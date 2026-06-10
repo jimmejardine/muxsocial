@@ -9,12 +9,4 @@ This folder is a hierarchy of folders containing markdown files. Each subfolder 
 ## Sections
 
 - [architecture/](architecture/index.md) — system architecture, toolchain, and repository structure
-
-## Planned future sections
-
-These do not exist yet; they will be created as the corresponding functionality is specified:
-
-- `networks/hashiverse/` — Hashiverse network integration
-- `networks/nostr/` — nostr network integration
-- `networks/mastodon/` — Mastodon network integration
-- `networks/bluesky/` — Bluesky network integration
+- [networks/](networks/index.md) — source-network integration (Hashiverse, nostr, Mastodon, Bluesky), the shared HTTP transport, and the normalized post model

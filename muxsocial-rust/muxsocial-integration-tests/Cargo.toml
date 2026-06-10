@@ -18,5 +18,8 @@ path = "src/bin/test_harness.rs"
 anyhow = { workspace = true }
 log = { workspace = true }
 muxsocial-lib = { workspace = true }
+# Native ergonomic Hashiverse client (sqlite/disk/DNSSEC/native-PoW defaults),
+# used to construct a client for the Hashiverse pull test and harness command.
+hashiverse-client-rust = { workspace = true }
 clap = { version = "4.5.38", features = ["derive"] }
 tokio = { version = "1.45", features = ["macros", "time", "rt", "rt-multi-thread"] }

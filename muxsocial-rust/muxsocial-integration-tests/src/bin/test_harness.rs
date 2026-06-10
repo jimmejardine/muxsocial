@@ -1,6 +1,11 @@
 use clap::Parser;
+use hashiverse_client_rust::HashiverseBuilder;
 use muxsocial_lib::greeting::compose_greeting_message;
+use muxsocial_lib::http::default_http_transport;
+use muxsocial_lib::post::AggregatedPost;
+use muxsocial_lib::sources::{bluesky, hashiverse, mastodon, nostr};
 use std::io::{self, BufRead, Write};
+use std::time::Duration;
 
 #[derive(Parser, Debug, Clone)]
 #[command(name = "test-harness", about = "mux.social long-running integration test harness")]
@@ -10,11 +15,22 @@ struct TestHarnessArguments {
     recipient_name: String,
 }
 
+/// A source network the harness can pull a sample feed from.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum NetworkChoice {
+    Nostr,
+    Bluesky,
+    Mastodon,
+    Hashiverse,
+}
+
 /// Outcome of analysing one typed sentence in the harness REPL.
 #[derive(Debug, PartialEq, Eq)]
 enum SentenceDispatchOutcome {
     /// A subsystem handled the sentence and produced output to display.
     Handled(String),
+    /// Pull a sample feed from a source network (handled asynchronously in `main`).
+    FetchNetwork(NetworkChoice),
     /// The sentence did not match any known command.
     Unrecognised(String),
     /// The user asked to quit the harness.
@@ -22,16 +38,61 @@ enum SentenceDispatchOutcome {
 }
 
 /// Analyse a typed sentence and route it to the correct subsystem.
-/// For now only `t` is wired up (to the greeting test message); everything
-/// else is unrecognised. This match is the single extension point for future
-/// subsystem dispatch (Hashiverse, nostr, Mastodon, Bluesky).
+/// `t` composes the greeting; `n`/`b`/`m`/`h` pull a sample feed from nostr,
+/// Bluesky, Mastodon, and Hashiverse respectively. (Hashiverse needs a user id
+/// in `MUXSOCIAL_HASHIVERSE_TEST_USER_ID`.)
 fn analyse_and_dispatch_sentence(sentence: &str, recipient_name: &str) -> SentenceDispatchOutcome {
     let trimmed_sentence: &str = sentence.trim();
     match trimmed_sentence {
         "q" | "quit" | "exit" => SentenceDispatchOutcome::Quit,
         "t" => SentenceDispatchOutcome::Handled(compose_greeting_message(recipient_name)),
+        "n" => SentenceDispatchOutcome::FetchNetwork(NetworkChoice::Nostr),
+        "b" => SentenceDispatchOutcome::FetchNetwork(NetworkChoice::Bluesky),
+        "m" => SentenceDispatchOutcome::FetchNetwork(NetworkChoice::Mastodon),
+        "h" => SentenceDispatchOutcome::FetchNetwork(NetworkChoice::Hashiverse),
         _ => SentenceDispatchOutcome::Unrecognised(trimmed_sentence.to_string()),
     }
+}
+
+/// Well-known identifiers used for the harness sample feeds.
+const NOSTR_JACK_PUBKEY_HEX: &str = "82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2";
+const BLUESKY_ACTOR: &str = "bsky.app";
+const MASTODON_INSTANCE_URL: &str = "https://mastodon.social";
+const MASTODON_ACCT: &str = "Gargron";
+
+/// Pull a small sample feed from the chosen network and render it as text.
+async fn fetch_network_sample(network_choice: NetworkChoice) -> String {
+    let fetch_result: anyhow::Result<Vec<AggregatedPost>> = match network_choice {
+        NetworkChoice::Nostr => nostr::fetch_recent_posts(NOSTR_JACK_PUBKEY_HEX, nostr::DEFAULT_RELAYS, 5, Duration::from_secs(20)).await,
+        NetworkChoice::Bluesky => bluesky::fetch_recent_posts(&default_http_transport(), BLUESKY_ACTOR, 5).await,
+        NetworkChoice::Mastodon => mastodon::fetch_recent_posts(&default_http_transport(), MASTODON_INSTANCE_URL, MASTODON_ACCT, 5).await,
+        NetworkChoice::Hashiverse => fetch_hashiverse_sample().await,
+    };
+
+    match fetch_result {
+        Ok(posts) => render_posts(network_choice, &posts),
+        Err(fetch_error) => format!("{network_choice:?} fetch failed: {fetch_error:#}"),
+    }
+}
+
+/// Build a Hashiverse client with native defaults and pull the timeline of the
+/// user id in `MUXSOCIAL_HASHIVERSE_TEST_USER_ID`.
+async fn fetch_hashiverse_sample() -> anyhow::Result<Vec<AggregatedPost>> {
+    let user_id_hex = std::env::var("MUXSOCIAL_HASHIVERSE_TEST_USER_ID").map_err(|_| anyhow::anyhow!("set MUXSOCIAL_HASHIVERSE_TEST_USER_ID to a 64-char hex user id first"))?;
+
+    let hashiverse_client = HashiverseBuilder::new().data_dir(std::env::temp_dir().join("muxsocial-hashiverse-harness")).build_with_keyphrase("muxsocial-harness").await?;
+
+    hashiverse::fetch_recent_posts(&hashiverse_client, &user_id_hex).await
+}
+
+fn render_posts(network_choice: NetworkChoice, posts: &[AggregatedPost]) -> String {
+    let mut rendered = format!("{network_choice:?}: {} post(s)\n", posts.len());
+    for post in posts {
+        let author = post.author_display_name.as_deref().unwrap_or(&post.author_identifier);
+        let preview: String = post.content_text.chars().take(160).collect();
+        rendered.push_str(&format!("  [{}] {author}: {preview}\n", post.created_at_millis));
+    }
+    rendered
 }
 
 #[tokio::main(flavor = "multi_thread")]
@@ -57,6 +118,9 @@ async fn main() -> anyhow::Result<()> {
         match analyse_and_dispatch_sentence(&line_buffer, &test_harness_arguments.recipient_name) {
             SentenceDispatchOutcome::Handled(output_message) => {
                 println!("{output_message}");
+            }
+            SentenceDispatchOutcome::FetchNetwork(network_choice) => {
+                println!("{}", fetch_network_sample(network_choice).await);
             }
             SentenceDispatchOutcome::Unrecognised(sentence) => {
                 println!("Unrecognised command: \"{sentence}\"");
@@ -84,6 +148,14 @@ mod tests {
     fn surrounding_whitespace_around_t_still_dispatches() {
         let dispatch_outcome: SentenceDispatchOutcome = analyse_and_dispatch_sentence("  t\n", "harness-recipient");
         assert_eq!(dispatch_outcome, SentenceDispatchOutcome::Handled(compose_greeting_message("harness-recipient")));
+    }
+
+    #[test]
+    fn network_letters_route_to_their_networks() {
+        for (command, expected_network) in [("n", NetworkChoice::Nostr), ("b", NetworkChoice::Bluesky), ("m", NetworkChoice::Mastodon), ("h", NetworkChoice::Hashiverse)] {
+            let dispatch_outcome = analyse_and_dispatch_sentence(command, "harness-recipient");
+            assert_eq!(dispatch_outcome, SentenceDispatchOutcome::FetchNetwork(expected_network), "expected {command:?} to route to {expected_network:?}");
+        }
     }
 
     #[test]

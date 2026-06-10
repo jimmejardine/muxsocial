@@ -14,7 +14,6 @@ impl MuxsocialClientWasm {
     }
 
     pub async fn compose_greeting(&self, recipient_name: String) -> String {
-
         compose_greeting_message(&recipient_name)
     }
 }

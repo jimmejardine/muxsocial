@@ -29,6 +29,49 @@ anyhow = "1.0.102"
 log = "0.4.29"
 muxsocial-lib = { path = "muxsocial-lib", version = "0.0.0" }
 
+# Serialization / encoding shared across source clients.
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+hex = "0.4.3"
+# RFC3339 timestamp parsing for normalizing post times to epoch millis.
+# default-features off avoids the `clock`/`now()` path so it builds clean on wasm.
+chrono = { version = "0.4.44", default-features = false, features = ["alloc"] }
+# The `http` request/response types atrium speaks; used by our XRPC adapter.
+http = "1"
+
+# Network source libraries.
+# nostr: rust-nostr SDK (WebSocket relays; its own transport, native + wasm).
+nostr-sdk = { version = "0.44", default-features = false }
+# Bluesky: ATrium AT-Protocol/XRPC client. We drive it over our own HttpTransport.
+# Only the app.bsky namespace is needed; dropping default features avoids the
+# `agent` module (and its tokio/sync pull) we don't use.
+atrium-api = { version = "0.25", default-features = false, features = ["namespace-appbsky"] }
+atrium-xrpc = "0.12"
+# Hashiverse: core protocol lib (native + wasm). The ergonomic native wrapper
+# (sqlite/disk/bootstrap defaults) is hashiverse-client-rust — native only, used
+# by the integration tests, never by muxsocial-lib (which must stay wasm-clean).
+hashiverse-lib = "1.0.7"
+hashiverse-client-rust = "1.0.7"
+
+# HTTP transport backends (cfg-gated in muxsocial-lib).
+# Native: reqwest with rustls (no native-tls/openssl).
+reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
+tokio = { version = "1.45", features = ["rt", "rt-multi-thread", "macros", "time"] }
+# Both aws-lc-rs (reqwest) and ring (nostr's websocket TLS) end up in the tree,
+# so rustls can't auto-pick a crypto provider — we install aws-lc-rs explicitly.
+rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs"] }
+# Wasm: gloo-net over the browser Fetch API.
+gloo-net = { version = "0.7", default-features = false, features = ["http"] }
+wasm-bindgen-futures = "0.4.58"
+
+# Published hashiverse-lib 1.0.7 uses `moka::ExternalClock`, a seam that only
+# exists in hashiverse's vendored moka fork, not upstream crates.io moka. The
+# fork is vendored locally at 3rdparty/moka; patch moka to it so hashiverse-lib's
+# native build links. (moka is also pulled by atrium-common, so the patch is
+# always active.)
+[patch.crates-io]
+moka = { path = "3rdparty/moka" }
+
 [profile.dev.package."*"]
 opt-level = 3
 
