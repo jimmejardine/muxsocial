@@ -25,6 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # On a v* tag push, rewrite the workspace Cargo.toml version from the tag
+      # BEFORE building, so the wasm bakes in the tagged CARGO_PKG_VERSION (shown
+      # in the status bar). No-op on branch/PR builds (stays 0.0.0).
+      - uses: ./.github/actions/set-cargo-version-from-tag
+
       # nostr's secp256k1-sys is C cross-compiled to wasm by cc-rs/clang; the
       # wasm build needs clang/llvm on PATH. (If cc-rs ever fails to auto-pick
       # clang for the wasm32 target, set CC_wasm32_unknown_unknown=clang and
@@ -82,6 +87,10 @@ jobs:
       - name: Install web dependencies
         working-directory: muxsocial-client-web
         run: npm ci
+
+      # Keep the built web package's version in lock-step with the Rust workspace
+      # version on tag builds (no-op otherwise). After npm ci so the lock stays in sync.
+      - uses: ./.github/actions/set-npm-version-from-tag
 
       - name: Web lint (Biome)
         working-directory: muxsocial-client-web

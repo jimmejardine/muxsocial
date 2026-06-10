@@ -30,6 +30,7 @@ export function App() {
 	const [timelines, set_timelines] = useState<TimelineConfig[] | null>(null);
 	// Provided via context so per-timeline post lists can call the client.
 	const [muxsocial_client, set_muxsocial_client] = useState<MuxsocialClientWasmProxy | null>(null);
+	const [app_version, set_app_version] = useState<string | null>(null);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -38,9 +39,11 @@ export function App() {
 				const muxsocial = await Muxsocial.create();
 				muxsocial_ref.current = muxsocial;
 				const initial_timelines = (await muxsocial.list_timelines()) as TimelineConfig[];
+				const version = await muxsocial.version();
 				if (!cancelled) {
 					set_muxsocial_client(muxsocial);
 					set_timelines(initial_timelines);
+					set_app_version(version);
 				}
 			} catch (err) {
 				if (!cancelled) {
@@ -130,7 +133,7 @@ export function App() {
 				</AppShell.Main>
 
 				<AppShell.Footer>
-					<StatusBar timeline_count={timelines?.length ?? 0} />
+					<StatusBar timeline_count={timelines?.length ?? 0} version={app_version} />
 				</AppShell.Footer>
 			</AppShell>
 		</MuxsocialContext.Provider>

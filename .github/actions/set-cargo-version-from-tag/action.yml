@@ -1,0 +1,44 @@
+name: Set Cargo workspace version from tag
+description: |
+  When the build was triggered by a v* tag push, rewrites the workspace version
+  in muxsocial-rust/Cargo.toml from the tag (leading "v" stripped). No-op for
+  branch/PR builds, which keep the placeholder 0.0.0.
+
+  Two places get rewritten so they stay in lock-step:
+
+  1. [workspace.package] `version` — what `env!("CARGO_PKG_VERSION")` (and the
+     wasm crate, which inherits via `version.workspace = true`) reports.
+  2. Internal path-deps in [workspace.dependencies] of the form
+     `name = { path = "...", version = "..." }`. Convention: write `path`
+     before `version` so the single-pass regex below catches it; external deps
+     (a bare `version`, no `path`) are left untouched.
+
+  Tag format must be valid Cargo SemVer: v1.0.5 (stable), v1.0.5-rc1 /
+  v1.0.5-beta.2 (pre-release with hyphen).
+
+runs:
+  using: composite
+  steps:
+    - name: Set Cargo workspace version from tag
+      if: startsWith(github.ref, 'refs/tags/v')
+      shell: bash
+      run: |
+        tag="${{ github.ref_name }}"
+        version="${tag#v}"
+        file=muxsocial-rust/Cargo.toml
+
+        # Pass 1: [workspace.package] version
+        sed -E '/^\[workspace\.package\]/,/^\[/ s/^version = "[^"]*"/version = "'"$version"'"/' "$file" > "$file.new"
+        mv "$file.new" "$file"
+
+        # Pass 2: internal workspace path-deps in [workspace.dependencies].
+        # Matches lines like:  muxsocial-lib = { path = "muxsocial-lib", version = "0.0.0" }
+        # Constrained to lines that have BOTH `path = "..."` AND `version = "..."` so
+        # external crate entries with only a `version` are left untouched.
+        sed -E '/^[A-Za-z0-9_-]+ = \{[^}]*path = "[^"]*"[^}]*version = "[^"]*"/ s/(version = ")[^"]*(")/\1'"$version"'\2/' "$file" > "$file.new"
+        mv "$file.new" "$file"
+
+        echo "--- workspace.package after rewrite ---"
+        sed -n '/^\[workspace\.package\]/,/^\[/p' "$file"
+        echo "--- workspace.dependencies (internal path-deps) ---"
+        grep -E '^[A-Za-z0-9_-]+ = \{[^}]*path = ' "$file" || true

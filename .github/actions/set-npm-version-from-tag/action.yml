@@ -1,0 +1,31 @@
+name: Set npm package version from tag
+description: |
+  When the build was triggered by a v* tag push, rewrites the version in the
+  npm package at `working-directory` (package.json, and package-lock.json if
+  present) from the tag (leading "v" stripped). No-op for branch/PR builds.
+
+  The GUI displays the version baked into the WASM (CARGO_PKG_VERSION), not this
+  one; this just keeps the built web package's metadata in lock-step with the
+  Rust workspace version.
+
+  Tag format must be valid SemVer: v1.0.5 (stable), v1.0.5-rc1 / v1.0.5-beta.2.
+
+inputs:
+  working-directory:
+    description: "Directory containing the package.json to bump."
+    required: false
+    default: muxsocial-client-web
+
+runs:
+  using: composite
+  steps:
+    - name: Set npm package version from tag
+      if: startsWith(github.ref, 'refs/tags/v')
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        tag="${{ github.ref_name }}"
+        version="${tag#v}"
+        npm version --no-git-tag-version --allow-same-version --ignore-scripts "$version"
+        echo "--- package.json after rewrite ---"
+        grep -m1 '"version"' package.json

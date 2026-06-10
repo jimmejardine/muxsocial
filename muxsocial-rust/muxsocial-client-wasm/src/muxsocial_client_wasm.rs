@@ -53,6 +53,12 @@ impl MuxsocialClientWasm {
         compose_greeting_message(&recipient_name)
     }
 
+    /// The app version — the workspace `Cargo.toml` version, baked in at build
+    /// time (CI rewrites it from the release tag before building).
+    pub fn version(&self) -> String {
+        env!("CARGO_PKG_VERSION").to_string()
+    }
+
     /// The current timeline snapshot (used by the GUI to seed its view).
     pub async fn list_timelines(&self) -> Result<JsValue, JsValue> {
         snapshot_to_js(&self.timeline_registry.list())

@@ -11,6 +11,7 @@
 	"timeline_area.empty": "No timelines. Use \"Add timeline\" to create one.",
 	"status.timelines_one": "{{count}} timeline",
 	"status.timelines_other": "{{count}} timelines",
+	"status.releases": "View releases",
 	"theme.label": "Theme",
 	"language.label": "Language",
 	"toast.timeline_added": "Timeline added",

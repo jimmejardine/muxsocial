@@ -8,6 +8,7 @@
 	"timeline_area.empty": "No hay cronologías. Usa \"Añadir cronología\" para crear una.",
 	"status.timelines_one": "{{count}} cronología",
 	"status.timelines_other": "{{count}} cronologías",
+	"status.releases": "Ver versiones",
 	"theme.label": "Tema",
 	"language.label": "Idioma",
 	"toast.timeline_added": "Cronología añadida",

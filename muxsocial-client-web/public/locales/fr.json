@@ -8,6 +8,7 @@
 	"timeline_area.empty": "Aucune timeline. Utilisez \"Ajouter une timeline\" pour en créer une.",
 	"status.timelines_one": "{{count}} timeline",
 	"status.timelines_other": "{{count}} timelines",
+	"status.releases": "Voir les versions",
 	"theme.label": "Thème",
 	"language.label": "Langue",
 	"toast.timeline_added": "Timeline ajoutée",
