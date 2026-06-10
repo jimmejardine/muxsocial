@@ -1,0 +1,12 @@
+{
+	"toolbar.add_timeline": "Ajouter une timeline",
+	"timeline.title": "Timeline {{number}}",
+	"timeline.remove": "Supprimer la timeline",
+	"timeline.address_placeholder": "Collez une adresse et appuyez sur Entrée…",
+	"timeline.no_sources": "Aucune source pour l'instant. Collez une adresse ci-dessus pour en ajouter une.",
+	"timeline_area.empty": "Aucune timeline. Utilisez \"Ajouter une timeline\" pour en créer une.",
+	"status.timelines_one": "{{count}} timeline",
+	"status.timelines_other": "{{count}} timelines",
+	"theme.label": "Thème",
+	"language.label": "Langue"
+}

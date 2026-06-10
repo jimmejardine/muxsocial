@@ -1,5 +1,6 @@
 import { CloseButton, Group, Text, TextInput } from "@mantine/core";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import type { SourceConfig, TimelineConfig } from "../tools/TimelineConfig.ts";
 import classes from "./Timeline.module.css";
@@ -19,7 +20,9 @@ interface TimelineProps {
  * comes from the Rust snapshot; this component never derives it.
  */
 export function Timeline({ timeline, index, on_remove, on_add_source }: TimelineProps) {
+	const { t } = useTranslation();
 	const [address, set_address] = useState("");
+	const timeline_title = t("timeline.title", { number: index + 1 });
 
 	const submit_address = () => {
 		const trimmed_address = address.trim();
@@ -30,18 +33,18 @@ export function Timeline({ timeline, index, on_remove, on_add_source }: Timeline
 	};
 
 	return (
-		<section className={classes.timeline} aria-label={`Timeline ${index + 1}`}>
+		<section className={classes.timeline} aria-label={timeline_title}>
 			<Group className={classes.miniToolbar} justify="space-between" wrap="nowrap" gap="xs">
 				<Text fw={600} size="sm" truncate>
-					Timeline {index + 1}
+					{timeline_title}
 				</Text>
-				<CloseButton aria-label="Remove timeline" title="Remove timeline" onClick={() => on_remove(timeline.id)} />
+				<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={() => on_remove(timeline.id)} />
 			</Group>
 
 			<div className={classes.addressBar}>
 				<TextInput
 					size="xs"
-					placeholder="Paste an address and press Enter…"
+					placeholder={t("timeline.address_placeholder")}
 					value={address}
 					onChange={(event) => set_address(event.currentTarget.value)}
 					onKeyDown={(event) => {
@@ -61,7 +64,7 @@ export function Timeline({ timeline, index, on_remove, on_add_source }: Timeline
 					components={{
 						EmptyPlaceholder: () => (
 							<Text c="dimmed" size="sm" p="sm">
-								No sources yet. Paste an address above to add one.
+								{t("timeline.no_sources")}
 							</Text>
 						),
 					}}

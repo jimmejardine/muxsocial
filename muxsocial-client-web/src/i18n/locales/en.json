@@ -1,0 +1,12 @@
+{
+	"toolbar.add_timeline": "Add timeline",
+	"timeline.title": "Timeline {{number}}",
+	"timeline.remove": "Remove timeline",
+	"timeline.address_placeholder": "Paste an address and press Enter…",
+	"timeline.no_sources": "No sources yet. Paste an address above to add one.",
+	"timeline_area.empty": "No timelines. Use \"Add timeline\" to create one.",
+	"status.timelines_one": "{{count}} timeline",
+	"status.timelines_other": "{{count}} timelines",
+	"theme.label": "Theme",
+	"language.label": "Language"
+}

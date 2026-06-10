@@ -1,4 +1,5 @@
 import { Text } from "@mantine/core";
+import { useTranslation } from "react-i18next";
 import type { TimelineConfig } from "../tools/TimelineConfig.ts";
 import { Timeline } from "./Timeline.tsx";
 import classes from "./TimelineArea.module.css";
@@ -15,10 +16,12 @@ interface TimelineAreaProps {
  * space when few, and scroll horizontally when too many fit.
  */
 export function TimelineArea({ timelines, on_remove, on_add_source }: TimelineAreaProps) {
+	const { t } = useTranslation();
+
 	if (timelines.length === 0) {
 		return (
 			<div className={classes.empty}>
-				<Text c="dimmed">No timelines. Use "Add timeline" to create one.</Text>
+				<Text c="dimmed">{t("timeline_area.empty")}</Text>
 			</div>
 		);
 	}

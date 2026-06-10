@@ -1,6 +1,7 @@
 import "./index.css";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
+import "./i18n/i18n.ts";
 import { Notifications } from "@mantine/notifications";
 import React from "react";
 import { createRoot } from "react-dom/client";

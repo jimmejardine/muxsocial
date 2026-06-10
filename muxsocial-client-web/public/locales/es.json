@@ -1,0 +1,12 @@
+{
+	"toolbar.add_timeline": "Añadir cronología",
+	"timeline.title": "Cronología {{number}}",
+	"timeline.remove": "Eliminar cronología",
+	"timeline.address_placeholder": "Pega una dirección y pulsa Enter…",
+	"timeline.no_sources": "Aún no hay fuentes. Pega una dirección arriba para añadir una.",
+	"timeline_area.empty": "No hay cronologías. Usa \"Añadir cronología\" para crear una.",
+	"status.timelines_one": "{{count}} cronología",
+	"status.timelines_other": "{{count}} cronologías",
+	"theme.label": "Tema",
+	"language.label": "Idioma"
+}
