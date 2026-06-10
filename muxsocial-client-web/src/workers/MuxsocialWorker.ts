@@ -92,5 +92,14 @@ const onMessage = async (event: MessageEvent<RPCRequest>) => {
 };
 
 wasm_init(true);
-self.onmessage = onMessage;
+
+// Serialise message handling: each request fully completes before the next
+// starts. The WASM client's `&mut self` command methods would panic with
+// "recursive use of an object" if two async calls overlapped, which a plain
+// async `onmessage` allows. Chaining them keeps mutations ordered and safe.
+let pending_chain: Promise<void> = Promise.resolve();
+self.onmessage = (event: MessageEvent<RPCRequest>) => {
+	pending_chain = pending_chain.then(() => onMessage(event));
+};
+
 self.postMessage({ type: "ready" });

@@ -2720,6 +2720,7 @@ dependencies = [
  "log",
  "muxsocial-lib",
  "serde",
+ "serde-wasm-bindgen",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
@@ -2758,6 +2759,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "uuid",
  "wasm-bindgen-futures",
 ]
 

@@ -1,22 +1,34 @@
-import { CloseButton, Group, Stack, Text } from "@mantine/core";
+import { CloseButton, Group, Text, TextInput } from "@mantine/core";
+import { useState } from "react";
+import { Virtuoso } from "react-virtuoso";
+import type { SourceConfig, TimelineConfig } from "../tools/TimelineConfig.ts";
 import classes from "./Timeline.module.css";
 
-export interface TimelineDescriptor {
-	id: string;
-}
-
 interface TimelineProps {
-	timeline: TimelineDescriptor;
+	timeline: TimelineConfig;
 	index: number;
 	on_remove: (id: string) => void;
+	on_add_source: (id: string, address: string) => void;
 }
 
 /**
- * A single timeline column: a small toolbar (title + remove button) over a
- * vertically-scrolling body. The body is a placeholder for now — real feed
- * content is wired in a later step.
+ * A single timeline column: a small toolbar (title + remove button), an address
+ * textbox (paste + Enter adds a source to this timeline), and a `react-virtuoso`
+ * body that lists the timeline's sources. Every action is addressed by the
+ * timeline's GUID (`timeline.id`). The source list — like all timeline state —
+ * comes from the Rust snapshot; this component never derives it.
  */
-export function Timeline({ timeline, index, on_remove }: TimelineProps) {
+export function Timeline({ timeline, index, on_remove, on_add_source }: TimelineProps) {
+	const [address, set_address] = useState("");
+
+	const submit_address = () => {
+		const trimmed_address = address.trim();
+		if (trimmed_address.length > 0) {
+			on_add_source(timeline.id, trimmed_address);
+			set_address("");
+		}
+	};
+
 	return (
 		<section className={classes.timeline} aria-label={`Timeline ${index + 1}`}>
 			<Group className={classes.miniToolbar} justify="space-between" wrap="nowrap" gap="xs">
@@ -25,13 +37,49 @@ export function Timeline({ timeline, index, on_remove }: TimelineProps) {
 				</Text>
 				<CloseButton aria-label="Remove timeline" title="Remove timeline" onClick={() => on_remove(timeline.id)} />
 			</Group>
+
+			<div className={classes.addressBar}>
+				<TextInput
+					size="xs"
+					placeholder="Paste an address and press Enter…"
+					value={address}
+					onChange={(event) => set_address(event.currentTarget.value)}
+					onKeyDown={(event) => {
+						if (event.key === "Enter") {
+							event.preventDefault();
+							submit_address();
+						}
+					}}
+				/>
+			</div>
+
 			<div className={classes.body}>
-				<Stack gap="xs">
-					<Text c="dimmed" size="sm">
-						No source configured yet.
-					</Text>
-				</Stack>
+				<Virtuoso
+					data={timeline.sources}
+					style={{ height: "100%" }}
+					itemContent={(_index: number, source: SourceConfig) => <SourceRow source={source} />}
+					components={{
+						EmptyPlaceholder: () => (
+							<Text c="dimmed" size="sm" p="sm">
+								No sources yet. Paste an address above to add one.
+							</Text>
+						),
+					}}
+				/>
 			</div>
 		</section>
+	);
+}
+
+function SourceRow({ source }: { source: SourceConfig }) {
+	return (
+		<Group gap="xs" px="sm" py={6} wrap="nowrap" className={classes.sourceRow}>
+			<Text size="xs" c="dimmed" fw={600}>
+				{source.network}
+			</Text>
+			<Text size="sm" truncate>
+				{source.id}
+			</Text>
+		</Group>
 	);
 }

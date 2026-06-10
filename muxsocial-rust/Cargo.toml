@@ -40,6 +40,10 @@ hex = "0.4.3"
 async-trait = "0.1.89"
 # Browser key/value persistence for the GUI ConfigStorage backend (wasm only).
 indexed_db_futures = { version = "0.6.4", features = ["serde"] }
+# Rust-minted timeline GUIDs (the `js` feature wires getrandom for wasm builds).
+uuid = { version = "1.11", features = ["v4"] }
+# Serialize Rust state snapshots to JsValue for the wasm bridge.
+serde-wasm-bindgen = "0.6.5"
 # RFC3339 timestamp parsing for normalizing post times to epoch millis.
 # default-features off avoids the `clock`/`now()` path so it builds clean on wasm.
 chrono = { version = "0.4.44", default-features = false, features = ["alloc"] }

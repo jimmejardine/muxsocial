@@ -5,3 +5,4 @@ pub mod http;
 pub mod post;
 pub mod sources;
 pub mod timeline;
+pub mod timeline_registry;

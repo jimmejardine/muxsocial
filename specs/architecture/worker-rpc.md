@@ -29,6 +29,17 @@ Responses:
 
 Errors thrown inside the worker are serialised into the `error` shape and re-hydrated as `Error` objects on the main thread.
 
+The worker processes requests **serially** — each `onmessage` is chained onto a promise so one request fully completes before the next begins. This keeps the WASM client's `&mut self` command methods (e.g. `add_timeline`) from re-entering, which would panic with "recursive use of an object".
+
+## State sync: command → snapshot (pull, not push)
+
+All app state lives in Rust; the GUI is a view. There is **no async push** from Rust to the GUI. Instead:
+
+- The GUI seeds itself with a query (`list_timelines()`).
+- Every mutation is a GUID-addressed command (`add_timeline()`, `remove_timeline(id)`, `add_source_to_timeline(id, address)`) that mutates Rust state, **serialises it to the `ConfigStorage` created at startup**, and **returns the new full snapshot**. The GUI replaces its render state with that snapshot — so the command reply *is* the change notification.
+
+The Rust `TimelineRegistry` (`muxsocial-lib/src/timeline_registry.rs`) owns the timeline list; snapshots cross the boundary as `serde_wasm_bindgen` values (`TimelineConfig[]`). If state ever changes *without* a GUI action (e.g. live post streams), that is handled by per-component pull/poll, not a push channel.
+
 ## Typing
 
 `MuxsocialClientWasmProxy` is derived from the wasm-bindgen-generated `MuxsocialClientWasm` type: every public method is mirrored with its return type wrapped in a `Promise`. Lifecycle internals (`constructor`, `free`, `Symbol.dispose`) are excluded on the type level and blocked at runtime by the worker's `isExposedMethodName` check; the proxy instead offers `dispose(): Promise<void>` which frees the WASM client and terminates the worker.

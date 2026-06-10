@@ -1,10 +1,12 @@
 import { Text } from "@mantine/core";
-import { Timeline, type TimelineDescriptor } from "./Timeline.tsx";
+import type { TimelineConfig } from "../tools/TimelineConfig.ts";
+import { Timeline } from "./Timeline.tsx";
 import classes from "./TimelineArea.module.css";
 
 interface TimelineAreaProps {
-	timelines: TimelineDescriptor[];
+	timelines: TimelineConfig[];
 	on_remove: (id: string) => void;
+	on_add_source: (id: string, address: string) => void;
 }
 
 /**
@@ -12,7 +14,7 @@ interface TimelineAreaProps {
  * 500px wide (or the screen width when it is narrower); they grow to fill the
  * space when few, and scroll horizontally when too many fit.
  */
-export function TimelineArea({ timelines, on_remove }: TimelineAreaProps) {
+export function TimelineArea({ timelines, on_remove, on_add_source }: TimelineAreaProps) {
 	if (timelines.length === 0) {
 		return (
 			<div className={classes.empty}>
@@ -24,7 +26,7 @@ export function TimelineArea({ timelines, on_remove }: TimelineAreaProps) {
 	return (
 		<div className={classes.area}>
 			{timelines.map((timeline, index) => (
-				<Timeline key={timeline.id} timeline={timeline} index={index} on_remove={on_remove} />
+				<Timeline key={timeline.id} timeline={timeline} index={index} on_remove={on_remove} on_add_source={on_add_source} />
 			))}
 		</div>
 	);

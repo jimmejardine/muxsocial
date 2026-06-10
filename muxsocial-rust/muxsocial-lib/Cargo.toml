@@ -24,6 +24,7 @@ hex = { workspace = true }
 chrono = { workspace = true }
 http = { workspace = true }
 async-trait = { workspace = true }
+uuid = { workspace = true }
 
 # Source-network protocol libraries. All must build for native AND wasm32, so
 # only wasm-clean crates live here (hashiverse-lib, not the native-only
@@ -42,3 +43,5 @@ rustls = { workspace = true }
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 gloo-net = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
+# getrandom js backend so uuid v4 works in the browser.
+uuid = { workspace = true, features = ["js"] }

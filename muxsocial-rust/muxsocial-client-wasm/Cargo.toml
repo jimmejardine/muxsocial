@@ -30,6 +30,8 @@ serde = { workspace = true }
 async-trait = { workspace = true }
 # Browser IndexedDB backend for ConfigStorage.
 indexed_db_futures = { workspace = true }
+# Serialize timeline snapshots to JsValue for the GUI.
+serde-wasm-bindgen = { workspace = true }
 wasm-bindgen = "0.2.108"
 wasm-bindgen-futures = "0.4.58"
 console_error_panic_hook = { version = "0.1.6", optional = true }
