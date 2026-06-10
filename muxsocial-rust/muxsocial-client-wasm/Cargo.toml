@@ -1,0 +1,31 @@
+[package]
+name = "muxsocial-client-wasm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+description = "This library provides the rust/wasm backend for the associated muxsocial-client-web folder."
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.71"
+
+[dependencies]
+muxsocial-lib = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+wasm-bindgen = "0.2.108"
+wasm-bindgen-futures = "0.4.58"
+console_error_panic_hook = { version = "0.1.6", optional = true }
+console_log = { version = "1.0.0", features = ["color"] }
+fern = "0.7.1"
+js-sys = "0.3.85"

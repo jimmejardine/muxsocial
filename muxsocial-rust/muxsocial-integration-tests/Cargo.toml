@@ -1,0 +1,21 @@
+[package]
+name = "muxsocial-integration-tests"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "test-harness"
+path = "src/bin/test_harness.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+log = { workspace = true }
+muxsocial-lib = { workspace = true }
+clap = { version = "4.5.38", features = ["derive"] }
+tokio = { version = "1.45", features = ["macros", "time", "rt", "rt-multi-thread"] }

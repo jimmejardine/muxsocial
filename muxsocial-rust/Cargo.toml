@@ -1,0 +1,37 @@
+[workspace]
+members = [
+    "muxsocial-lib",
+    "muxsocial-client-wasm",
+    "muxsocial-integration-tests",
+]
+# Bare cargo invocations only touch host-buildable, fast crates. The wasm crate is a
+# member (for cargo metadata and explicit -p invocations) but skipped by default, and
+# the long-running integration tests are opt-in via -p.
+default-members = ["muxsocial-lib"]
+resolver = "2"
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+authors = ["James Jardine <mail@jimme.net>"]
+license = "MIT OR Apache-2.0"
+
+[workspace.lints.clippy]
+module_inception = "allow"
+collapsible_match = "allow"
+collapsible_if = "allow"
+collapsible_else_if = "allow"
+
+[workspace.dependencies]
+anyhow = "1.0.102"
+log = "0.4.29"
+muxsocial-lib = { path = "muxsocial-lib", version = "0.0.0" }
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.profiling]
+inherits = "release"
+debug = true
+debug-assertions = true
+strip = false

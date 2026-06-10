@@ -1,0 +1,27 @@
+{
+	"compilerOptions": {
+		"lib": ["DOM", "ES2020", "WebWorker", "ESNext.Disposable"],
+		"target": "ES2020",
+		"noEmit": true,
+		"skipLibCheck": true,
+		"verbatimModuleSyntax": true,
+		"useDefineForClassFields": true,
+
+		/* modules */
+		"module": "ESNext",
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+
+		/* type checking */
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"jsx": "react-jsx",
+
+		"types": ["@rsbuild/core/types"],
+		"allowSyntheticDefaultImports": true
+	},
+	"include": ["src"]
+}

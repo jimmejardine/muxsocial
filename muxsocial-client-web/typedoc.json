@@ -1,0 +1,15 @@
+{
+	"entryPoints": ["src"],
+	"entryPointStrategy": "expand",
+	"exclude": ["**/node_modules/**", "**/env.d.ts"],
+	"out": "docs",
+	"name": "muxsocial-client-web",
+	"readme": "none",
+	"tsconfig": "./tsconfig.json",
+	"skipErrorChecking": true,
+	"cleanOutputDir": true,
+	"excludePrivate": false,
+	"excludeProtected": false,
+	"excludeInternal": false,
+	"includeVersion": true
+}

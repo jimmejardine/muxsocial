@@ -2,7 +2,7 @@
 
 We are building an open source social media tool that aggregates posts from the top tier open source social media networks: Hashiverse, nostr, Mastodon, and Bluesky.
 
-The tool is a SPA (single page application) written in Rust/WASM (for the heavy lifting), and React/Mantine (for the GUI).
+The tool is a SPA (single page application) written in Rust/WASM (for the heavy lifting), and React/Mantine (for the GUI).  There is no server (other than the hosting of the SPA) - everything lives in the browser.
 
 # Specification
 
