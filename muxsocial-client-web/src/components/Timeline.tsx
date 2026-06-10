@@ -1,4 +1,5 @@
 import { Badge, Button, CloseButton, Group, Text, TextInput } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
@@ -6,6 +7,7 @@ import { usePosts } from "../hooks/usePosts.ts";
 import { networkColor } from "../theme/networkColors.ts";
 import type { Post } from "../tools/Post.ts";
 import type { SourceConfig, TimelineConfig } from "../tools/TimelineConfig.ts";
+import { ConfirmModal } from "./ConfirmModal.tsx";
 import { PostCard } from "./PostCard.tsx";
 import classes from "./Timeline.module.css";
 
@@ -30,6 +32,7 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_set_nam
 	const [address, set_address] = useState("");
 	// Local draft of the custom name; the effective name (default) is the placeholder.
 	const [name_draft, set_name_draft] = useState(timeline.name ?? "");
+	const [confirm_opened, confirm_handlers] = useDisclosure(false);
 	const { posts, firstItemIndex, loading, reachedOldest, getMore } = usePosts(timeline.id);
 
 	// display_name is empty only for a nameless, sourceless timeline -> index fallback.
@@ -73,7 +76,7 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_set_nam
 					<Button size="xs" variant="light" onClick={getMore} loading={loading}>
 						{t("timeline.get_more")}
 					</Button>
-					<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={() => on_remove(timeline.id)} />
+					<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={confirm_handlers.open} />
 				</Group>
 			</Group>
 
@@ -122,6 +125,18 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_set_nam
 					}}
 				/>
 			</div>
+
+			<ConfirmModal
+				opened={confirm_opened}
+				title={t("timeline.remove_confirm_title")}
+				message={t("timeline.remove_confirm_message")}
+				confirmLabel={t("common.remove")}
+				onConfirm={() => {
+					on_remove(timeline.id);
+					confirm_handlers.close();
+				}}
+				onClose={confirm_handlers.close}
+			/>
 		</section>
 	);
 }
