@@ -10,5 +10,12 @@
 	"status.timelines_other": "{{count}} Timelines",
 	"theme.label": "Design",
 	"language.label": "Sprache",
+	"toast.timeline_added": "Timeline hinzugefügt",
+	"toast.timeline_removed": "Timeline entfernt",
+	"toast.source_added": "Quelle hinzugefügt",
+	"toast.error_load": "Timelines konnten nicht geladen werden: {{message}}",
+	"toast.error_add_timeline": "Timeline konnte nicht hinzugefügt werden: {{message}}",
+	"toast.error_remove_timeline": "Timeline konnte nicht entfernt werden: {{message}}",
+	"toast.error_add_source": "Quelle konnte nicht hinzugefügt werden: {{message}}",
 	"toast.error_set_name": "Timeline konnte nicht umbenannt werden: {{message}}"
 }

@@ -1,0 +1,21 @@
+{
+	"toolbar.add_timeline": "0d47",
+	"timeline.title": "a5d2",
+	"timeline.remove": "a181",
+	"timeline.name_label": "2f00",
+	"timeline.address_placeholder": "7995",
+	"timeline.no_sources": "2152",
+	"timeline_area.empty": "26ee",
+	"status.timelines_one": "8a4c",
+	"status.timelines_other": "ceeb",
+	"theme.label": "efb5",
+	"language.label": "a4fe",
+	"toast.timeline_added": "4296",
+	"toast.timeline_removed": "d412",
+	"toast.source_added": "2d5f",
+	"toast.error_load": "4a4f",
+	"toast.error_add_timeline": "af27",
+	"toast.error_remove_timeline": "df28",
+	"toast.error_add_source": "c272",
+	"toast.error_set_name": "45a8"
+}

@@ -10,5 +10,12 @@
 	"status.timelines_other": "{{count}} timelines",
 	"theme.label": "Thème",
 	"language.label": "Langue",
+	"toast.timeline_added": "Timeline ajoutée",
+	"toast.timeline_removed": "Timeline supprimée",
+	"toast.source_added": "Source ajoutée",
+	"toast.error_load": "Échec du chargement des timelines : {{message}}",
+	"toast.error_add_timeline": "Échec de l'ajout de la timeline : {{message}}",
+	"toast.error_remove_timeline": "Échec de la suppression de la timeline : {{message}}",
+	"toast.error_add_source": "Échec de l'ajout de la source : {{message}}",
 	"toast.error_set_name": "Échec du renommage de la timeline : {{message}}"
 }

@@ -10,5 +10,12 @@
 	"status.timelines_other": "{{count}} cronologías",
 	"theme.label": "Tema",
 	"language.label": "Idioma",
+	"toast.timeline_added": "Cronología añadida",
+	"toast.timeline_removed": "Cronología eliminada",
+	"toast.source_added": "Fuente añadida",
+	"toast.error_load": "No se pudieron cargar las cronologías: {{message}}",
+	"toast.error_add_timeline": "No se pudo añadir la cronología: {{message}}",
+	"toast.error_remove_timeline": "No se pudo eliminar la cronología: {{message}}",
+	"toast.error_add_source": "No se pudo añadir la fuente: {{message}}",
 	"toast.error_set_name": "No se pudo renombrar la cronología: {{message}}"
 }
