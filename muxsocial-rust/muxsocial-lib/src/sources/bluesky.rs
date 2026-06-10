@@ -17,8 +17,9 @@ use atrium_api::types::{LimitedNonZeroU8, TryFromUnknown, Union};
 use atrium_xrpc::{HttpClient, OutputDataOrBytes, XrpcClient, XrpcRequest};
 use http::{Method, Request, Response};
 
-use crate::http::{HttpRequest, HttpTransport};
+use crate::http::{DefaultHttpTransport, HttpRequest, HttpTransport};
 use crate::post::{AggregatedPost, SourceNetwork, parse_rfc3339_to_epoch_millis};
+use crate::timeline::SourcePager;
 
 /// The unauthenticated public AppView base URL.
 pub const PUBLIC_APPVIEW_BASE_URL: &str = "https://public.api.bsky.app";
@@ -64,17 +65,25 @@ impl<'transport, T: HttpTransport + Sync> XrpcClient for TransportXrpcClient<'tr
 /// Fetch up to `limit` recent posts authored by `actor` (a handle like
 /// `"bsky.app"` or a DID) from the public AppView. Unauthenticated.
 pub async fn fetch_recent_posts(http_transport: &(impl HttpTransport + Sync), actor: &str, limit: u8) -> anyhow::Result<Vec<AggregatedPost>> {
+    let (posts, _next_cursor) = fetch_feed_page(http_transport, actor, limit, None).await?;
+    Ok(posts)
+}
+
+/// Fetch one page of an author's feed, returning the mapped posts plus the
+/// opaque `cursor` for the *next* (older) page (None when the feed is
+/// exhausted). `cursor` paginates older; `None` starts at the top.
+async fn fetch_feed_page(http_transport: &(impl HttpTransport + Sync), actor: &str, limit: u8, cursor: Option<String>) -> anyhow::Result<(Vec<AggregatedPost>, Option<String>)> {
     let xrpc_client = TransportXrpcClient {
         base_uri: PUBLIC_APPVIEW_BASE_URL.to_string(),
         http_transport,
     };
 
-    log::info!("bluesky: fetching up to {limit} posts for actor {actor:?}");
+    log::info!("bluesky: fetching up to {limit} posts for actor {actor:?} (cursor={cursor:?})");
 
     let actor_identifier: AtIdentifier = actor.parse().map_err(|parse_error| anyhow!("invalid Bluesky actor {actor:?}: {parse_error}"))?;
     let parameters = get_author_feed::ParametersData {
         actor: actor_identifier,
-        cursor: None,
+        cursor,
         filter: Some("posts_no_replies".to_string()),
         include_pins: None,
         limit: LimitedNonZeroU8::try_from(limit.max(1)).ok(),
@@ -100,7 +109,75 @@ pub async fn fetch_recent_posts(http_transport: &(impl HttpTransport + Sync), ac
 
     log::debug!("bluesky: received {} feed item(s) for actor {actor:?}", author_feed.feed.len());
 
-    author_feed.feed.iter().map(map_feed_view_post).collect()
+    let next_cursor = author_feed.cursor.clone();
+    let posts = author_feed.feed.iter().map(map_feed_view_post).collect::<anyhow::Result<Vec<AggregatedPost>>>()?;
+    Ok((posts, next_cursor))
+}
+
+/// A timeline pager for a single Bluesky actor.
+///
+/// Bluesky paginates older via an opaque `cursor` returned by each page; there
+/// is no "since" query, so newer = re-fetch the top page and let the timeline's
+/// dedupe surface anything new. The pager remembers the cursor for the next
+/// older page so backward paging is preserved across the interleaved
+/// newer/older calls.
+pub struct BlueskyPager {
+    http_transport: DefaultHttpTransport,
+    actor: String,
+    /// Cursor for the next older page, advanced only by older fetches.
+    next_older_cursor: Option<String>,
+    /// Whether backward paging has been seeded yet.
+    older_started: bool,
+}
+
+impl BlueskyPager {
+    pub fn new(http_transport: DefaultHttpTransport, actor: impl Into<String>) -> Self {
+        Self {
+            http_transport,
+            actor: actor.into(),
+            next_older_cursor: None,
+            older_started: false,
+        }
+    }
+}
+
+impl SourcePager for BlueskyPager {
+    async fn fetch_newer(&mut self, _newest_known: Option<&AggregatedPost>, limit: usize) -> anyhow::Result<Vec<AggregatedPost>> {
+        let limit_u8 = limit.clamp(1, u8::MAX as usize) as u8;
+        let (posts, next_cursor) = fetch_feed_page(&self.http_transport, &self.actor, limit_u8, None).await?;
+        // Seed backward paging right after the top page on the first fetch only,
+        // so later older fetches continue beyond the top rather than restarting.
+        if !self.older_started {
+            self.next_older_cursor = next_cursor;
+            self.older_started = true;
+        }
+        Ok(posts)
+    }
+
+    async fn fetch_older(&mut self, _oldest_known: Option<&AggregatedPost>, limit: usize) -> anyhow::Result<Vec<AggregatedPost>> {
+        let limit_u8 = limit.clamp(1, u8::MAX as usize) as u8;
+        if !self.older_started {
+            let (posts, next_cursor) = fetch_feed_page(&self.http_transport, &self.actor, limit_u8, None).await?;
+            self.next_older_cursor = next_cursor;
+            self.older_started = true;
+            return Ok(posts);
+        }
+        match self.next_older_cursor.clone() {
+            Some(cursor) => {
+                let (posts, next_cursor) = fetch_feed_page(&self.http_transport, &self.actor, limit_u8, Some(cursor)).await?;
+                self.next_older_cursor = next_cursor;
+                Ok(posts)
+            }
+            // No further cursor — the feed is exhausted.
+            None => Ok(Vec::new()),
+        }
+    }
+
+    async fn reset(&mut self) -> anyhow::Result<()> {
+        self.next_older_cursor = None;
+        self.older_started = false;
+        Ok(())
+    }
 }
 
 fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedViewPost) -> anyhow::Result<AggregatedPost> {
