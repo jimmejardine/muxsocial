@@ -18,8 +18,10 @@ pub enum SourceNetwork {
 
 /// A single post normalized across all source networks.
 ///
-/// `content_text` may contain HTML (Mastodon and Hashiverse post bodies are
-/// HTML); sanitization/rendering is a later concern.
+/// `content_text` is HTML for every source: Mastodon and Hashiverse bodies are
+/// HTML natively; Bluesky is rendered from its text + richtext facets; nostr's
+/// plain text is escaped and wrapped (newlines → `<br>`). Sanitization/rendering
+/// is a later concern.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AggregatedPost {
     /// The network this post came from.

@@ -161,27 +161,17 @@ fn render_facets_to_html(text: &str, facets: &[Facet]) -> String {
         if byte_start < cursor {
             continue;
         }
-        html.push_str(&escape_html_text(&text[cursor..byte_start]));
-        let segment_html = escape_html_text(&text[byte_start..byte_end]);
+        html.push_str(&crate::html::escape_text(&text[cursor..byte_start]));
+        let segment_html = crate::html::escape_text(&text[byte_start..byte_end]);
         match feature {
-            MainFeaturesItem::Link(link) => html.push_str(&format!("<a href=\"{}\">{segment_html}</a>", escape_html_attribute(&link.uri))),
-            MainFeaturesItem::Mention(mention) => html.push_str(&format!("<a href=\"https://bsky.app/profile/{}\">{segment_html}</a>", escape_html_attribute(mention.did.as_str()))),
-            MainFeaturesItem::Tag(tag) => html.push_str(&format!("<a href=\"https://bsky.app/hashtag/{}\">{segment_html}</a>", escape_html_attribute(&tag.tag))),
+            MainFeaturesItem::Link(link) => html.push_str(&format!("<a href=\"{}\">{segment_html}</a>", crate::html::escape_attribute(&link.uri))),
+            MainFeaturesItem::Mention(mention) => html.push_str(&format!("<a href=\"https://bsky.app/profile/{}\">{segment_html}</a>", crate::html::escape_attribute(mention.did.as_str()))),
+            MainFeaturesItem::Tag(tag) => html.push_str(&format!("<a href=\"https://bsky.app/hashtag/{}\">{segment_html}</a>", crate::html::escape_attribute(&tag.tag))),
         }
         cursor = byte_end;
     }
-    html.push_str(&escape_html_text(&text[cursor..]));
+    html.push_str(&crate::html::escape_text(&text[cursor..]));
     html.replace('\n', "<br>")
-}
-
-/// HTML-escape text content (`&`, `<`, `>`).
-fn escape_html_text(text: &str) -> String {
-    text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
-}
-
-/// HTML-escape an attribute value (text escapes plus `"`).
-fn escape_html_attribute(text: &str) -> String {
-    escape_html_text(text).replace('"', "&quot;")
 }
 
 #[cfg(test)]

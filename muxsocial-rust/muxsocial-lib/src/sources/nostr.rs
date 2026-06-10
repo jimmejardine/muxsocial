@@ -3,7 +3,9 @@
 //! nostr uses its own WebSocket relay transport (native and wasm both handled
 //! by `nostr-sdk`), so it does not go through [`crate::http`]. We connect to a
 //! few public relays, request recent kind-1 (text note) events for an author,
-//! and map them into [`AggregatedPost`].
+//! and map them into [`AggregatedPost`]. Note content is plain text, so we wrap
+//! it into HTML (escape + newlines → `<br>`) to match the other sources; no URL
+//! linkification is done.
 
 use std::time::Duration;
 
@@ -64,6 +66,7 @@ fn map_event(event: Event) -> AggregatedPost {
         author_display_name: None,
         // nostr timestamps are whole seconds since the epoch.
         created_at_millis: event.created_at.as_secs() as i64 * 1000,
-        content_text: event.content.clone(),
+        // nostr note content is plain text; wrap it into HTML like the other sources.
+        content_text: crate::html::plain_text_to_html(&event.content),
     }
 }

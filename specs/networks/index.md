@@ -19,10 +19,15 @@ every network maps into:
 - `author_identifier: String` — pubkey hex, handle, acct, or DID
 - `author_display_name: Option<String>`
 - `created_at_millis: i64` — Unix epoch milliseconds (UTC); `parse_rfc3339_to_epoch_millis` normalizes ISO timestamps
-- `content_text: String` — plain text or HTML depending on source
+- `content_text: String` — HTML for every source (Mastodon/Hashiverse native HTML;
+  Bluesky rendered from text + facets; nostr plain text escaped + wrapped via
+  `crate::html::plain_text_to_html`)
 
 This is deliberately minimal — enough to prove the pull-and-display pipeline.
 Richer versioned wire/bundle types come later.
+
+`muxsocial-lib/src/html.rs` holds the shared HTML helpers (`escape_text`,
+`escape_attribute`, `plain_text_to_html`) used by the plain-text sources.
 
 ## Shared HTTP transport
 
