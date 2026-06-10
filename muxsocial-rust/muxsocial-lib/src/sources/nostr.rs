@@ -67,6 +67,6 @@ fn map_event(event: Event) -> AggregatedPost {
         // nostr timestamps are whole seconds since the epoch.
         created_at_millis: event.created_at.as_secs() as i64 * 1000,
         // nostr note content is plain text; wrap it into HTML like the other sources.
-        content_text: crate::html::plain_text_to_html(&event.content),
+        content_html: crate::html::plain_text_to_html(&event.content),
     }
 }

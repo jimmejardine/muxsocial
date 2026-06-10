@@ -18,7 +18,7 @@ pub enum SourceNetwork {
 
 /// A single post normalized across all source networks.
 ///
-/// `content_text` is HTML for every source: Mastodon and Hashiverse bodies are
+/// `content_html` is HTML for every source: Mastodon and Hashiverse bodies are
 /// HTML natively; Bluesky is rendered from its text + richtext facets; nostr's
 /// plain text is escaped and wrapped (newlines → `<br>`). Sanitization/rendering
 /// is a later concern.
@@ -34,8 +34,8 @@ pub struct AggregatedPost {
     pub author_display_name: Option<String>,
     /// Post creation time as Unix epoch milliseconds (UTC).
     pub created_at_millis: i64,
-    /// The post body. May be plain text or HTML depending on the source.
-    pub content_text: String,
+    /// The post body as HTML (see the type-level note).
+    pub content_html: String,
 }
 
 /// Parse an RFC3339 / ISO-8601 timestamp (as emitted by Mastodon and Bluesky)

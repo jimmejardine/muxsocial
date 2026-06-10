@@ -44,6 +44,6 @@ fn map_encoded_post(encoded_post: EncodedPostV1) -> AggregatedPost {
         author_display_name: None,
         created_at_millis: encoded_post.header.time_millis.0,
         // Hashiverse post bodies are HTML.
-        content_text: encoded_post.post,
+        content_html: encoded_post.post,
     }
 }

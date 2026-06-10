@@ -107,7 +107,7 @@ fn render_posts(network_choice: NetworkChoice, posts: &[AggregatedPost]) -> Stri
     let mut rendered = format!("{network_choice:?}: {} post(s)\n", posts.len());
     for post in posts {
         let author = post.author_display_name.as_deref().unwrap_or(&post.author_identifier);
-        let preview: String = post.content_text.chars().take(160).collect();
+        let preview: String = post.content_html.chars().take(160).collect();
         rendered.push_str(&format!("  [{}] {author}: {preview}\n", post.created_at_millis));
     }
     rendered

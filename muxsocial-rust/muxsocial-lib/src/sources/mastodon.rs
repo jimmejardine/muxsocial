@@ -80,7 +80,7 @@ fn map_status(status: MastodonStatus) -> anyhow::Result<AggregatedPost> {
         author_display_name,
         created_at_millis,
         // Mastodon status content is sanitized HTML.
-        content_text: status.content,
+        content_html: status.content,
     })
 }
 

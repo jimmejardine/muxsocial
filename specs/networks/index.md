@@ -19,7 +19,7 @@ every network maps into:
 - `author_identifier: String` — pubkey hex, handle, acct, or DID
 - `author_display_name: Option<String>`
 - `created_at_millis: i64` — Unix epoch milliseconds (UTC); `parse_rfc3339_to_epoch_millis` normalizes ISO timestamps
-- `content_text: String` — HTML for every source (Mastodon/Hashiverse native HTML;
+- `content_html: String` — HTML for every source (Mastodon/Hashiverse native HTML;
   Bluesky rendered from text + facets; nostr plain text escaped + wrapped via
   `crate::html::plain_text_to_html`)
 

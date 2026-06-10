@@ -19,7 +19,7 @@ support — pass a hex pubkey to avoid depending on it.)
 3. `fetch_events(Filter::new().author(pk).kind(Kind::TextNote).limit(n), timeout)`.
 4. Map each `Event` → `AggregatedPost` (id hex, pubkey hex, `created_at` seconds → millis, content).
 
-Note content is plain text, so `content_text` is produced by
+Note content is plain text, so `content_html` is produced by
 `crate::html::plain_text_to_html` (HTML-escape + newlines → `<br>`) to match the
 HTML the other sources emit. No URL/`nostr:` linkification is done.
 

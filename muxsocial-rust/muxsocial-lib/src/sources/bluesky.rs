@@ -110,10 +110,10 @@ fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedVi
     // turn its text + richtext facets into inline HTML. If it isn't a post
     // record we can decode, fall back to empty content rather than failing.
     let post_record = post::RecordData::try_from_unknown(post_view.record.clone());
-    let (content_text, record_created_at_millis) = match &post_record {
+    let (content_html, record_created_at_millis) = match &post_record {
         Ok(record) => {
-            let content_html = render_facets_to_html(&record.text, record.facets.as_deref().unwrap_or(&[]));
-            (content_html, parse_rfc3339_to_epoch_millis(record.created_at.as_str()).ok())
+            let rendered_html = render_facets_to_html(&record.text, record.facets.as_deref().unwrap_or(&[]));
+            (rendered_html, parse_rfc3339_to_epoch_millis(record.created_at.as_str()).ok())
         }
         Err(_) => (String::new(), None),
     };
@@ -126,7 +126,7 @@ fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedVi
         author_identifier: post_view.author.handle.as_str().to_string(),
         author_display_name: post_view.author.display_name.clone(),
         created_at_millis,
-        content_text,
+        content_html,
     })
 }
 
