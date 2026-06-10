@@ -88,10 +88,10 @@ impl TimelineRegistry {
 /// Parse a pasted address into a [`Source`], detecting the network.
 ///
 /// An explicit `network:identifier` prefix (`nostr:`, `bluesky:`/`bsky:`,
-/// `mastodon:`/`masto:`, `hashiverse:`/`hash:`) always wins — needed to
-/// disambiguate a bare 64-char hex id (nostr vs Hashiverse). Otherwise:
+/// `mastodon:`/`masto:`, `hashiverse:`/`hash:`) always wins. Otherwise:
 /// `@user@host` → Mastodon, `npub1…` → nostr, `did:plc:…` or a bare dotted handle
-/// → Bluesky. Anything else is an error asking for an explicit prefix.
+/// → Bluesky, and a bare 64-char hex id → Hashiverse (a hex *nostr* key must use
+/// the `nostr:` prefix). Anything else is an error.
 pub fn parse_source_address(address: &str) -> anyhow::Result<Source> {
     let trimmed = address.trim();
     anyhow::ensure!(!trimmed.is_empty(), "empty address");
@@ -119,6 +119,11 @@ pub fn parse_source_address(address: &str) -> anyhow::Result<Source> {
     // Bluesky: a DID, or a bare dotted handle (no '@').
     if trimmed.starts_with("did:plc:") || (trimmed.contains('.') && !trimmed.contains('@')) {
         return Ok(Source::new(SourceNetwork::Bluesky, trimmed));
+    }
+
+    // A bare 64-char hex id is a Hashiverse user id.
+    if trimmed.len() == 64 && trimmed.chars().all(|character| character.is_ascii_hexdigit()) {
+        return Ok(Source::new(SourceNetwork::Hashiverse, trimmed));
     }
 
     anyhow::bail!("could not determine the network for {address:?}; prefix it like \"nostr:<id>\", \"bluesky:<handle>\", \"mastodon:@user@host\", or \"hashiverse:<hex>\"")
@@ -192,6 +197,12 @@ mod tests {
             ("nostr:ddd86177", SourceNetwork::Nostr, "ddd86177"),
             ("hashiverse:ddd86177", SourceNetwork::Hashiverse, "ddd86177"),
             ("bsky:jay.bsky.team", SourceNetwork::Bluesky, "jay.bsky.team"),
+            // A bare 64-char hex id defaults to Hashiverse.
+            (
+                "ddd86177f252f0d33f32aa3e59fb6b554969faad48af443347c5b72ac2e186f0",
+                SourceNetwork::Hashiverse,
+                "ddd86177f252f0d33f32aa3e59fb6b554969faad48af443347c5b72ac2e186f0",
+            ),
         ];
         for (address, network, id) in cases {
             assert_eq!(parse_source_address(address).expect(address), Source::new(network, id), "address {address:?}");
@@ -199,9 +210,11 @@ mod tests {
     }
 
     #[test]
-    fn rejects_ambiguous_or_empty_addresses() {
-        // Bare 64-hex is ambiguous (nostr vs hashiverse) -> needs a prefix.
-        assert!(parse_source_address("ddd86177f252f0d33f32aa3e59fb6b554969faad48af443347c5b72ac2e186f0").is_err());
+    fn rejects_empty_or_unrecognised_addresses() {
         assert!(parse_source_address("   ").is_err());
+        // Not hex, not a handle/npub/did -> unrecognised.
+        assert!(parse_source_address("just some text").is_err());
+        // 63 hex chars (wrong length) is not a Hashiverse id.
+        assert!(parse_source_address("ddd86177f252f0d33f32aa3e59fb6b554969faad48af443347c5b72ac2e186").is_err());
     }
 }
