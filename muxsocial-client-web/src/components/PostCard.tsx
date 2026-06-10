@@ -17,9 +17,10 @@ export function PostCard({ post }: PostCardProps) {
 	const author = post.author_display_name ?? post.author_identifier;
 	const timestamp = new Date(post.created_at_millis).toLocaleString();
 
+	const color = networkColor(post.source);
 	return (
 		<div className={classes.card}>
-			<div className={classes.sourceBar} style={{ backgroundColor: networkColor(post.source) }} title={post.source}>
+			<div className={classes.sourceBar} style={{ backgroundColor: `var(--mantine-color-${color}-light)`, color: `var(--mantine-color-${color}-light-color)` }} title={post.source}>
 				<span className={classes.sourceLabel}>{post.source}</span>
 			</div>
 			<Stack gap={4} className={classes.content}>

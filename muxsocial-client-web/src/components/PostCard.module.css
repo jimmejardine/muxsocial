@@ -4,8 +4,9 @@
 	border-bottom: 1px solid var(--mantine-color-default-border);
 }
 
-/* Thin colored strip on the left; the network color is set inline per post as the
-   background, with the vertical label in black on top. */
+/* Colored strip on the left; the network's Mantine `light` variant background and
+   text color are set inline per post, matching the source chips at the top of the
+   timeline. */
 .sourceBar {
 	flex: 0 0 auto;
 	display: flex;
@@ -22,7 +23,7 @@
 	font-size: var(--mantine-font-size-xs);
 	font-weight: 600;
 	letter-spacing: 0.02em;
-	color: black;
+	color: inherit;
 }
 
 .content {

@@ -1,23 +1,28 @@
 /**
- * Fixed per-network colors, used for the post source bar and the timeline source
- * chips. These are intentionally theme-independent (raw hex, not Mantine theme
- * colors) so a network reads as the same color across the light/dark/electric
- * themes. The values are pastel versions of each network's brand hue.
+ * Per-network colors for the post source bar and the timeline source chips.
+ *
+ * Each network maps to a built-in Mantine color name (not a raw hex) so both the
+ * source bar and the chips can use Mantine's `light` variant — a tinted background
+ * with a darker same-hue text — which Mantine derives per color scheme. This keeps
+ * the bar and the chips visually identical across the light/dark/electric themes.
+ *
+ * The chosen Mantine ramps are the pastel-brand hues confirmed with the user:
+ * Hashiverse → teal, Nostr → violet, Mastodon → indigo, Bluesky → blue.
  *
  * @module
  */
 
 import type { SourceNetwork } from "../tools/TimelineConfig.ts";
 
-/** Pastel per-network brand colors. */
+/** Per-network Mantine color names. */
 export const NETWORK_COLORS: Record<SourceNetwork, string> = {
-	Hashiverse: "#63E6BE",
-	Nostr: "#B197FC",
-	Mastodon: "#91A7FF",
-	Bluesky: "#74C0FC",
+	Hashiverse: "teal",
+	Nostr: "violet",
+	Mastodon: "indigo",
+	Bluesky: "blue",
 };
 
-/** The color for a given network. */
+/** The Mantine color name for a given network. */
 export function networkColor(network: SourceNetwork): string {
 	return NETWORK_COLORS[network];
 }

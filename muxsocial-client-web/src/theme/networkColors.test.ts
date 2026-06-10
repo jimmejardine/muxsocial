@@ -5,18 +5,18 @@ import { NETWORK_COLORS, networkColor } from "./networkColors.ts";
 const ALL_NETWORKS: SourceNetwork[] = ["Hashiverse", "Nostr", "Mastodon", "Bluesky"];
 
 describe("networkColor", () => {
-	it("returns the expected hex for each network", () => {
-		expect(networkColor("Hashiverse")).toBe("#63E6BE");
-		expect(networkColor("Nostr")).toBe("#B197FC");
-		expect(networkColor("Mastodon")).toBe("#91A7FF");
-		expect(networkColor("Bluesky")).toBe("#74C0FC");
+	it("returns the expected Mantine color name for each network", () => {
+		expect(networkColor("Hashiverse")).toBe("teal");
+		expect(networkColor("Nostr")).toBe("violet");
+		expect(networkColor("Mastodon")).toBe("indigo");
+		expect(networkColor("Bluesky")).toBe("blue");
 	});
 });
 
 describe("NETWORK_COLORS", () => {
-	it("maps every network to a hex color", () => {
+	it("maps every network to a non-empty color name", () => {
 		for (const network of ALL_NETWORKS) {
-			expect(NETWORK_COLORS[network]).toMatch(/^#[0-9A-Fa-f]{6}$/);
+			expect(NETWORK_COLORS[network].length).toBeGreaterThan(0);
 		}
 	});
 
