@@ -44,9 +44,11 @@ impl HttpTransport for DefaultHttpTransport {
 
         // gloo-net's error type is not Send/Sync, so flatten it to a string
         // before it touches anyhow.
+        log::debug!("http: {} {}", request.method, request.url);
         let response = request_builder.send().await.map_err(|send_error| anyhow!("HTTP request to {} failed: {send_error}", request.url))?;
 
         let status = response.status();
+        log::debug!("http: {status} <- {} {}", request.method, request.url);
         let headers = response.headers().entries().collect();
         let body = response.binary().await.map_err(|body_error| anyhow!("reading HTTP response body failed: {body_error}"))?;
 

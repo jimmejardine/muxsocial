@@ -69,6 +69,8 @@ pub async fn fetch_recent_posts(http_transport: &(impl HttpTransport + Sync), ac
         http_transport,
     };
 
+    log::info!("bluesky: fetching up to {limit} posts for actor {actor:?}");
+
     let actor_identifier: AtIdentifier = actor.parse().map_err(|parse_error| anyhow!("invalid Bluesky actor {actor:?}: {parse_error}"))?;
     let parameters = get_author_feed::ParametersData {
         actor: actor_identifier,
@@ -95,6 +97,8 @@ pub async fn fetch_recent_posts(http_transport: &(impl HttpTransport + Sync), ac
         OutputDataOrBytes::Data(output) => output,
         OutputDataOrBytes::Bytes(_) => return Err(anyhow!("Bluesky getAuthorFeed returned an unexpected non-JSON response")),
     };
+
+    log::debug!("bluesky: received {} feed item(s) for actor {actor:?}", author_feed.feed.len());
 
     author_feed.feed.iter().map(map_feed_view_post).collect()
 }

@@ -28,8 +28,10 @@ use crate::post::{AggregatedPost, SourceNetwork};
 /// [`HashiverseClient`].
 pub async fn fetch_recent_posts(hashiverse_client: &HashiverseClient, user_id_hex: &str) -> anyhow::Result<Vec<AggregatedPost>> {
     let user_id = Id::from_hex_str(user_id_hex).with_context(|| format!("parsing hashiverse user id {user_id_hex:?}"))?;
+    log::info!("hashiverse: reading user timeline for {user_id_hex}");
 
     let (timeline_posts, _oldest_processed_time_millis) = hashiverse_client.single_timeline_get_more(BucketType::User, &user_id).await.context("reading hashiverse user timeline")?;
+    log::debug!("hashiverse: read {} timeline post(s) for {user_id_hex}", timeline_posts.len());
 
     Ok(timeline_posts.into_iter().map(|(_bucket_location, encoded_post, _body_bytes, _was_healed)| map_encoded_post(encoded_post)).collect())
 }

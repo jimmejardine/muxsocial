@@ -6,6 +6,7 @@ use muxsocial_lib::post::AggregatedPost;
 use muxsocial_lib::sources::{bluesky, hashiverse, mastodon, nostr};
 use std::io::{self, BufRead, Write};
 use std::time::Duration;
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 #[derive(Parser, Debug, Clone)]
 #[command(name = "test-harness", about = "mux.social long-running integration test harness")]
@@ -13,6 +14,23 @@ struct TestHarnessArguments {
     /// Recipient name used by the `t` greeting command
     #[arg(long, default_value = "integration-harness")]
     recipient_name: String,
+    /// Base log level for the native logging listener (overridable per-module via RUST_LOG)
+    #[arg(long, default_value = "trace")]
+    log_level: String,
+}
+
+/// Initialise the native logging listener so `log::` records from muxsocial-lib
+/// and the source SDKs surface (tracing-subscriber's default `tracing-log`
+/// bridge captures the `log` facade). `RUST_LOG` overrides the default filter;
+/// otherwise noisy infra crates are silenced so muxsocial and the network SDKs
+/// stay readable. The GUI logs the same `log` events via `wasm_init` instead.
+fn configure_logging_listener(level: &str) {
+    let default_filter: String = format!("{level},hyper=off,reqwest=off,rustls=off,h2=off,hickory_resolver=off,hickory_proto=off,tokio_tungstenite=off,tungstenite=off,mio=off,want=off");
+    let env_filter: EnvFilter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(default_filter));
+
+    tracing_subscriber::registry().with(fmt::layer()).with(env_filter).init();
+
+    log::info!("Logging initialized");
 }
 
 /// A source network the harness can pull a sample feed from.
@@ -98,6 +116,7 @@ fn render_posts(network_choice: NetworkChoice, posts: &[AggregatedPost]) -> Stri
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> anyhow::Result<()> {
     let test_harness_arguments: TestHarnessArguments = TestHarnessArguments::parse();
+    configure_logging_listener(&test_harness_arguments.log_level);
 
     let standard_input = io::stdin();
     let mut standard_output = io::stdout();

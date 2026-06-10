@@ -23,6 +23,7 @@ pub async fn fetch_recent_posts(http_transport: &impl HttpTransport, account: &s
     // The user-facing identifier is a single `@user@instance` handle; the split
     // into an instance base URL and a local username is purely internal.
     let (instance_base_url, username) = split_fediverse_handle(account)?;
+    log::info!("mastodon: fetching up to {limit} statuses for {username}@{instance_base_url}");
 
     // 1. Resolve the account id from its local username.
     let lookup_url = format!("{instance_base_url}/api/v1/accounts/lookup?acct={username}");
@@ -35,6 +36,7 @@ pub async fn fetch_recent_posts(http_transport: &impl HttpTransport, account: &s
     let statuses_response = http_transport.execute(HttpRequest::get(statuses_url).header("Accept", "application/json")).await?;
     anyhow::ensure!(statuses_response.is_success(), "Mastodon statuses fetch failed: HTTP {}", statuses_response.status);
     let statuses: Vec<MastodonStatus> = serde_json::from_slice(&statuses_response.body).context("parsing Mastodon statuses response")?;
+    log::debug!("mastodon: received {} status(es) for {username}@{instance_base_url}", statuses.len());
 
     statuses.into_iter().map(map_status).collect()
 }

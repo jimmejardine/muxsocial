@@ -33,8 +33,10 @@ impl HttpTransport for DefaultHttpTransport {
             request_builder = request_builder.body(request.body);
         }
 
+        log::debug!("http: {} {}", request.method, request.url);
         let response = request_builder.send().await.with_context(|| format!("HTTP request to {} failed", request.url))?;
         let status = response.status().as_u16();
+        log::debug!("http: {status} <- {} {}", request.method, request.url);
         let headers = response.headers().iter().map(|(name, value)| (name.as_str().to_string(), value.to_str().unwrap_or_default().to_string())).collect();
         let body = response.bytes().await.context("reading HTTP response body failed")?.to_vec();
 

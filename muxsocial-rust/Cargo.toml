@@ -27,6 +27,9 @@ collapsible_else_if = "allow"
 [workspace.dependencies]
 anyhow = "1.0.102"
 log = "0.4.29"
+# Native logging backend for the test-harness (the GUI uses fern->console_log
+# in muxsocial-client-wasm instead). `env-filter` is not a default feature.
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 muxsocial-lib = { path = "muxsocial-lib", version = "0.0.0" }
 
 # Serialization / encoding shared across source clients.

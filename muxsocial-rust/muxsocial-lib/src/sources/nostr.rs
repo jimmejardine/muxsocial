@@ -31,8 +31,11 @@ pub async fn fetch_recent_posts(public_key_hex_or_bech32: &str, relays: &[&str],
     }
     client.connect().await;
 
+    log::info!("nostr: fetching up to {limit} text notes for {public_key_hex_or_bech32} from {} relay(s)", relays.len());
+
     let filter = Filter::new().author(author_public_key).kind(Kind::TextNote).limit(limit);
     let events = client.fetch_events(filter, timeout).await.context("fetching nostr events")?;
+    log::debug!("nostr: fetched {} event(s)", events.len());
 
     let mut posts: Vec<AggregatedPost> = events.into_iter().map(map_event).collect();
     // Newest first.

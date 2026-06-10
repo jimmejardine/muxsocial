@@ -23,3 +23,5 @@ muxsocial-lib = { workspace = true }
 hashiverse-client-rust = { workspace = true }
 clap = { version = "4.5.38", features = ["derive"] }
 tokio = { version = "1.45", features = ["macros", "time", "rt", "rt-multi-thread"] }
+# Native logging listener for the harness (tracing-subscriber + log->tracing bridge).
+tracing-subscriber = { workspace = true }
