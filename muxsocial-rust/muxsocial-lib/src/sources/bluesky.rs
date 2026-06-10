@@ -9,10 +9,11 @@
 //! (`public.api.bsky.app`), which also sends permissive CORS headers, so this
 //! works from a browser too.
 
-use anyhow::{Context, anyhow};
-use atrium_api::app::bsky::feed::get_author_feed;
-use atrium_api::types::LimitedNonZeroU8;
+use anyhow::anyhow;
+use atrium_api::app::bsky::feed::{get_author_feed, post};
+use atrium_api::app::bsky::richtext::facet::{Main as Facet, MainFeaturesItem};
 use atrium_api::types::string::AtIdentifier;
+use atrium_api::types::{LimitedNonZeroU8, TryFromUnknown, Union};
 use atrium_xrpc::{HttpClient, OutputDataOrBytes, XrpcClient, XrpcRequest};
 use http::{Method, Request, Response};
 
@@ -101,17 +102,19 @@ pub async fn fetch_recent_posts(http_transport: &(impl HttpTransport + Sync), ac
 fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedViewPost) -> anyhow::Result<AggregatedPost> {
     let post_view = &feed_view_post.post;
 
-    // The post record is loosely typed (`Unknown`); serialize it to JSON and
-    // pull out the bits we need.
-    let record_value = serde_json::to_value(&post_view.record).context("serializing Bluesky post record")?;
-    let content_text = record_value.get("text").and_then(|value| value.as_str()).unwrap_or_default().to_string();
+    // The post record is loosely typed; recover the typed post Record so we can
+    // turn its text + richtext facets into inline HTML. If it isn't a post
+    // record we can decode, fall back to empty content rather than failing.
+    let post_record = post::RecordData::try_from_unknown(post_view.record.clone());
+    let (content_text, record_created_at_millis) = match &post_record {
+        Ok(record) => {
+            let content_html = render_facets_to_html(&record.text, record.facets.as_deref().unwrap_or(&[]));
+            (content_html, parse_rfc3339_to_epoch_millis(record.created_at.as_str()).ok())
+        }
+        Err(_) => (String::new(), None),
+    };
 
-    let created_at_millis = record_value
-        .get("createdAt")
-        .and_then(|value| value.as_str())
-        .and_then(|timestamp_text| parse_rfc3339_to_epoch_millis(timestamp_text).ok())
-        .or_else(|| parse_rfc3339_to_epoch_millis(post_view.indexed_at.as_str()).ok())
-        .unwrap_or_default();
+    let created_at_millis = record_created_at_millis.or_else(|| parse_rfc3339_to_epoch_millis(post_view.indexed_at.as_str()).ok()).unwrap_or_default();
 
     Ok(AggregatedPost {
         source: SourceNetwork::Bluesky,
@@ -121,4 +124,121 @@ fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedVi
         created_at_millis,
         content_text,
     })
+}
+
+/// Render Bluesky post `text` plus its richtext `facets` into inline HTML.
+///
+/// Facets are byte-range annotations over the UTF-8 `text`; each is wrapped in an
+/// `<a>` (link / mention / hashtag) and the surrounding plain text is
+/// HTML-escaped. Newlines become `<br>`. Invalid or overlapping facets (bad
+/// range, off a char boundary) are skipped so the output stays well-formed.
+fn render_facets_to_html(text: &str, facets: &[Facet]) -> String {
+    // Collect each facet's byte range and first resolvable feature, dropping any
+    // facet whose range is out of bounds or not on a UTF-8 char boundary.
+    let mut facet_spans: Vec<(usize, usize, &MainFeaturesItem)> = facets
+        .iter()
+        .filter_map(|facet| {
+            let byte_start = facet.index.byte_start;
+            let byte_end = facet.index.byte_end;
+            let feature = facet.features.iter().find_map(|feature_union| match feature_union {
+                Union::Refs(feature) => Some(feature),
+                Union::Unknown(_) => None,
+            })?;
+            let in_bounds = byte_start < byte_end && byte_end <= text.len() && text.is_char_boundary(byte_start) && text.is_char_boundary(byte_end);
+            in_bounds.then_some((byte_start, byte_end, feature))
+        })
+        .collect();
+    facet_spans.sort_by_key(|(byte_start, _, _)| *byte_start);
+
+    let mut html = String::new();
+    let mut cursor = 0usize;
+    for (byte_start, byte_end, feature) in facet_spans {
+        // Skip a facet that overlaps the previous one.
+        if byte_start < cursor {
+            continue;
+        }
+        html.push_str(&escape_html_text(&text[cursor..byte_start]));
+        let segment_html = escape_html_text(&text[byte_start..byte_end]);
+        match feature {
+            MainFeaturesItem::Link(link) => html.push_str(&format!("<a href=\"{}\">{segment_html}</a>", escape_html_attribute(&link.uri))),
+            MainFeaturesItem::Mention(mention) => html.push_str(&format!("<a href=\"https://bsky.app/profile/{}\">{segment_html}</a>", escape_html_attribute(mention.did.as_str()))),
+            MainFeaturesItem::Tag(tag) => html.push_str(&format!("<a href=\"https://bsky.app/hashtag/{}\">{segment_html}</a>", escape_html_attribute(&tag.tag))),
+        }
+        cursor = byte_end;
+    }
+    html.push_str(&escape_html_text(&text[cursor..]));
+    html.replace('\n', "<br>")
+}
+
+/// HTML-escape text content (`&`, `<`, `>`).
+fn escape_html_text(text: &str) -> String {
+    text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+}
+
+/// HTML-escape an attribute value (text escapes plus `"`).
+fn escape_html_attribute(text: &str) -> String {
+    escape_html_text(text).replace('"', "&quot;")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn facets_from_json(json: &str) -> Vec<Facet> {
+        serde_json::from_str(json).expect("valid facets json")
+    }
+
+    #[test]
+    fn renders_link_facet_as_anchor() {
+        let text = "see example here";
+        let facets = facets_from_json(r#"[{"index":{"byteStart":4,"byteEnd":11},"features":[{"$type":"app.bsky.richtext.facet#link","uri":"https://example.com"}]}]"#);
+        assert_eq!(render_facets_to_html(text, &facets), "see <a href=\"https://example.com\">example</a> here");
+    }
+
+    #[test]
+    fn renders_mention_facet_as_profile_link() {
+        let text = "@jay says hi";
+        let facets = facets_from_json(r#"[{"index":{"byteStart":0,"byteEnd":4},"features":[{"$type":"app.bsky.richtext.facet#mention","did":"did:plc:z72i7hdynmk6r22z27h6tvur"}]}]"#);
+        assert_eq!(render_facets_to_html(text, &facets), "<a href=\"https://bsky.app/profile/did:plc:z72i7hdynmk6r22z27h6tvur\">@jay</a> says hi");
+    }
+
+    #[test]
+    fn renders_tag_facet_as_hashtag_link() {
+        let text = "#rust rocks";
+        let facets = facets_from_json(r#"[{"index":{"byteStart":0,"byteEnd":5},"features":[{"$type":"app.bsky.richtext.facet#tag","tag":"rust"}]}]"#);
+        assert_eq!(render_facets_to_html(text, &facets), "<a href=\"https://bsky.app/hashtag/rust\">#rust</a> rocks");
+    }
+
+    #[test]
+    fn escapes_html_special_chars_in_plain_text() {
+        assert_eq!(render_facets_to_html("a < b & c > d", &[]), "a &lt; b &amp; c &gt; d");
+    }
+
+    #[test]
+    fn converts_newlines_to_break_tags() {
+        assert_eq!(render_facets_to_html("line1\nline2", &[]), "line1<br>line2");
+    }
+
+    #[test]
+    fn skips_out_of_bounds_facet_without_panicking() {
+        let text = "short";
+        let facets = facets_from_json(r#"[{"index":{"byteStart":0,"byteEnd":99},"features":[{"$type":"app.bsky.richtext.facet#link","uri":"https://example.com"}]}]"#);
+        assert_eq!(render_facets_to_html(text, &facets), "short");
+    }
+
+    #[test]
+    fn handles_multibyte_text_offsets() {
+        // "🎉" is 4 bytes, then a space, so "example" starts at byte 5.
+        let text = "🎉 example";
+        let facets = facets_from_json(r#"[{"index":{"byteStart":5,"byteEnd":12},"features":[{"$type":"app.bsky.richtext.facet#link","uri":"https://example.com"}]}]"#);
+        assert_eq!(render_facets_to_html(text, &facets), "🎉 <a href=\"https://example.com\">example</a>");
+    }
+
+    #[test]
+    fn skips_facet_starting_off_a_char_boundary() {
+        // Byte 1 is inside the 4-byte "🎉", so the facet is dropped.
+        let text = "🎉ab";
+        let facets = facets_from_json(r#"[{"index":{"byteStart":1,"byteEnd":3},"features":[{"$type":"app.bsky.richtext.facet#link","uri":"https://example.com"}]}]"#);
+        assert_eq!(render_facets_to_html(text, &facets), "🎉ab");
+    }
 }
