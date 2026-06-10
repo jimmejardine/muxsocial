@@ -10,3 +10,4 @@ This folder is a hierarchy of folders containing markdown files. Each subfolder 
 
 - [architecture/](architecture/index.md) — system architecture, toolchain, and repository structure
 - [networks/](networks/index.md) — source-network integration (Hashiverse, nostr, Mastodon, Bluesky), the shared HTTP transport, and the normalized post model
+- [ui/](ui/index.md) — cross-cutting GUI concerns, including the pluggable theme system and Google Fonts loading

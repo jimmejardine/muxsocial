@@ -8,3 +8,8 @@ body {
 #root {
 	height: 100%;
 }
+
+/* The active mux theme sets --mux-app-bg; fall back to Mantine's body color. */
+body {
+	background: var(--mux-app-bg, var(--mantine-color-body));
+}

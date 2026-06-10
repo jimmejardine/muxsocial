@@ -8,6 +8,7 @@
 		"dev": "rsbuild dev --open",
 		"build": "tsc --noEmit && rsbuild build",
 		"preview": "rsbuild preview",
+		"test": "vitest run",
 		"check": "biome check --write",
 		"check:ci": "biome ci .",
 		"format": "biome format --write",
@@ -28,7 +29,9 @@
 		"@rsbuild/plugin-react": "^1.4.5",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
+		"jsdom": "^25.0.1",
 		"typedoc": "^0.28.17",
-		"typescript": "^5.9.3"
+		"typescript": "^5.9.3",
+		"vitest": "^3.0.5"
 	}
 }

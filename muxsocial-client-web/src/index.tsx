@@ -1,12 +1,12 @@
 import "./index.css";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter, Route, Routes } from "react-router";
 import { App } from "./App.tsx";
+import { MuxThemeProvider } from "./theme/MuxThemeProvider.tsx";
 
 const root_element = document.getElementById("root");
 if (!root_element) {
@@ -15,13 +15,13 @@ if (!root_element) {
 
 createRoot(root_element).render(
 	<React.StrictMode>
-		<MantineProvider defaultColorScheme="auto">
+		<MuxThemeProvider>
 			<Notifications />
 			<HashRouter>
 				<Routes>
 					<Route path="/" element={<App />} />
 				</Routes>
 			</HashRouter>
-		</MantineProvider>
+		</MuxThemeProvider>
 	</React.StrictMode>,
 );
