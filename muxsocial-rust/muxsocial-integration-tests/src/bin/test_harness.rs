@@ -1,14 +1,15 @@
 use clap::Parser;
 use hashiverse_client_rust::HashiverseBuilder;
 use muxsocial_lib::greeting::compose_greeting_message;
-use muxsocial_lib::http::default_http_transport;
+use muxsocial_lib::http::{DefaultHttpTransport, default_http_transport};
 use muxsocial_lib::post::{AggregatedPost, SourceNetwork};
 use muxsocial_lib::sources::bluesky::BlueskyPager;
-use muxsocial_lib::sources::hashiverse::HashiversePager;
+use muxsocial_lib::sources::hashiverse::{Client as HashiverseClient, HashiversePager};
 use muxsocial_lib::sources::mastodon::MastodonPager;
-use muxsocial_lib::sources::nostr::{self, NostrPager};
+use muxsocial_lib::sources::nostr::{self, Client as NostrClient, NostrPager};
 use muxsocial_lib::timeline::{MultiTimeline, NetworkPager, Source, SourceTimeline};
 use std::io::{self, BufRead, Write};
+use std::sync::Arc;
 use std::time::Duration;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
@@ -94,11 +95,25 @@ fn nostr_relay_timeout() -> Duration {
     Duration::from_secs(20)
 }
 
-/// Persistent, lazily-constructed timelines so repeated commands page further
-/// rather than re-fetching the top. The mixed timeline omits Hashiverse so it
-/// doesn't open a second sqlite-backed client alongside the standalone `th`.
-#[derive(Default)]
+fn hashiverse_user_id() -> String {
+    std::env::var("MUXSOCIAL_HASHIVERSE_TEST_USER_ID").unwrap_or_else(|_| HASHIVERSE_USER_ID.to_string())
+}
+
+/// Owns the shared, singleton source clients and the persistent timelines built
+/// from them. One HTTP transport (shared reqwest pool) serves Bluesky + Mastodon;
+/// one connected nostr client (shared relay pool) serves nostr; one guest-mode
+/// Hashiverse client serves Hashiverse. Repeated commands page their timeline
+/// further rather than re-fetching the top.
+///
+/// The slow clients (nostr connect, Hashiverse guest bootstrap) are built lazily
+/// on first use, so a plain `tm` doesn't pay for them. The standalone `th` and
+/// the Hashiverse child of `tx` share the one guest client — and therefore also
+/// share hashiverse's internal per-(bucket,user) `SingleTimeline` walk position;
+/// that's a harness-only artifact (the real GUI has one timeline per source).
 struct HarnessTimelines {
+    http_transport: DefaultHttpTransport,
+    nostr_client: Option<NostrClient>,
+    hashiverse_client: Option<Arc<HashiverseClient>>,
     nostr: Option<SourceTimeline<NetworkPager>>,
     bluesky: Option<SourceTimeline<NetworkPager>>,
     mastodon: Option<SourceTimeline<NetworkPager>>,
@@ -107,48 +122,101 @@ struct HarnessTimelines {
 }
 
 impl HarnessTimelines {
-    fn nostr_source_timeline() -> SourceTimeline<NetworkPager> {
-        SourceTimeline::new(
-            Source::new(SourceNetwork::Nostr, NOSTR_AUTHOR_NPUB),
-            NetworkPager::Nostr(NostrPager::new(NOSTR_AUTHOR_NPUB, nostr::DEFAULT_RELAYS, nostr_relay_timeout())),
-        )
+    fn new() -> Self {
+        Self {
+            http_transport: default_http_transport(),
+            nostr_client: None,
+            hashiverse_client: None,
+            nostr: None,
+            bluesky: None,
+            mastodon: None,
+            hashiverse: None,
+            mixed: None,
+        }
     }
 
-    fn bluesky_source_timeline() -> SourceTimeline<NetworkPager> {
-        SourceTimeline::new(Source::new(SourceNetwork::Bluesky, BLUESKY_ACTOR), NetworkPager::Bluesky(BlueskyPager::new(default_http_transport(), BLUESKY_ACTOR)))
+    /// Connect the shared nostr client once; hand out cheap clones (shared pool).
+    async fn shared_nostr_client(&mut self) -> anyhow::Result<NostrClient> {
+        if self.nostr_client.is_none() {
+            self.nostr_client = Some(nostr::connect_client(nostr::DEFAULT_RELAYS).await?);
+        }
+        Ok(self.nostr_client.as_ref().expect("nostr client just connected").clone())
     }
 
-    fn mastodon_source_timeline() -> SourceTimeline<NetworkPager> {
-        SourceTimeline::new(Source::new(SourceNetwork::Mastodon, MASTODON_ACCOUNT), NetworkPager::Mastodon(MastodonPager::new(default_http_transport(), MASTODON_ACCOUNT)))
+    /// Build the shared Hashiverse guest client once (empty keyphrase); hand out
+    /// cheap Arc clones (one sqlite-backed client serves every Hashiverse source).
+    async fn shared_hashiverse_client(&mut self) -> anyhow::Result<Arc<HashiverseClient>> {
+        if self.hashiverse_client.is_none() {
+            let hashiverse = HashiverseBuilder::new().data_dir(std::env::temp_dir().join("muxsocial-hashiverse-harness")).build_with_keyphrase("").await?;
+            self.hashiverse_client = Some(hashiverse.client().clone());
+        }
+        Ok(self.hashiverse_client.as_ref().expect("hashiverse client just built").clone())
     }
 
-    fn nostr_timeline(&mut self) -> &mut SourceTimeline<NetworkPager> {
-        self.nostr.get_or_insert_with(Self::nostr_source_timeline)
+    fn nostr_source_timeline(client: NostrClient) -> SourceTimeline<NetworkPager> {
+        SourceTimeline::new(Source::new(SourceNetwork::Nostr, NOSTR_AUTHOR_NPUB), NetworkPager::Nostr(NostrPager::new(client, NOSTR_AUTHOR_NPUB, nostr_relay_timeout())))
+    }
+
+    fn bluesky_source_timeline(http_transport: DefaultHttpTransport) -> SourceTimeline<NetworkPager> {
+        SourceTimeline::new(Source::new(SourceNetwork::Bluesky, BLUESKY_ACTOR), NetworkPager::Bluesky(BlueskyPager::new(http_transport, BLUESKY_ACTOR)))
+    }
+
+    fn mastodon_source_timeline(http_transport: DefaultHttpTransport) -> SourceTimeline<NetworkPager> {
+        SourceTimeline::new(Source::new(SourceNetwork::Mastodon, MASTODON_ACCOUNT), NetworkPager::Mastodon(MastodonPager::new(http_transport, MASTODON_ACCOUNT)))
+    }
+
+    fn hashiverse_source_timeline(client: Arc<HashiverseClient>) -> SourceTimeline<NetworkPager> {
+        let user_id_hex = hashiverse_user_id();
+        SourceTimeline::new(Source::new(SourceNetwork::Hashiverse, user_id_hex.clone()), NetworkPager::Hashiverse(HashiversePager::new(client, user_id_hex)))
+    }
+
+    async fn nostr_timeline(&mut self) -> anyhow::Result<&mut SourceTimeline<NetworkPager>> {
+        if self.nostr.is_none() {
+            let client = self.shared_nostr_client().await?;
+            self.nostr = Some(Self::nostr_source_timeline(client));
+        }
+        Ok(self.nostr.as_mut().expect("nostr timeline just built"))
     }
 
     fn bluesky_timeline(&mut self) -> &mut SourceTimeline<NetworkPager> {
-        self.bluesky.get_or_insert_with(Self::bluesky_source_timeline)
+        if self.bluesky.is_none() {
+            self.bluesky = Some(Self::bluesky_source_timeline(self.http_transport.clone()));
+        }
+        self.bluesky.as_mut().expect("bluesky timeline just built")
     }
 
     fn mastodon_timeline(&mut self) -> &mut SourceTimeline<NetworkPager> {
-        self.mastodon.get_or_insert_with(Self::mastodon_source_timeline)
+        if self.mastodon.is_none() {
+            self.mastodon = Some(Self::mastodon_source_timeline(self.http_transport.clone()));
+        }
+        self.mastodon.as_mut().expect("mastodon timeline just built")
     }
 
     /// Build (once) and return the Hashiverse timeline. Construction is async and
-    /// slow (it spins up a native DHT client), so it's deferred to first use.
+    /// slow (it spins up the guest DHT client), so it's deferred to first use.
     async fn hashiverse_timeline(&mut self) -> anyhow::Result<&mut SourceTimeline<NetworkPager>> {
         if self.hashiverse.is_none() {
-            let user_id_hex = std::env::var("MUXSOCIAL_HASHIVERSE_TEST_USER_ID").unwrap_or_else(|_| HASHIVERSE_USER_ID.to_string());
-            let hashiverse = HashiverseBuilder::new().data_dir(std::env::temp_dir().join("muxsocial-hashiverse-harness")).build_with_keyphrase("muxsocial-harness").await?;
-            let hashiverse_pager = HashiversePager::new(hashiverse.client().clone(), user_id_hex.clone());
-            self.hashiverse = Some(SourceTimeline::new(Source::new(SourceNetwork::Hashiverse, user_id_hex), NetworkPager::Hashiverse(hashiverse_pager)));
+            let client = self.shared_hashiverse_client().await?;
+            self.hashiverse = Some(Self::hashiverse_source_timeline(client));
         }
         Ok(self.hashiverse.as_mut().expect("hashiverse timeline just built"))
     }
 
-    fn mixed_timeline(&mut self) -> &mut MultiTimeline<NetworkPager> {
-        self.mixed
-            .get_or_insert_with(|| MultiTimeline::new(vec![Self::nostr_source_timeline(), Self::bluesky_source_timeline(), Self::mastodon_source_timeline()]))
+    /// Build (once) the mixed timeline over all four networks, sharing the same
+    /// singleton clients as the standalone timelines.
+    async fn mixed_timeline(&mut self) -> anyhow::Result<&mut MultiTimeline<NetworkPager>> {
+        if self.mixed.is_none() {
+            let nostr_client = self.shared_nostr_client().await?;
+            let hashiverse_client = self.shared_hashiverse_client().await?;
+            let children = vec![
+                Self::nostr_source_timeline(nostr_client),
+                Self::bluesky_source_timeline(self.http_transport.clone()),
+                Self::mastodon_source_timeline(self.http_transport.clone()),
+                Self::hashiverse_source_timeline(hashiverse_client),
+            ];
+            self.mixed = Some(MultiTimeline::new(children));
+        }
+        Ok(self.mixed.as_mut().expect("mixed timeline just built"))
     }
 }
 
@@ -181,7 +249,7 @@ async fn main() -> anyhow::Result<()> {
     let test_harness_arguments: TestHarnessArguments = TestHarnessArguments::parse();
     configure_logging_listener(&test_harness_arguments.log_level);
 
-    let mut harness_timelines = HarnessTimelines::default();
+    let mut harness_timelines = HarnessTimelines::new();
 
     let standard_input = io::stdin();
     let mut standard_output = io::stdout();
@@ -205,7 +273,10 @@ async fn main() -> anyhow::Result<()> {
             }
             SentenceDispatchOutcome::PageNetwork(network_choice) => {
                 let rendered = match network_choice {
-                    NetworkChoice::Nostr => page_and_render(harness_timelines.nostr_timeline()).await,
+                    NetworkChoice::Nostr => match harness_timelines.nostr_timeline().await {
+                        Ok(timeline) => page_and_render(timeline).await,
+                        Err(setup_error) => format!("nostr setup failed: {setup_error:#}"),
+                    },
                     NetworkChoice::Bluesky => page_and_render(harness_timelines.bluesky_timeline()).await,
                     NetworkChoice::Mastodon => page_and_render(harness_timelines.mastodon_timeline()).await,
                     NetworkChoice::Hashiverse => match harness_timelines.hashiverse_timeline().await {
@@ -216,16 +287,18 @@ async fn main() -> anyhow::Result<()> {
                 println!("{rendered}");
             }
             SentenceDispatchOutcome::PageMixed => {
-                let mixed_timeline = harness_timelines.mixed_timeline();
-                let rendered = match mixed_timeline.get_more(PAGE_LIMIT).await {
-                    Ok(new_posts) => {
-                        let mut out = format!("Mixed: +{} new, {} held\n", new_posts.len(), mixed_timeline.posts().len());
-                        for post in &new_posts {
-                            out.push_str(&render_post_line(post, true));
+                let rendered = match harness_timelines.mixed_timeline().await {
+                    Ok(mixed_timeline) => match mixed_timeline.get_more(PAGE_LIMIT).await {
+                        Ok(new_posts) => {
+                            let mut out = format!("Mixed: +{} new, {} held\n", new_posts.len(), mixed_timeline.posts().len());
+                            for post in &new_posts {
+                                out.push_str(&render_post_line(post, true));
+                            }
+                            out
                         }
-                        out
-                    }
-                    Err(fetch_error) => format!("mixed fetch failed: {fetch_error:#}"),
+                        Err(fetch_error) => format!("mixed fetch failed: {fetch_error:#}"),
+                    },
+                    Err(setup_error) => format!("mixed setup failed: {setup_error:#}"),
                 };
                 println!("{rendered}");
             }

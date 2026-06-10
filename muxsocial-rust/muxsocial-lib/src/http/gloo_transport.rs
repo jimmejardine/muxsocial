@@ -11,6 +11,7 @@ use gloo_net::http::{Request, RequestBuilder};
 use super::{HttpRequest, HttpResponse, HttpTransport};
 
 /// The wasm HTTP transport. Stateless — each call builds a fresh fetch.
+#[derive(Clone)]
 pub struct DefaultHttpTransport;
 
 impl DefaultHttpTransport {

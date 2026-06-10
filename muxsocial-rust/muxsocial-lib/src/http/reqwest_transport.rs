@@ -5,6 +5,10 @@ use anyhow::Context;
 use super::{HttpRequest, HttpResponse, HttpTransport};
 
 /// The native HTTP transport. Holds a shared `reqwest::Client` (connection pool).
+///
+/// `Clone` is cheap — `reqwest::Client` is `Arc`-backed — so cloning shares one
+/// connection pool. Hand clones to multiple pagers to share a single transport.
+#[derive(Clone)]
 pub struct DefaultHttpTransport {
     reqwest_client: reqwest::Client,
 }

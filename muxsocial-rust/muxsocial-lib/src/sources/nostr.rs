@@ -18,32 +18,45 @@ use nostr_sdk::prelude::*;
 use crate::post::{AggregatedPost, SourceNetwork};
 use crate::timeline::SourcePager;
 
+/// The nostr SDK client type, re-exported so an owner can hold a shared,
+/// pre-connected client and pass clones to multiple [`NostrPager`]s.
+pub use nostr_sdk::Client;
+
 /// Default public relays used when a caller does not supply their own.
 pub const DEFAULT_RELAYS: &[&str] = &["wss://relay.damus.io", "wss://nos.lol"];
 
-/// Fetch up to `limit` recent text notes (kind 1) authored by
-/// `public_key_hex_or_bech32` from `relays`, waiting at most `timeout`.
-///
-/// The key may be hex or `npub` bech32 (bech32 requires nostr's nip19 support).
-pub async fn fetch_recent_posts(public_key_hex_or_bech32: &str, relays: &[&str], limit: usize, timeout: Duration) -> anyhow::Result<Vec<AggregatedPost>> {
-    fetch_text_notes(public_key_hex_or_bech32, relays, limit, timeout, None, None).await
-}
-
-/// Fetch text notes for an author, optionally bounded by `since_secs` (only
-/// newer) and/or `until_secs` (only older), both in whole epoch seconds.
-async fn fetch_text_notes(public_key_hex_or_bech32: &str, relays: &[&str], limit: usize, timeout: Duration, since_secs: Option<u64>, until_secs: Option<u64>) -> anyhow::Result<Vec<AggregatedPost>> {
+/// Build and connect a nostr client to `relays`. The returned [`Client`] is
+/// `Arc`-backed (cheap to clone, shared relay pool) — build it once and hand
+/// clones to every nostr source rather than reconnecting per fetch.
+pub async fn connect_client(relays: &[&str]) -> anyhow::Result<Client> {
     #[cfg(not(target_arch = "wasm32"))]
     ensure_default_crypto_provider();
-
-    let author_public_key = PublicKey::parse(public_key_hex_or_bech32).with_context(|| format!("parsing nostr public key {public_key_hex_or_bech32:?}"))?;
 
     let client = Client::default();
     for relay_url in relays {
         client.add_relay(*relay_url).await.with_context(|| format!("adding nostr relay {relay_url}"))?;
     }
     client.connect().await;
+    Ok(client)
+}
 
-    log::info!("nostr: fetching up to {limit} text notes for {public_key_hex_or_bech32} (since={since_secs:?}, until={until_secs:?}) from {} relay(s)", relays.len());
+/// Fetch up to `limit` recent text notes (kind 1) authored by
+/// `public_key_hex_or_bech32` from `relays`, waiting at most `timeout`. Builds a
+/// transient client; for repeated paging use [`NostrPager`] with a shared client.
+///
+/// The key may be hex or `npub` bech32 (bech32 requires nostr's nip19 support).
+pub async fn fetch_recent_posts(public_key_hex_or_bech32: &str, relays: &[&str], limit: usize, timeout: Duration) -> anyhow::Result<Vec<AggregatedPost>> {
+    let client = connect_client(relays).await?;
+    fetch_with_client(&client, public_key_hex_or_bech32, limit, timeout, None, None).await
+}
+
+/// Fetch text notes for an author over an already-connected client, optionally
+/// bounded by `since_secs` (only newer) and/or `until_secs` (only older), both
+/// in whole epoch seconds.
+async fn fetch_with_client(client: &Client, public_key_hex_or_bech32: &str, limit: usize, timeout: Duration, since_secs: Option<u64>, until_secs: Option<u64>) -> anyhow::Result<Vec<AggregatedPost>> {
+    let author_public_key = PublicKey::parse(public_key_hex_or_bech32).with_context(|| format!("parsing nostr public key {public_key_hex_or_bech32:?}"))?;
+
+    log::info!("nostr: fetching up to {limit} text notes for {public_key_hex_or_bech32} (since={since_secs:?}, until={until_secs:?})");
 
     let mut filter = Filter::new().author(author_public_key).kind(Kind::TextNote).limit(limit);
     if let Some(since_secs) = since_secs {
@@ -62,25 +75,27 @@ async fn fetch_text_notes(public_key_hex_or_bech32: &str, relays: &[&str], limit
     Ok(posts)
 }
 
-/// A timeline pager for a single nostr author. Paginates by event timestamp.
+/// A timeline pager for a single nostr author over a shared, pre-connected
+/// [`Client`]. Paginates by event timestamp.
 pub struct NostrPager {
+    client: Client,
     public_key_hex_or_bech32: String,
-    relays: Vec<String>,
     timeout: Duration,
 }
 
 impl NostrPager {
-    pub fn new(public_key_hex_or_bech32: impl Into<String>, relays: &[&str], timeout: Duration) -> Self {
+    /// `client` should be a clone of the shared, already-connected client (see
+    /// [`connect_client`]).
+    pub fn new(client: Client, public_key_hex_or_bech32: impl Into<String>, timeout: Duration) -> Self {
         Self {
+            client,
             public_key_hex_or_bech32: public_key_hex_or_bech32.into(),
-            relays: relays.iter().map(|relay| relay.to_string()).collect(),
             timeout,
         }
     }
 
     async fn fetch_bounded(&self, limit: usize, since_secs: Option<u64>, until_secs: Option<u64>) -> anyhow::Result<Vec<AggregatedPost>> {
-        let relay_refs: Vec<&str> = self.relays.iter().map(|relay| relay.as_str()).collect();
-        fetch_text_notes(&self.public_key_hex_or_bech32, &relay_refs, limit, self.timeout, since_secs, until_secs).await
+        fetch_with_client(&self.client, &self.public_key_hex_or_bech32, limit, self.timeout, since_secs, until_secs).await
     }
 }
 

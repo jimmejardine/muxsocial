@@ -10,6 +10,9 @@ use crate::sources::nostr::NostrPager;
 use crate::timeline::SourcePager;
 
 /// Enum-dispatched pager over the four source networks.
+// One pager is constructed per source and lives inside a `SourceTimeline`; it's
+// never moved on a hot path, so the size spread between variants doesn't matter.
+#[allow(clippy::large_enum_variant)]
 pub enum NetworkPager {
     Nostr(NostrPager),
     Bluesky(BlueskyPager),
