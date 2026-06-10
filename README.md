@@ -19,6 +19,8 @@ mux.social is a serverless SPA (single page application). There is no server oth
 
 Prerequisites: rustup (the pinned nightly in `muxsocial-rust/rust-toolchain.toml` plus the `wasm32-unknown-unknown` target), [wasm-pack](https://rustwasm.github.io/wasm-pack/), and Node.js.
 
+The WASM build also needs **LLVM/clang on `PATH`**: it cross-compiles nostr's `secp256k1-sys` C code to wasm, and cc-rs uses clang for the `wasm32-unknown-unknown` target. Linux/macOS usually have clang already; on Windows install [LLVM](https://releases.llvm.org/) and ensure `C:\Program Files\LLVM\bin` is on `PATH`. (Native `cargo` builds use the platform's default C toolchain and don't need this. Unlike the hashiverse toolchain, which is C-free on wasm, muxsocial requires clang because nostr's secp256k1 has no pure-Rust substitute.)
+
 The web client imports the WASM package by relative path from `muxsocial-rust/muxsocial-client-wasm/pkg`, which is gitignored — so the WASM build must run before anything in the web client will type-check or build:
 
 ```
