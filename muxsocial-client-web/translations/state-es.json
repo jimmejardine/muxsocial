@@ -5,6 +5,9 @@
 	"timeline.name_label": "2f00",
 	"timeline.address_placeholder": "7995",
 	"timeline.no_sources": "2152",
+	"timeline.get_more": "c9f7",
+	"timeline.no_posts": "3fdb",
+	"timeline.reached_oldest": "2b46",
 	"timeline_area.empty": "26ee",
 	"status.timelines_one": "8a4c",
 	"status.timelines_other": "ceeb",
@@ -18,5 +21,6 @@
 	"toast.error_add_timeline": "af27",
 	"toast.error_remove_timeline": "df28",
 	"toast.error_add_source": "c272",
-	"toast.error_set_name": "45a8"
+	"toast.error_set_name": "45a8",
+	"toast.error_get_more": "5dc5"
 }

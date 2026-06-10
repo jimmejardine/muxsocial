@@ -5,6 +5,9 @@
 	"timeline.name_label": "Timeline-Name",
 	"timeline.address_placeholder": "Adresse einfügen und Enter drücken…",
 	"timeline.no_sources": "Noch keine Quellen. Füge oben eine Adresse ein, um eine hinzuzufügen.",
+	"timeline.get_more": "Mehr Beiträge laden",
+	"timeline.no_posts": "Noch keine Beiträge. Verwende \"Mehr Beiträge laden\", um welche abzurufen.",
+	"timeline.reached_oldest": "Älteste Beiträge erreicht.",
 	"timeline_area.empty": "Keine Timelines. Verwende \"Timeline hinzufügen\", um eine zu erstellen.",
 	"status.timelines_one": "{{count}} Timeline",
 	"status.timelines_other": "{{count}} Timelines",
@@ -18,5 +21,6 @@
 	"toast.error_add_timeline": "Timeline konnte nicht hinzugefügt werden: {{message}}",
 	"toast.error_remove_timeline": "Timeline konnte nicht entfernt werden: {{message}}",
 	"toast.error_add_source": "Quelle konnte nicht hinzugefügt werden: {{message}}",
-	"toast.error_set_name": "Timeline konnte nicht umbenannt werden: {{message}}"
+	"toast.error_set_name": "Timeline konnte nicht umbenannt werden: {{message}}",
+	"toast.error_get_more": "Beiträge konnten nicht geladen werden: {{message}}"
 }

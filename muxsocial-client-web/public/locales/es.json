@@ -5,6 +5,9 @@
 	"timeline.name_label": "Nombre de la cronología",
 	"timeline.address_placeholder": "Pega una dirección y pulsa Enter…",
 	"timeline.no_sources": "Aún no hay fuentes. Pega una dirección arriba para añadir una.",
+	"timeline.get_more": "Cargar más publicaciones",
+	"timeline.no_posts": "Aún no hay publicaciones. Usa \"Cargar más publicaciones\" para obtener algunas.",
+	"timeline.reached_oldest": "Has llegado a las publicaciones más antiguas.",
 	"timeline_area.empty": "No hay cronologías. Usa \"Añadir cronología\" para crear una.",
 	"status.timelines_one": "{{count}} cronología",
 	"status.timelines_other": "{{count}} cronologías",
@@ -18,5 +21,6 @@
 	"toast.error_add_timeline": "No se pudo añadir la cronología: {{message}}",
 	"toast.error_remove_timeline": "No se pudo eliminar la cronología: {{message}}",
 	"toast.error_add_source": "No se pudo añadir la fuente: {{message}}",
-	"toast.error_set_name": "No se pudo renombrar la cronología: {{message}}"
+	"toast.error_set_name": "No se pudo renombrar la cronología: {{message}}",
+	"toast.error_get_more": "No se pudieron cargar más publicaciones: {{message}}"
 }
