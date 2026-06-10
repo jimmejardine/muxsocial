@@ -65,6 +65,13 @@ jobs:
           cache: npm
           cache-dependency-path: muxsocial-client-web/package-lock.json
 
+      # Rewrite the npm package version from the tag early, alongside the Cargo
+      # bump (no-op on branch/PR builds). `npm version` updates package.json and
+      # package-lock.json together, so they stay in sync for the `npm ci` below.
+      # After setup-node so npm is the pinned version and the npm cache key (hashed
+      # from the lockfile) is computed before this bump.
+      - uses: ./.github/actions/set-npm-version-from-tag
+
       # clippy/test run against muxsocial-lib on the host: the wasm crate has
       # wasm32-only deps and is exercised via wasm-pack on its real target below.
       - name: Rust format check
@@ -87,10 +94,6 @@ jobs:
       - name: Install web dependencies
         working-directory: muxsocial-client-web
         run: npm ci
-
-      # Keep the built web package's version in lock-step with the Rust workspace
-      # version on tag builds (no-op otherwise). After npm ci so the lock stays in sync.
-      - uses: ./.github/actions/set-npm-version-from-tag
 
       - name: Web lint (Biome)
         working-directory: muxsocial-client-web
