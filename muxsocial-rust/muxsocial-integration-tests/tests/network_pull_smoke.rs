@@ -46,7 +46,7 @@ async fn pulls_recent_posts_from_bluesky() {
 #[tokio::test]
 async fn pulls_recent_statuses_from_mastodon() {
     let http_transport = default_http_transport();
-    let posts = mastodon::fetch_recent_posts(&http_transport, "https://mastodon.social", "Gargron", 5).await.expect("mastodon fetch should succeed");
+    let posts = mastodon::fetch_recent_posts(&http_transport, "@Gargron@mastodon.social", 5).await.expect("mastodon fetch should succeed");
 
     assert!(!posts.is_empty(), "expected at least one Mastodon status for @Gargron");
     for post in &posts {

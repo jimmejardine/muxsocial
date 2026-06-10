@@ -9,10 +9,15 @@ read-only client built on the shared `HttpTransport`.
 
 ## Reading posts
 
-Unauthenticated, two calls against an instance base URL (e.g.
-`https://mastodon.social`):
+The caller supplies a single concatenated fediverse handle `@user@instance`
+(e.g. `@Gargron@mastodon.social`). `split_fediverse_handle`
+(`muxsocial-lib/src/sources/mastodon.rs`) splits it into the instance base URL
+(`https://instance`) and local username — that split is internal; everywhere
+user-facing uses the `@user@instance` form.
 
-1. `GET /api/v1/accounts/lookup?acct={acct}` → account id.
+Then, unauthenticated, two calls:
+
+1. `GET /api/v1/accounts/lookup?acct={username}` → account id.
 2. `GET /api/v1/accounts/{id}/statuses?limit={n}&exclude_reblogs=true` → statuses.
 
 Each status maps to `AggregatedPost` (`id`, `created_at` RFC3339 → millis,
@@ -20,7 +25,7 @@ Each status maps to `AggregatedPost` (`id`, `created_at` RFC3339 → millis,
 
 ## Test identifier
 
-`@Gargron` on `https://mastodon.social`.
+`@Gargron@mastodon.social`.
 
 ## CORS — important
 
