@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import { usePosts } from "../hooks/usePosts.ts";
+import { networkColor } from "../theme/networkColors.ts";
 import type { Post } from "../tools/Post.ts";
 import type { SourceConfig, TimelineConfig } from "../tools/TimelineConfig.ts";
 import { PostCard } from "./PostCard.tsx";
@@ -127,7 +128,7 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_set_nam
 
 function SourceChip({ source }: { source: SourceConfig }) {
 	return (
-		<Badge size="sm" variant="light" radius="sm" title={`${source.network}: ${source.id}`}>
+		<Badge size="sm" variant="light" radius="sm" color={networkColor(source.network)} title={`${source.network}: ${source.id}`}>
 			{source.network}: {source.id}
 		</Badge>
 	);

@@ -1,6 +1,34 @@
 .card {
-	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+	display: flex;
+	align-items: stretch;
 	border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+/* Thin colored strip on the left; the network color is set inline per post as the
+   background, with the vertical label in black on top. */
+.sourceBar {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 2px;
+}
+
+.sourceLabel {
+	writing-mode: vertical-rl;
+	/* Rotate so the name reads bottom-to-top, centered along the bar. */
+	transform: rotate(180deg);
+	text-align: center;
+	font-size: var(--mantine-font-size-xs);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: black;
+}
+
+.content {
+	flex: 1;
+	min-width: 0;
+	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
 }
 
 /* Keep network-sourced HTML from breaking the column layout. */
