@@ -1,0 +1,17 @@
+.area {
+	display: flex;
+	flex-direction: row;
+	/* Fill the space between the toolbar and the statusbar. */
+	height: calc(100dvh - var(--mux-header-height) - var(--mux-footer-height));
+	/* Too many timelines to fit -> scroll them sideways. */
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: calc(100dvh - var(--mux-header-height) - var(--mux-footer-height));
+}

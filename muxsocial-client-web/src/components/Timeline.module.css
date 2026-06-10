@@ -1,0 +1,24 @@
+.timeline {
+	/* Grow to fill the available width, but never shrink below 500px — or the
+	   viewport width when the screen itself is narrower than 500px. */
+	flex: 1 0 min(500px, 100vw);
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	border-inline-end: 1px solid var(--mantine-color-default-border);
+	overflow: hidden;
+}
+
+.miniToolbar {
+	flex: 0 0 auto;
+	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+	border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.body {
+	flex: 1;
+	/* min-height:0 lets the body scroll vertically inside the flex column. */
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--mantine-spacing-sm);
+}
