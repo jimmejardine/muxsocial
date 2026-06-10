@@ -5,6 +5,9 @@
 	"timeline.name_label": "Timeline name",
 	"timeline.address_placeholder": "Paste an address and press Enter…",
 	"timeline.no_sources": "No sources yet. Paste an address above to add one.",
+	"timeline.get_more": "Get more posts",
+	"timeline.no_posts": "No posts yet. Use \"Get more posts\" to fetch some.",
+	"timeline.reached_oldest": "Reached the oldest posts.",
 	"timeline_area.empty": "No timelines. Use \"Add timeline\" to create one.",
 	"status.timelines_one": "{{count}} timeline",
 	"status.timelines_other": "{{count}} timelines",
@@ -17,5 +20,6 @@
 	"toast.error_add_timeline": "Failed to add timeline: {{message}}",
 	"toast.error_remove_timeline": "Failed to remove timeline: {{message}}",
 	"toast.error_add_source": "Failed to add source: {{message}}",
-	"toast.error_set_name": "Failed to rename timeline: {{message}}"
+	"toast.error_set_name": "Failed to rename timeline: {{message}}",
+	"toast.error_get_more": "Failed to get more posts: {{message}}"
 }

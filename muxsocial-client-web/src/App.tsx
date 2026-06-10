@@ -5,6 +5,7 @@ import { StatusBar } from "./components/StatusBar.tsx";
 import { TimelineArea } from "./components/TimelineArea.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { Muxsocial, type MuxsocialClientWasmProxy } from "./Muxsocial.ts";
+import { MuxsocialContext } from "./tools/MuxsocialContext.tsx";
 import type { TimelineConfig } from "./tools/TimelineConfig.ts";
 import { Toast } from "./tools/Toast.ts";
 
@@ -27,6 +28,8 @@ export function App() {
 	const muxsocial_ref = useRef<MuxsocialClientWasmProxy | null>(null);
 	// null while the Rust client is being created and the list loaded.
 	const [timelines, set_timelines] = useState<TimelineConfig[] | null>(null);
+	// Provided via context so per-timeline post lists can call the client.
+	const [muxsocial_client, set_muxsocial_client] = useState<MuxsocialClientWasmProxy | null>(null);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -36,6 +39,7 @@ export function App() {
 				muxsocial_ref.current = muxsocial;
 				const initial_timelines = (await muxsocial.list_timelines()) as TimelineConfig[];
 				if (!cancelled) {
+					set_muxsocial_client(muxsocial);
 					set_timelines(initial_timelines);
 				}
 			} catch (err) {
@@ -109,24 +113,26 @@ export function App() {
 	} as CSSProperties;
 
 	return (
-		<AppShell header={{ height: HEADER_HEIGHT }} footer={{ height: FOOTER_HEIGHT }} padding={0} style={content_height_vars}>
-			<AppShell.Header>
-				<Toolbar on_add_timeline={add_timeline} />
-			</AppShell.Header>
+		<MuxsocialContext.Provider value={muxsocial_client}>
+			<AppShell header={{ height: HEADER_HEIGHT }} footer={{ height: FOOTER_HEIGHT }} padding={0} style={content_height_vars}>
+				<AppShell.Header>
+					<Toolbar on_add_timeline={add_timeline} />
+				</AppShell.Header>
 
-			<AppShell.Main>
-				{timelines === null ? (
-					<Center h="100%">
-						<Loader />
-					</Center>
-				) : (
-					<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_set_name={set_name} />
-				)}
-			</AppShell.Main>
+				<AppShell.Main>
+					{timelines === null ? (
+						<Center h="100%">
+							<Loader />
+						</Center>
+					) : (
+						<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_set_name={set_name} />
+					)}
+				</AppShell.Main>
 
-			<AppShell.Footer>
-				<StatusBar timeline_count={timelines?.length ?? 0} />
-			</AppShell.Footer>
-		</AppShell>
+				<AppShell.Footer>
+					<StatusBar timeline_count={timelines?.length ?? 0} />
+				</AppShell.Footer>
+			</AppShell>
+		</MuxsocialContext.Provider>
 	);
 }

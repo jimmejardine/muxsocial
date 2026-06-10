@@ -18,6 +18,7 @@
 		"@mantine/core": "^8.3.15",
 		"@mantine/hooks": "^8.3.15",
 		"@mantine/notifications": "^8.3.15",
+		"dompurify": "^3.4.9",
 		"i18next": "^25.8.14",
 		"i18next-http-backend": "^3.0.2",
 		"react": "^19.2.4",

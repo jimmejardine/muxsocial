@@ -17,10 +17,12 @@
 //! cursor, Hashiverse via its own `SingleTimeline`), so each provides its own
 //! pager; see [`crate::sources`] and [`network_pager::NetworkPager`].
 
+pub mod builder;
 pub mod multi_timeline;
 pub mod network_pager;
 pub mod source_timeline;
 
+pub use builder::SharedSourceClients;
 pub use multi_timeline::MultiTimeline;
 pub use network_pager::NetworkPager;
 pub use source_timeline::SourceTimeline;

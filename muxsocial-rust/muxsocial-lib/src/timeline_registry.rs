@@ -93,6 +93,12 @@ impl TimelineRegistry {
         self.timelines.iter().map(TimelineConfig::to_view).collect()
     }
 
+    /// The sources backing the timeline `id`, if such a timeline exists. Used by
+    /// the client to build that timeline's live [`crate::timeline::MultiTimeline`].
+    pub fn sources_for(&self, id: &str) -> Option<&[Source]> {
+        self.timelines.iter().find(|timeline| timeline.id == id).map(|timeline| timeline.sources.as_slice())
+    }
+
     /// Serialise the whole list to permanent storage.
     async fn persist(&self) -> anyhow::Result<()> {
         set_json(self.storage.as_ref(), TIMELINES_KEY, &self.timelines).await

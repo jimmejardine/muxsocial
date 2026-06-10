@@ -1,8 +1,11 @@
-import { CloseButton, Group, Text, TextInput } from "@mantine/core";
+import { Badge, Button, CloseButton, Group, Text, TextInput } from "@mantine/core";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
+import { usePosts } from "../hooks/usePosts.ts";
+import type { Post } from "../tools/Post.ts";
 import type { SourceConfig, TimelineConfig } from "../tools/TimelineConfig.ts";
+import { PostCard } from "./PostCard.tsx";
 import classes from "./Timeline.module.css";
 
 interface TimelineProps {
@@ -14,18 +17,19 @@ interface TimelineProps {
 }
 
 /**
- * A single timeline column: an editable name + remove button, an address textbox
- * (paste + Enter adds a source to this timeline), and a `react-virtuoso` body that
- * lists the timeline's sources. Every action is addressed by the timeline's GUID
- * (`timeline.id`). All timeline state — the name and sources — comes from the Rust
- * snapshot; this component never derives it (the name's source-derived default is
- * `timeline.display_name`, computed in Rust).
+ * A single timeline column: an editable name + a "get more posts" button + remove
+ * button, an address textbox (paste + Enter adds a source), a compact row of the
+ * timeline's sources, and a `react-virtuoso` body that lists the merged posts.
+ * Every action is addressed by the timeline's GUID (`timeline.id`). The name and
+ * sources come from the Rust snapshot; the posts come from {@link usePosts}, which
+ * holds the rendered window and pages it via the Rust client.
  */
 export function Timeline({ timeline, index, on_remove, on_add_source, on_set_name }: TimelineProps) {
 	const { t } = useTranslation();
 	const [address, set_address] = useState("");
 	// Local draft of the custom name; the effective name (default) is the placeholder.
 	const [name_draft, set_name_draft] = useState(timeline.name ?? "");
+	const { posts, firstItemIndex, loading, reachedOldest, getMore } = usePosts(timeline.id);
 
 	// display_name is empty only for a nameless, sourceless timeline -> index fallback.
 	const default_title = timeline.display_name || t("timeline.title", { number: index + 1 });
@@ -64,7 +68,12 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_set_nam
 						}
 					}}
 				/>
-				<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={() => on_remove(timeline.id)} />
+				<Group gap="xs" wrap="nowrap">
+					<Button size="xs" variant="light" onClick={getMore} loading={loading}>
+						{t("timeline.get_more")}
+					</Button>
+					<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={() => on_remove(timeline.id)} />
+				</Group>
 			</Group>
 
 			<div className={classes.addressBar}>
@@ -82,17 +91,33 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_set_nam
 				/>
 			</div>
 
+			{timeline.sources.length > 0 && (
+				<Group className={classes.sourceChips} gap={4} wrap="wrap">
+					{timeline.sources.map((source) => (
+						<SourceChip key={`${source.network}:${source.id}`} source={source} />
+					))}
+				</Group>
+			)}
+
 			<div className={classes.body}>
 				<Virtuoso
-					data={timeline.sources}
+					data={posts}
+					firstItemIndex={firstItemIndex}
 					style={{ height: "100%" }}
-					itemContent={(_index: number, source: SourceConfig) => <SourceRow source={source} />}
+					computeItemKey={(_index: number, post: Post) => post.source_post_id}
+					itemContent={(_index: number, post: Post) => <PostCard post={post} />}
 					components={{
 						EmptyPlaceholder: () => (
 							<Text c="dimmed" size="sm" p="sm">
-								{t("timeline.no_sources")}
+								{timeline.sources.length === 0 ? t("timeline.no_sources") : t("timeline.no_posts")}
 							</Text>
 						),
+						Footer: () =>
+							reachedOldest && posts.length > 0 ? (
+								<Text c="dimmed" size="xs" ta="center" p="sm">
+									{t("timeline.reached_oldest")}
+								</Text>
+							) : null,
 					}}
 				/>
 			</div>
@@ -100,15 +125,10 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_set_nam
 	);
 }
 
-function SourceRow({ source }: { source: SourceConfig }) {
+function SourceChip({ source }: { source: SourceConfig }) {
 	return (
-		<Group gap="xs" px="sm" py={6} wrap="nowrap" className={classes.sourceRow}>
-			<Text size="xs" c="dimmed" fw={600}>
-				{source.network}
-			</Text>
-			<Text size="sm" truncate>
-				{source.id}
-			</Text>
-		</Group>
+		<Badge size="sm" variant="light" radius="sm" title={`${source.network}: ${source.id}`}>
+			{source.network}: {source.id}
+		</Badge>
 	);
 }

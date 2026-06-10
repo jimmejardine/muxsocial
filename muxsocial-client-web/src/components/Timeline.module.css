@@ -33,6 +33,10 @@
 	min-height: 0;
 }
 
-.sourceRow {
+.sourceChips {
+	flex: 0 0 auto;
+	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
 	border-bottom: 1px solid var(--mantine-color-default-border);
+	max-height: 4.5rem;
+	overflow-y: auto;
 }
