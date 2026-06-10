@@ -15,6 +15,17 @@
 	padding: 0 2px;
 }
 
+/* When the source bar links to the original post, give it link affordance
+   without changing the network-colored look. */
+a.sourceBar {
+	text-decoration: none;
+	cursor: pointer;
+}
+
+a.sourceBar:hover {
+	filter: brightness(1.08);
+}
+
 .sourceLabel {
 	writing-mode: vertical-rl;
 	/* Rotate so the name reads bottom-to-top, centered along the bar. */

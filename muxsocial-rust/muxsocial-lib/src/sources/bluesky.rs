@@ -204,7 +204,17 @@ fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedVi
         author_display_name: post_view.author.display_name.clone(),
         created_at_millis,
         content_html,
+        // Permalink from the stable DID + the AT-URI's rkey; the handle can change.
+        post_url: bluesky_post_url(&post_view.uri, post_view.author.did.as_str()),
     })
+}
+
+/// Build the bsky.app permalink for a post from its AT-URI
+/// (`at://did/app.bsky.feed.post/{rkey}`) and the author DID:
+/// `https://bsky.app/profile/{did}/post/{rkey}`. `None` if the AT-URI has no rkey.
+fn bluesky_post_url(at_uri: &str, did: &str) -> Option<String> {
+    let rkey = at_uri.rsplit('/').next().filter(|rkey| !rkey.is_empty())?;
+    Some(format!("https://bsky.app/profile/{did}/post/{rkey}"))
 }
 
 /// Render Bluesky post `text` plus its richtext `facets` into inline HTML.
@@ -257,6 +267,17 @@ mod tests {
 
     fn facets_from_json(json: &str) -> Vec<Facet> {
         serde_json::from_str(json).expect("valid facets json")
+    }
+
+    #[test]
+    fn builds_bsky_app_url_from_at_uri_and_did() {
+        let url = bluesky_post_url("at://did:plc:abc123/app.bsky.feed.post/3kxyz", "did:plc:abc123");
+        assert_eq!(url.as_deref(), Some("https://bsky.app/profile/did:plc:abc123/post/3kxyz"));
+    }
+
+    #[test]
+    fn bluesky_post_url_is_none_without_an_rkey() {
+        assert_eq!(bluesky_post_url("at://did:plc:abc123/", "did:plc:abc123"), None);
     }
 
     #[test]

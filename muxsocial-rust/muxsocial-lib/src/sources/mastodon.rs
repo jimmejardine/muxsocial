@@ -127,6 +127,10 @@ struct MastodonStatus {
     created_at: String,
     content: String,
     account: MastodonStatusAccount,
+    /// The status's canonical web URL (present for normal statuses; absent for
+    /// some types). Used directly as the post permalink.
+    #[serde(default)]
+    url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -147,6 +151,7 @@ fn map_status(status: MastodonStatus) -> anyhow::Result<AggregatedPost> {
         created_at_millis,
         // Mastodon status content is sanitized HTML.
         content_html: status.content,
+        post_url: status.url,
     })
 }
 
@@ -172,5 +177,31 @@ mod tests {
     fn rejects_handle_without_instance() {
         assert!(split_fediverse_handle("@Gargron").is_err());
         assert!(split_fediverse_handle("Gargron").is_err());
+    }
+
+    #[test]
+    fn map_status_uses_the_statuss_canonical_url_as_permalink() {
+        let status: MastodonStatus = serde_json::from_str(
+            r#"{
+                "id": "123",
+                "created_at": "2024-01-02T03:04:05.000Z",
+                "content": "<p>hi</p>",
+                "url": "https://mastodon.social/@Gargron/123",
+                "account": { "acct": "Gargron", "display_name": "Eugen" }
+            }"#,
+        )
+        .expect("valid status json");
+
+        let post = map_status(status).expect("map");
+        assert_eq!(post.post_url.as_deref(), Some("https://mastodon.social/@Gargron/123"));
+    }
+
+    #[test]
+    fn map_status_has_no_permalink_when_url_absent() {
+        let status: MastodonStatus = serde_json::from_str(
+            r#"{ "id": "1", "created_at": "2024-01-02T03:04:05.000Z", "content": "x", "account": { "acct": "a", "display_name": "" } }"#,
+        )
+        .expect("valid status json");
+        assert_eq!(map_status(status).expect("map").post_url, None);
     }
 }

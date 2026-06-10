@@ -10,6 +10,7 @@ function post(source_post_id: string, created_at_millis: number): Post {
 		author_display_name: null,
 		created_at_millis,
 		content_html: `<p>${source_post_id}</p>`,
+		post_url: null,
 	};
 }
 

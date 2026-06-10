@@ -83,6 +83,7 @@ pub(crate) mod test_support {
             author_display_name: None,
             created_at_millis,
             content_html: format!("<p>{source_post_id}</p>"),
+            post_url: None,
         }
     }
 

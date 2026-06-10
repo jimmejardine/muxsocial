@@ -36,6 +36,10 @@ pub struct AggregatedPost {
     pub created_at_millis: i64,
     /// The post body as HTML (see the type-level note).
     pub content_html: String,
+    /// A canonical web permalink to the original post on its network, when one can
+    /// be built (njump for nostr, bsky.app for Bluesky, the status URL for
+    /// Mastodon, the Hashiverse app route). `None` when no link is available.
+    pub post_url: Option<String>,
 }
 
 /// Parse an RFC3339 / ISO-8601 timestamp (as emitted by Mastodon and Bluesky)

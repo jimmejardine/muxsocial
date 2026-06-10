@@ -47,13 +47,14 @@ pub async fn connect_client(relays: &[&str]) -> anyhow::Result<Client> {
 /// The key may be hex or `npub` bech32 (bech32 requires nostr's nip19 support).
 pub async fn fetch_recent_posts(public_key_hex_or_bech32: &str, relays: &[&str], limit: usize, timeout: Duration) -> anyhow::Result<Vec<AggregatedPost>> {
     let client = connect_client(relays).await?;
-    fetch_with_client(&client, public_key_hex_or_bech32, limit, timeout, None, None).await
+    let relay_hints: Vec<String> = relays.iter().map(|relay_url| relay_url.to_string()).collect();
+    fetch_with_client(&client, public_key_hex_or_bech32, limit, timeout, None, None, &relay_hints).await
 }
 
 /// Fetch text notes for an author over an already-connected client, optionally
 /// bounded by `since_secs` (only newer) and/or `until_secs` (only older), both
 /// in whole epoch seconds.
-async fn fetch_with_client(client: &Client, public_key_hex_or_bech32: &str, limit: usize, timeout: Duration, since_secs: Option<u64>, until_secs: Option<u64>) -> anyhow::Result<Vec<AggregatedPost>> {
+async fn fetch_with_client(client: &Client, public_key_hex_or_bech32: &str, limit: usize, timeout: Duration, since_secs: Option<u64>, until_secs: Option<u64>, relay_hints: &[String]) -> anyhow::Result<Vec<AggregatedPost>> {
     let author_public_key = PublicKey::parse(public_key_hex_or_bech32).with_context(|| format!("parsing nostr public key {public_key_hex_or_bech32:?}"))?;
 
     log::info!("nostr: fetching up to {limit} text notes for {public_key_hex_or_bech32} (since={since_secs:?}, until={until_secs:?})");
@@ -69,7 +70,7 @@ async fn fetch_with_client(client: &Client, public_key_hex_or_bech32: &str, limi
     let events = client.fetch_events(filter, timeout).await.context("fetching nostr events")?;
     log::debug!("nostr: fetched {} event(s)", events.len());
 
-    let mut posts: Vec<AggregatedPost> = events.into_iter().map(map_event).collect();
+    let mut posts: Vec<AggregatedPost> = events.into_iter().map(|event| map_event(event, relay_hints)).collect();
     // Newest first.
     posts.sort_by_key(|post| std::cmp::Reverse(post.created_at_millis));
     Ok(posts)
@@ -81,21 +82,25 @@ pub struct NostrPager {
     client: Client,
     public_key_hex_or_bech32: String,
     timeout: Duration,
+    /// The relays this pager queries; embedded as hints in each post's `nevent`
+    /// permalink so it resolves where we actually fetched it from.
+    relays: Vec<String>,
 }
 
 impl NostrPager {
     /// `client` should be a clone of the shared, already-connected client (see
-    /// [`connect_client`]).
-    pub fn new(client: Client, public_key_hex_or_bech32: impl Into<String>, timeout: Duration) -> Self {
+    /// [`connect_client`]); `relays` are the relay URLs it is connected to.
+    pub fn new(client: Client, public_key_hex_or_bech32: impl Into<String>, timeout: Duration, relays: Vec<String>) -> Self {
         Self {
             client,
             public_key_hex_or_bech32: public_key_hex_or_bech32.into(),
             timeout,
+            relays,
         }
     }
 
     async fn fetch_bounded(&self, limit: usize, since_secs: Option<u64>, until_secs: Option<u64>) -> anyhow::Result<Vec<AggregatedPost>> {
-        fetch_with_client(&self.client, &self.public_key_hex_or_bech32, limit, self.timeout, since_secs, until_secs).await
+        fetch_with_client(&self.client, &self.public_key_hex_or_bech32, limit, self.timeout, since_secs, until_secs, &self.relays).await
     }
 }
 
@@ -130,7 +135,8 @@ fn ensure_default_crypto_provider() {
     });
 }
 
-fn map_event(event: Event) -> AggregatedPost {
+fn map_event(event: Event, relay_hints: &[String]) -> AggregatedPost {
+    let post_url = njump_event_url(&event, relay_hints);
     AggregatedPost {
         source: SourceNetwork::Nostr,
         source_post_id: event.id.to_hex(),
@@ -140,5 +146,15 @@ fn map_event(event: Event) -> AggregatedPost {
         created_at_millis: event.created_at.as_secs() as i64 * 1000,
         // nostr note content is plain text; wrap it into HTML like the other sources.
         content_html: crate::html::plain_text_to_html(&event.content),
+        post_url,
     }
+}
+
+/// Build the njump permalink for an event: an `nevent` (bech32) carrying the event
+/// id, author pubkey, and up to two relay hints (the relays we fetched from), so
+/// it resolves on the right relay. `None` if bech32 encoding fails.
+fn njump_event_url(event: &Event, relay_hints: &[String]) -> Option<String> {
+    let relay_urls: Vec<RelayUrl> = relay_hints.iter().take(2).filter_map(|relay_url| RelayUrl::parse(relay_url).ok()).collect();
+    let nip19_event = Nip19Event::new(event.id).author(event.pubkey).relays(relay_urls);
+    nip19_event.to_bech32().ok().map(|nevent| format!("https://njump.me/{nevent}"))
 }

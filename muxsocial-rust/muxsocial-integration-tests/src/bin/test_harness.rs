@@ -154,7 +154,8 @@ impl HarnessTimelines {
     }
 
     fn nostr_source_timeline(client: NostrClient) -> SourceTimeline<NetworkPager> {
-        SourceTimeline::new(Source::new(SourceNetwork::Nostr, NOSTR_AUTHOR_NPUB), NetworkPager::Nostr(NostrPager::new(client, NOSTR_AUTHOR_NPUB, nostr_relay_timeout())))
+        let relays: Vec<String> = nostr::DEFAULT_RELAYS.iter().map(|relay_url| relay_url.to_string()).collect();
+        SourceTimeline::new(Source::new(SourceNetwork::Nostr, NOSTR_AUTHOR_NPUB), NetworkPager::Nostr(NostrPager::new(client, NOSTR_AUTHOR_NPUB, nostr_relay_timeout(), relays)))
     }
 
     fn bluesky_source_timeline(http_transport: DefaultHttpTransport) -> SourceTimeline<NetworkPager> {

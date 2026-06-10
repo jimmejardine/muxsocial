@@ -75,7 +75,7 @@ impl SharedSourceClients {
         let pager = match source.network {
             SourceNetwork::Nostr => {
                 let nostr_client = self.shared_nostr_client().await?;
-                NetworkPager::Nostr(NostrPager::new(nostr_client, source.id.clone(), self.nostr_timeout))
+                NetworkPager::Nostr(NostrPager::new(nostr_client, source.id.clone(), self.nostr_timeout, self.nostr_relays.clone()))
             }
             SourceNetwork::Bluesky => NetworkPager::Bluesky(BlueskyPager::new(self.http_transport.clone(), source.id.clone())),
             SourceNetwork::Mastodon => NetworkPager::Mastodon(MastodonPager::new(self.http_transport.clone(), source.id.clone())),

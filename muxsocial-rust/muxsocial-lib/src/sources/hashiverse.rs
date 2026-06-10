@@ -19,7 +19,7 @@ use std::sync::Arc;
 use anyhow::Context;
 use hashiverse_lib::client::hashiverse_client::HashiverseClient;
 use hashiverse_lib::protocol::posting::encoded_post::EncodedPostV1;
-use hashiverse_lib::tools::buckets::BucketType;
+use hashiverse_lib::tools::buckets::{BucketLocation, BucketType};
 use hashiverse_lib::tools::types::Id;
 
 /// Re-export so callers (tests) can name the client type without depending on
@@ -76,7 +76,7 @@ async fn timeline_get_more(hashiverse_client: &HashiverseClient, user_id_hex: &s
     let (timeline_posts, _oldest_processed_time_millis) = hashiverse_client.single_timeline_get_more(BucketType::User, &user_id).await.context("reading hashiverse user timeline")?;
     log::debug!("hashiverse: read {} timeline post(s) for {user_id_hex}", timeline_posts.len());
 
-    Ok(timeline_posts.into_iter().map(|(_bucket_location, encoded_post, _body_bytes, _was_healed)| map_encoded_post(encoded_post)).collect())
+    Ok(timeline_posts.into_iter().map(|(bucket_location, encoded_post, _body_bytes, _was_healed)| map_encoded_post(encoded_post, &bucket_location)).collect())
 }
 
 /// A timeline pager for a single Hashiverse user — a thin wrapper over
@@ -112,14 +112,51 @@ impl SourcePager for HashiversePager {
     }
 }
 
-fn map_encoded_post(encoded_post: EncodedPostV1) -> AggregatedPost {
+/// Base of the Hashiverse web app's single-post route (hash-routed):
+/// `{base}/#/post/{post_id}/{bucket_location}`.
+const HASHIVERSE_POST_URL_BASE: &str = "https://app.hashiverse.com";
+
+fn map_encoded_post(encoded_post: EncodedPostV1, bucket_location: &BucketLocation) -> AggregatedPost {
+    let post_id_hex = encoded_post.post_id.to_hex_str();
+    let post_url = format!(
+        "{HASHIVERSE_POST_URL_BASE}/#/post/{}/{}",
+        percent_encode_component(&post_id_hex),
+        percent_encode_component(&bucket_location.to_html_attr()),
+    );
     AggregatedPost {
         source: SourceNetwork::Hashiverse,
-        source_post_id: encoded_post.post_id.to_hex_str(),
+        source_post_id: post_id_hex,
         author_identifier: hex::encode(encoded_post.header.verification_key_bytes.0),
         author_display_name: None,
         created_at_millis: encoded_post.header.time_millis.0,
         // Hashiverse post bodies are HTML.
         content_html: encoded_post.post,
+        post_url: Some(post_url),
+    }
+}
+
+/// Percent-encode one URL path segment like JS `encodeURIComponent`: everything
+/// except the RFC3986 unreserved set (`A-Z a-z 0-9 - _ . ~`) is escaped. Used for
+/// the Hashiverse permalink segments, matching the hashiverse web client.
+fn percent_encode_component(input: &str) -> String {
+    let mut encoded = String::with_capacity(input.len());
+    for byte in input.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => encoded.push(byte as char),
+            _ => encoded.push_str(&format!("%{byte:02X}")),
+        }
+    }
+    encoded
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn percent_encodes_reserved_chars_only() {
+        // Unreserved chars pass through; reserved ones (':', '/', '#') are escaped.
+        assert_eq!(percent_encode_component("abc-123_.~"), "abc-123_.~");
+        assert_eq!(percent_encode_component("a:b/c#d"), "a%3Ab%2Fc%23d");
     }
 }

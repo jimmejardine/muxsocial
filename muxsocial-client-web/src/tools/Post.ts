@@ -21,4 +21,6 @@ export interface Post {
 	created_at_millis: number;
 	/** The post body as HTML (sanitized before rendering — see {@link ../components/PostBody}). */
 	content_html: string;
+	/** Canonical web permalink to the original post on its network, or null. */
+	post_url: string | null;
 }
