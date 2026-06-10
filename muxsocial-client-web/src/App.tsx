@@ -88,6 +88,19 @@ export function App() {
 		[t],
 	);
 
+	const set_name = useCallback(
+		async (id: string, name: string) => {
+			const muxsocial = muxsocial_ref.current;
+			if (!muxsocial) return;
+			try {
+				set_timelines((await muxsocial.set_timeline_name(id, name)) as TimelineConfig[]);
+			} catch (err) {
+				Toast.error(t("toast.error_set_name", { message: error_message(err) }));
+			}
+		},
+		[t],
+	);
+
 	// The timeline area's height is calc(100dvh - header - footer); expose the
 	// header/footer heights as CSS vars so that calc stays in sync with AppShell.
 	const content_height_vars = {
@@ -107,7 +120,7 @@ export function App() {
 						<Loader />
 					</Center>
 				) : (
-					<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} />
+					<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_set_name={set_name} />
 				)}
 			</AppShell.Main>
 

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use muxsocial_lib::config_storage::ConfigStorage;
 use muxsocial_lib::greeting::compose_greeting_message;
-use muxsocial_lib::timeline_registry::{TimelineConfig, TimelineRegistry};
+use muxsocial_lib::timeline_registry::{TimelineRegistry, TimelineView};
 use wasm_bindgen::prelude::*;
 
 use crate::indexed_db_config_storage::IndexedDbConfigStorage;
@@ -58,9 +58,16 @@ impl MuxsocialClientWasm {
         let snapshot = self.timeline_registry.add_source_to_timeline(&id, &address).await.map_err(anyhow_to_js)?;
         snapshot_to_js(&snapshot)
     }
+
+    /// Set (or, with an empty string, clear) the custom name of the timeline
+    /// addressed by `id`. Returns the new snapshot.
+    pub async fn set_timeline_name(&mut self, id: String, name: String) -> Result<JsValue, JsValue> {
+        let snapshot = self.timeline_registry.set_timeline_name(&id, &name).await.map_err(anyhow_to_js)?;
+        snapshot_to_js(&snapshot)
+    }
 }
 
-fn snapshot_to_js(snapshot: &[TimelineConfig]) -> Result<JsValue, JsValue> {
+fn snapshot_to_js(snapshot: &[TimelineView]) -> Result<JsValue, JsValue> {
     serde_wasm_bindgen::to_value(snapshot).map_err(|serialize_error| JsValue::from_str(&format!("serializing timelines: {serialize_error}")))
 }
 

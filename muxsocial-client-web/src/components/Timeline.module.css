@@ -15,6 +15,12 @@
 	border-bottom: 1px solid var(--mantine-color-default-border);
 }
 
+.nameInput {
+	/* Fill the toolbar so the name reads like a title; allow it to truncate. */
+	flex: 1;
+	min-width: 0;
+}
+
 .addressBar {
 	flex: 0 0 auto;
 	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);

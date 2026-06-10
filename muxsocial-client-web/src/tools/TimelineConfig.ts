@@ -15,5 +15,9 @@ export interface SourceConfig {
 
 export interface TimelineConfig {
 	id: string;
+	/** The user-set custom name, or null when using the source-derived default. */
+	name: string | null;
+	/** The effective name to display (custom name, else the default from sources). */
+	display_name: string;
 	sources: SourceConfig[];
 }

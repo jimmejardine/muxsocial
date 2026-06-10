@@ -18,11 +18,55 @@ use crate::timeline::Source;
 /// The storage key under which the whole timeline list is persisted.
 const TIMELINES_KEY: &str = "timelines";
 
-/// One timeline: a GUID plus the sources whose posts it merges.
+/// One timeline as persisted: a GUID, an optional user-set name, and the sources
+/// whose posts it merges. `name` is `None` until the user names it; the effective
+/// name is then derived from the sources (see [`TimelineConfig::display_name`]).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TimelineConfig {
     pub id: String,
+    #[serde(default)]
+    pub name: Option<String>,
     pub sources: Vec<Source>,
+}
+
+/// A timeline as handed to the GUI: the persisted fields plus the computed
+/// effective name (`display_name`), so the truncation/concatenation rule lives
+/// only in Rust.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineView {
+    pub id: String,
+    pub name: Option<String>,
+    pub display_name: String,
+    pub sources: Vec<Source>,
+}
+
+impl TimelineConfig {
+    /// The effective name to show: a non-empty user-set name wins; otherwise the
+    /// source ids each truncated to 16 chars (`+ "..."` when longer) joined with
+    /// `", "`; otherwise empty (the GUI supplies a fallback for a nameless,
+    /// sourceless timeline).
+    pub fn display_name(&self) -> String {
+        if let Some(name) = self.name.as_deref().map(str::trim).filter(|name| !name.is_empty()) {
+            return name.to_string();
+        }
+        self.sources.iter().map(|source| truncate_16(&source.id)).collect::<Vec<_>>().join(", ")
+    }
+
+    fn to_view(&self) -> TimelineView {
+        TimelineView {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            display_name: self.display_name(),
+            sources: self.sources.clone(),
+        }
+    }
+}
+
+/// Take the first 16 characters of `id`, appending `"..."` only if it was longer.
+fn truncate_16(id: &str) -> String {
+    let mut characters = id.chars();
+    let prefix: String = characters.by_ref().take(16).collect();
+    if characters.next().is_some() { format!("{prefix}...") } else { prefix }
 }
 
 /// Owns the list of timelines and persists every change to [`ConfigStorage`].
@@ -44,9 +88,9 @@ impl TimelineRegistry {
         Ok(())
     }
 
-    /// The current timeline snapshot.
-    pub fn list(&self) -> Vec<TimelineConfig> {
-        self.timelines.clone()
+    /// The current timeline snapshot (with computed display names).
+    pub fn list(&self) -> Vec<TimelineView> {
+        self.timelines.iter().map(TimelineConfig::to_view).collect()
     }
 
     /// Serialise the whole list to permanent storage.
@@ -55,9 +99,10 @@ impl TimelineRegistry {
     }
 
     /// Add a new, empty timeline with a freshly-minted GUID. Returns the snapshot.
-    pub async fn add_timeline(&mut self) -> anyhow::Result<Vec<TimelineConfig>> {
+    pub async fn add_timeline(&mut self) -> anyhow::Result<Vec<TimelineView>> {
         self.timelines.push(TimelineConfig {
             id: uuid::Uuid::new_v4().to_string(),
+            name: None,
             sources: Vec::new(),
         });
         self.persist().await?;
@@ -66,7 +111,7 @@ impl TimelineRegistry {
 
     /// Remove the timeline with `id`. A no-op if there is no such timeline.
     /// Returns the snapshot.
-    pub async fn remove_timeline(&mut self, id: &str) -> anyhow::Result<Vec<TimelineConfig>> {
+    pub async fn remove_timeline(&mut self, id: &str) -> anyhow::Result<Vec<TimelineView>> {
         self.timelines.retain(|timeline| timeline.id != id);
         self.persist().await?;
         Ok(self.list())
@@ -74,14 +119,28 @@ impl TimelineRegistry {
 
     /// Parse `address` into a [`Source`] and add it to the timeline `id`'s
     /// sources (deduplicated). Returns the snapshot.
-    pub async fn add_source_to_timeline(&mut self, id: &str, address: &str) -> anyhow::Result<Vec<TimelineConfig>> {
+    pub async fn add_source_to_timeline(&mut self, id: &str, address: &str) -> anyhow::Result<Vec<TimelineView>> {
         let source = parse_source_address(address)?;
-        let timeline = self.timelines.iter_mut().find(|timeline| timeline.id == id).ok_or_else(|| anyhow::anyhow!("no timeline with id {id:?}"))?;
+        let timeline = self.timeline_mut(id)?;
         if !timeline.sources.contains(&source) {
             timeline.sources.push(source);
         }
         self.persist().await?;
         Ok(self.list())
+    }
+
+    /// Set (or clear) the timeline `id`'s custom name. An empty/whitespace name
+    /// clears it, reverting to the source-derived default. Returns the snapshot.
+    pub async fn set_timeline_name(&mut self, id: &str, name: &str) -> anyhow::Result<Vec<TimelineView>> {
+        let trimmed = name.trim();
+        let timeline = self.timeline_mut(id)?;
+        timeline.name = if trimmed.is_empty() { None } else { Some(trimmed.to_string()) };
+        self.persist().await?;
+        Ok(self.list())
+    }
+
+    fn timeline_mut(&mut self, id: &str) -> anyhow::Result<&mut TimelineConfig> {
+        self.timelines.iter_mut().find(|timeline| timeline.id == id).ok_or_else(|| anyhow::anyhow!("no timeline with id {id:?}"))
     }
 }
 
@@ -167,6 +226,38 @@ mod tests {
 
         let after_remove = timeline_registry.remove_timeline(&timeline_id).await.expect("remove");
         assert!(after_remove.is_empty());
+    }
+
+    #[tokio::test]
+    async fn default_name_is_truncated_joined_source_ids() {
+        let mut timeline_registry = registry();
+        let id = timeline_registry.add_timeline().await.expect("add")[0].id.clone();
+
+        // No sources -> empty default name.
+        assert_eq!(timeline_registry.list()[0].display_name, "");
+
+        // Two sources -> "<id-trunc>, <id-trunc>", each cut at 16 chars + "...".
+        timeline_registry.add_source_to_timeline(&id, "@Gargron@mastodon.social").await.expect("add masto");
+        timeline_registry.add_source_to_timeline(&id, "nostr:abcdef").await.expect("add nostr");
+        // "@Gargron@mastodon.social" is 24 chars -> first 16 + "...". "abcdef" is short.
+        assert_eq!(timeline_registry.list()[0].display_name, "@Gargron@mastodo..., abcdef");
+        assert_eq!(timeline_registry.list()[0].name, None);
+    }
+
+    #[tokio::test]
+    async fn custom_name_overrides_and_clearing_reverts() {
+        let mut timeline_registry = registry();
+        let id = timeline_registry.add_timeline().await.expect("add")[0].id.clone();
+        timeline_registry.add_source_to_timeline(&id, "nostr:abcdef").await.expect("add source");
+
+        let named = timeline_registry.set_timeline_name(&id, "  My feed  ").await.expect("set name");
+        assert_eq!(named[0].name.as_deref(), Some("My feed"));
+        assert_eq!(named[0].display_name, "My feed");
+
+        // Clearing reverts to the source-derived default.
+        let cleared = timeline_registry.set_timeline_name(&id, "   ").await.expect("clear name");
+        assert_eq!(cleared[0].name, None);
+        assert_eq!(cleared[0].display_name, "abcdef");
     }
 
     #[tokio::test]

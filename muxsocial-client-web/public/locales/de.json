@@ -2,11 +2,13 @@
 	"toolbar.add_timeline": "Timeline hinzufügen",
 	"timeline.title": "Timeline {{number}}",
 	"timeline.remove": "Timeline entfernen",
+	"timeline.name_label": "Timeline-Name",
 	"timeline.address_placeholder": "Adresse einfügen und Enter drücken…",
 	"timeline.no_sources": "Noch keine Quellen. Füge oben eine Adresse ein, um eine hinzuzufügen.",
 	"timeline_area.empty": "Keine Timelines. Verwende \"Timeline hinzufügen\", um eine zu erstellen.",
 	"status.timelines_one": "{{count}} Timeline",
 	"status.timelines_other": "{{count}} Timelines",
 	"theme.label": "Design",
-	"language.label": "Sprache"
+	"language.label": "Sprache",
+	"toast.error_set_name": "Timeline konnte nicht umbenannt werden: {{message}}"
 }

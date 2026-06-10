@@ -2,6 +2,7 @@
 	"toolbar.add_timeline": "Add timeline",
 	"timeline.title": "Timeline {{number}}",
 	"timeline.remove": "Remove timeline",
+	"timeline.name_label": "Timeline name",
 	"timeline.address_placeholder": "Paste an address and press Enter…",
 	"timeline.no_sources": "No sources yet. Paste an address above to add one.",
 	"timeline_area.empty": "No timelines. Use \"Add timeline\" to create one.",
@@ -15,5 +16,6 @@
 	"toast.error_load": "Failed to load timelines: {{message}}",
 	"toast.error_add_timeline": "Failed to add timeline: {{message}}",
 	"toast.error_remove_timeline": "Failed to remove timeline: {{message}}",
-	"toast.error_add_source": "Failed to add source: {{message}}"
+	"toast.error_add_source": "Failed to add source: {{message}}",
+	"toast.error_set_name": "Failed to rename timeline: {{message}}"
 }
