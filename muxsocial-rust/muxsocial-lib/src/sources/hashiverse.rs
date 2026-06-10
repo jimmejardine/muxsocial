@@ -36,6 +36,37 @@ pub async fn fetch_recent_posts(hashiverse_client: &HashiverseClient, user_id_he
     timeline_get_more(hashiverse_client, user_id_hex).await
 }
 
+/// Build a read-only **guest** [`HashiverseClient`] for the browser, wiring
+/// hashiverse-lib's own wasm runtime services (IndexedDB key locker + storage,
+/// fetch transport) with the single-threaded PoW generator — reading a timeline
+/// needs no PoW workers. Guest mode is the empty keyphrase. wasm32 only; native
+/// callers inject a client built by `hashiverse-client-rust` instead.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub async fn build_guest_client() -> anyhow::Result<Arc<HashiverseClient>> {
+    use hashiverse_lib::client::args::Args;
+    use hashiverse_lib::client::client_storage::client_storage::ClientStorage;
+    use hashiverse_lib::client::client_storage::wasm_client_storage::WasmClientStorage;
+    use hashiverse_lib::client::key_locker::key_locker::{KeyLocker, KeyLockerManager};
+    use hashiverse_lib::client::key_locker::wasm_key_locker::WasmKeyLockerManager;
+    use hashiverse_lib::tools::pow_generator::pow_generator::PowGenerator;
+    use hashiverse_lib::tools::pow_generator::single_threaded_pow_generator::SingleThreadedPowGenerator;
+    use hashiverse_lib::tools::runtime_services::RuntimeServices;
+    use hashiverse_lib::tools::time_provider::time_provider::{RealTimeProvider, TimeProvider};
+    use hashiverse_lib::transport::transport::TransportFactory;
+    use hashiverse_lib::transport::wasm_transport::WasmTransportFactory;
+
+    let key_locker_manager = WasmKeyLockerManager::new().await?;
+    // Empty keyphrase = the deterministic read-only guest identity.
+    let key_locker: Arc<dyn KeyLocker> = key_locker_manager.create(String::new()).await?;
+    let client_storage: Arc<dyn ClientStorage> = WasmClientStorage::new().await?;
+    let transport_factory: Arc<dyn TransportFactory> = Arc::new(WasmTransportFactory::default());
+    let time_provider: Arc<dyn TimeProvider> = Arc::new(RealTimeProvider::default());
+    let pow_generator: Arc<dyn PowGenerator> = Arc::new(SingleThreadedPowGenerator::new());
+    let runtime_services = Arc::new(RuntimeServices { time_provider, transport_factory, pow_generator });
+    let hashiverse_client = HashiverseClient::new(runtime_services, client_storage, key_locker, Args::new()).await?;
+    Ok(Arc::new(hashiverse_client))
+}
+
 /// One step of hashiverse's own `SingleTimeline`: the next batch of unseen
 /// posts for the user, mapped into [`AggregatedPost`].
 async fn timeline_get_more(hashiverse_client: &HashiverseClient, user_id_hex: &str) -> anyhow::Result<Vec<AggregatedPost>> {

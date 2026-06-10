@@ -5,6 +5,10 @@ import { pluginReact } from "@rsbuild/plugin-react";
 export default defineConfig({
 	plugins: [pluginReact(), pluginBasicSsl()],
 
+	server: {
+		port: 4000,
+	},
+
 	dev: {
 		hmr: true,
 		liveReload: true,

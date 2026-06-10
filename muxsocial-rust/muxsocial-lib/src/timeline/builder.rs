@@ -80,14 +80,31 @@ impl SharedSourceClients {
             SourceNetwork::Bluesky => NetworkPager::Bluesky(BlueskyPager::new(self.http_transport.clone(), source.id.clone())),
             SourceNetwork::Mastodon => NetworkPager::Mastodon(MastodonPager::new(self.http_transport.clone(), source.id.clone())),
             SourceNetwork::Hashiverse => {
-                let hashiverse_client = self
-                    .hashiverse_client
-                    .clone()
-                    .ok_or_else(|| anyhow::anyhow!("Hashiverse sources are not supported by this client (no Hashiverse client available)"))?;
+                let hashiverse_client = self.ensure_hashiverse_client().await?;
                 NetworkPager::Hashiverse(HashiversePager::new(hashiverse_client, source.id.clone()))
             }
         };
         Ok(SourceTimeline::new(source.clone(), pager))
+    }
+
+    /// The Hashiverse client to page with: the injected one if present (native
+    /// callers inject via [`Self::with_hashiverse_client`]), otherwise — on wasm —
+    /// a lazily-built read-only guest client (cached for reuse). On native with no
+    /// injected client, Hashiverse is unsupported.
+    async fn ensure_hashiverse_client(&mut self) -> anyhow::Result<Arc<HashiverseClient>> {
+        if let Some(hashiverse_client) = &self.hashiverse_client {
+            return Ok(hashiverse_client.clone());
+        }
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+        {
+            let hashiverse_client = crate::sources::hashiverse::build_guest_client().await?;
+            self.hashiverse_client = Some(hashiverse_client.clone());
+            Ok(hashiverse_client)
+        }
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+        {
+            anyhow::bail!("Hashiverse sources are not supported by this client (no Hashiverse client available)")
+        }
     }
 
     /// Build a [`MultiTimeline`] mixing every source, sharing the singleton
