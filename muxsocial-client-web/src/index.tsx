@@ -17,7 +17,7 @@ if (!root_element) {
 createRoot(root_element).render(
 	<React.StrictMode>
 		<MuxThemeProvider>
-			<Notifications />
+			<Notifications position="bottom-center" />
 			<HashRouter>
 				<Routes>
 					<Route path="/" element={<App />} />

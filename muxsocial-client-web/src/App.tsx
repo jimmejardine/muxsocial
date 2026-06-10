@@ -1,10 +1,17 @@
 import { AppShell, Center, Loader } from "@mantine/core";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StatusBar } from "./components/StatusBar.tsx";
 import { TimelineArea } from "./components/TimelineArea.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { Muxsocial, type MuxsocialClientWasmProxy } from "./Muxsocial.ts";
 import type { TimelineConfig } from "./tools/TimelineConfig.ts";
+import { Toast } from "./tools/Toast.ts";
+
+/** The error's message, for interpolation into a toast string. */
+function error_message(err: unknown): string {
+	return err instanceof Error ? err.message : String(err);
+}
 
 const HEADER_HEIGHT = 52;
 const FOOTER_HEIGHT = 32;
@@ -16,6 +23,7 @@ const FOOTER_HEIGHT = 32;
  * returns. Every timeline is addressed by its Rust-minted GUID.
  */
 export function App() {
+	const { t } = useTranslation();
 	const muxsocial_ref = useRef<MuxsocialClientWasmProxy | null>(null);
 	// null while the Rust client is being created and the list loaded.
 	const [timelines, set_timelines] = useState<TimelineConfig[] | null>(null);
@@ -23,38 +31,62 @@ export function App() {
 	useEffect(() => {
 		let cancelled = false;
 		(async () => {
-			const muxsocial = await Muxsocial.create();
-			muxsocial_ref.current = muxsocial;
-			const initial_timelines = (await muxsocial.list_timelines()) as TimelineConfig[];
-			if (!cancelled) {
-				set_timelines(initial_timelines);
+			try {
+				const muxsocial = await Muxsocial.create();
+				muxsocial_ref.current = muxsocial;
+				const initial_timelines = (await muxsocial.list_timelines()) as TimelineConfig[];
+				if (!cancelled) {
+					set_timelines(initial_timelines);
+				}
+			} catch (err) {
+				if (!cancelled) {
+					Toast.error(t("toast.error_load", { message: error_message(err) }));
+				}
 			}
 		})();
 		return () => {
 			cancelled = true;
 		};
-	}, []);
+	}, [t]);
 
 	const add_timeline = useCallback(async () => {
 		const muxsocial = muxsocial_ref.current;
-		if (muxsocial) {
+		if (!muxsocial) return;
+		try {
 			set_timelines((await muxsocial.add_timeline()) as TimelineConfig[]);
+			Toast.success(t("toast.timeline_added"));
+		} catch (err) {
+			Toast.error(t("toast.error_add_timeline", { message: error_message(err) }));
 		}
-	}, []);
+	}, [t]);
 
-	const remove_timeline = useCallback(async (id: string) => {
-		const muxsocial = muxsocial_ref.current;
-		if (muxsocial) {
-			set_timelines((await muxsocial.remove_timeline(id)) as TimelineConfig[]);
-		}
-	}, []);
+	const remove_timeline = useCallback(
+		async (id: string) => {
+			const muxsocial = muxsocial_ref.current;
+			if (!muxsocial) return;
+			try {
+				set_timelines((await muxsocial.remove_timeline(id)) as TimelineConfig[]);
+				Toast.success(t("toast.timeline_removed"));
+			} catch (err) {
+				Toast.error(t("toast.error_remove_timeline", { message: error_message(err) }));
+			}
+		},
+		[t],
+	);
 
-	const add_source = useCallback(async (id: string, address: string) => {
-		const muxsocial = muxsocial_ref.current;
-		if (muxsocial) {
-			set_timelines((await muxsocial.add_source_to_timeline(id, address)) as TimelineConfig[]);
-		}
-	}, []);
+	const add_source = useCallback(
+		async (id: string, address: string) => {
+			const muxsocial = muxsocial_ref.current;
+			if (!muxsocial) return;
+			try {
+				set_timelines((await muxsocial.add_source_to_timeline(id, address)) as TimelineConfig[]);
+				Toast.success(t("toast.source_added"));
+			} catch (err) {
+				Toast.error(t("toast.error_add_source", { message: error_message(err) }));
+			}
+		},
+		[t],
+	);
 
 	// The timeline area's height is calc(100dvh - header - footer); expose the
 	// header/footer heights as CSS vars so that calc stays in sync with AppShell.

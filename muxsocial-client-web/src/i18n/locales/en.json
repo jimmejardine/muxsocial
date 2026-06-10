@@ -8,5 +8,12 @@
 	"status.timelines_one": "{{count}} timeline",
 	"status.timelines_other": "{{count}} timelines",
 	"theme.label": "Theme",
-	"language.label": "Language"
+	"language.label": "Language",
+	"toast.timeline_added": "Timeline added",
+	"toast.timeline_removed": "Timeline removed",
+	"toast.source_added": "Source added",
+	"toast.error_load": "Failed to load timelines: {{message}}",
+	"toast.error_add_timeline": "Failed to add timeline: {{message}}",
+	"toast.error_remove_timeline": "Failed to remove timeline: {{message}}",
+	"toast.error_add_source": "Failed to add source: {{message}}"
 }
