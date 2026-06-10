@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 publish = false
+repository = "https://github.com/jimmejardine/muxsocial/tree/main/muxsocial-rust/muxsocial-client-wasm"
 description = "This library provides the rust/wasm backend for the associated muxsocial-client-web folder."
 
 [lints]
