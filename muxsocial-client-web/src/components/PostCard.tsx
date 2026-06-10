@@ -1,5 +1,6 @@
 import { Group, Stack, Text } from "@mantine/core";
 import type { Post } from "../tools/Post.ts";
+import { RelativeTimeAgo } from "../tools/RelativeTimeAgo.tsx";
 import { PostBody } from "./PostBody.tsx";
 import classes from "./PostCard.module.css";
 
@@ -26,7 +27,7 @@ export function PostCard({ post }: PostCardProps) {
 				<PostBody content_html={post.content_html} />
 			</div>
 			<Text size="xs" c="dimmed">
-				{timestamp}
+				{timestamp} · <RelativeTimeAgo date_millis={post.created_at_millis} />
 			</Text>
 		</Stack>
 	);
