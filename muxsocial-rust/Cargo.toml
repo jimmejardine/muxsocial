@@ -36,6 +36,10 @@ muxsocial-lib = { path = "muxsocial-lib", version = "0.0.0" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 hex = "0.4.3"
+# Boxed async fns in object-safe traits (ConfigStorage). `?Send` on wasm.
+async-trait = "0.1.89"
+# Browser key/value persistence for the GUI ConfigStorage backend (wasm only).
+indexed_db_futures = { version = "0.6.4", features = ["serde"] }
 # RFC3339 timestamp parsing for normalizing post times to epoch millis.
 # default-features off avoids the `clock`/`now()` path so it builds clean on wasm.
 chrono = { version = "0.4.44", default-features = false, features = ["alloc"] }

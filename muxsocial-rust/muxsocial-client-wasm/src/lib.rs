@@ -1,3 +1,6 @@
+#![feature(try_blocks)]
+
+pub mod indexed_db_config_storage;
 pub mod muxsocial_client_wasm;
 
 use log::{info, trace};

@@ -10,6 +10,11 @@ description = "Core library for mux.social: aggregation of Hashiverse, nostr, Ma
 [lints]
 workspace = true
 
+[features]
+# Exposes the backend-agnostic `config_storage::tests` suite so the wasm client
+# crate can run it against its IndexedDB backend.
+generic-tests = []
+
 [dependencies]
 anyhow = { workspace = true }
 log = { workspace = true }
@@ -18,6 +23,7 @@ serde_json = { workspace = true }
 hex = { workspace = true }
 chrono = { workspace = true }
 http = { workspace = true }
+async-trait = { workspace = true }
 
 # Source-network protocol libraries. All must build for native AND wasm32, so
 # only wasm-clean crates live here (hashiverse-lib, not the native-only
