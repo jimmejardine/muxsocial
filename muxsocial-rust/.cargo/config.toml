@@ -1,3 +1,14 @@
+# hashiverse-lib's config.rs derives `TESTING = cfg!(any(test, debug_assertions))`
+# and `POW_REDUCTION_FACTOR = if TESTING { 16 } else { 1 }`, which divides every
+# `POW_MINIMUM_*` constant. So a debug build of hashiverse-lib computes a
+# 16x-reduced proof-of-work that the live (production) network rejects — reads
+# come back "no post bundles discovered". Turning debug-assertions off makes
+# TESTING=false so the client computes the full network-required PoW; opt-level 3
+# keeps that (now 16x harder) PoW fast enough to finish in its time budget.
+[profile.dev.package.hashiverse-lib]
+opt-level = 3
+debug-assertions = false
+
 [target.wasm32-unknown-unknown]
 rustflags = ["-C", "target-feature=+simd128"]
 

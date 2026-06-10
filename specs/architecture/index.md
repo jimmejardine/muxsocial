@@ -30,6 +30,7 @@ The build toolchain mirrors the one proven in the Hashiverse project.
 - `wasm-bindgen` 0.2.108, crate-type `["cdylib", "rlib"]`.
 - `wasm_init(verbose)` must be called once per worker before use: it wires `fern` → `console_log` logging and sets `console_error_panic_hook`.
 - Deferred dependencies (not yet needed by the skeleton; versions recorded here to stay in lockstep with Hashiverse when added): serde 1.0.228, serde-wasm-bindgen 0.6.5, tsify 0.5.6 (js feature), web-sys 0.3, tokio 1.45, gloo-net 0.6.0, indexed_db_futures 0.6.4.
+- The wasm build needs a **clang toolchain on `PATH`**: nostr's `secp256k1-sys` is C and is cross-compiled to wasm by cc-rs/clang. This is a muxsocial-specific requirement — hashiverse is C-free on wasm (pure-Rust crypto, with `ring` gated off the wasm target), but nostr's secp256k1 has no pure-Rust substitute. See the README for the Windows LLVM setup.
 
 ### Web client (`/muxsocial-client-web`)
 
