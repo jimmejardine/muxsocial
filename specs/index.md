@@ -1,6 +1,6 @@
-# Muxsocial Specification
+# mux.social Specification
 
-Muxsocial is an open source social media tool that aggregates posts from the top tier open source social media networks: Hashiverse, nostr, Mastodon, and Bluesky. It is a serverless SPA — everything lives in the browser.
+mux.social is an open source social media tool that aggregates posts from the top tier open source social media networks: Hashiverse, nostr, Mastodon, and Bluesky. It is a serverless SPA — everything lives in the browser.
 
 ## How this specification is organised
 

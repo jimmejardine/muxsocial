@@ -2,7 +2,7 @@
 
 ## Overview
 
-Muxsocial is a serverless SPA. There is no backend server — the only hosted artifact is the static SPA bundle. All aggregation, protocol handling, and storage happens in the browser.
+mux.social is a serverless SPA. There is no backend server — the only hosted artifact is the static SPA bundle. All aggregation, protocol handling, and storage happens in the browser.
 
 The application is layered:
 

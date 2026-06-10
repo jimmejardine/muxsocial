@@ -25,6 +25,6 @@ An index.md will describe the specification covered in each subfolder, and will 
 
 - Be direct and not obseqious.  I don't need flattery.
 - Prefer long variables names like are already in the codebase - generally prefer `encoded_post_bundle_feedback: EncodedPostBundleFeedbackV1` and `let bytes_gatherer: BytesGatherer = xxx` over `let g: BytesGatherer = xxx` 
-- In git, omit "Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>" from commit messages
+- Do not autmoatically stage or commit to git.  If ever I ask you to commit, omit "Co-Authored-By: xxx" from commit messages
 - Every suggested addition or refactor should be able to be tested using tests - write them if they are missing.  For a refactor, lets write any missing tests and test them before doing the refactor.
 - All strings in both rust and typescript should be " delimited, not '

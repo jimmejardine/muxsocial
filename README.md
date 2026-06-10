@@ -1,8 +1,8 @@
-# muxsocial
+# mux.social
 
 An open source social media tool that aggregates posts from the top tier open source social media networks: Hashiverse, nostr, Mastodon, and Bluesky.
 
-Muxsocial is a serverless SPA (single page application). There is no server other than the hosting of the SPA — everything lives in the browser. The heavy lifting is done in Rust compiled to WASM; the GUI is React/Mantine.
+mux.social is a serverless SPA (single page application). There is no server other than the hosting of the SPA — everything lives in the browser. The heavy lifting is done in Rust compiled to WASM; the GUI is React/Mantine.
 
 ## Repository layout
 

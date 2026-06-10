@@ -2,7 +2,7 @@ use clap::Parser;
 use muxsocial_lib::greeting::compose_greeting_message;
 
 #[derive(Parser, Debug, Clone)]
-#[command(name = "test-harness", about = "Muxsocial long-running integration test harness")]
+#[command(name = "test-harness", about = "mux.social long-running integration test harness")]
 struct TestHarnessArguments {
     /// Recipient name used for the end-to-end greeting check
     #[arg(long, default_value = "integration-harness")]

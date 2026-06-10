@@ -15,7 +15,7 @@ function HomePage() {
 		let cancelled = false;
 		(async () => {
 			const muxsocial_client_proxy = await Muxsocial.create();
-			const composed_greeting_message = await muxsocial_client_proxy.compose_greeting("muxsocial");
+			const composed_greeting_message = await muxsocial_client_proxy.compose_greeting("mux.social");
 			if (!cancelled) {
 				set_greeting_message(composed_greeting_message);
 			}

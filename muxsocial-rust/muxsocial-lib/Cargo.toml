@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Core library for muxsocial: aggregation of Hashiverse, nostr, Mastodon, and Bluesky."
+description = "Core library for mux.social: aggregation of Hashiverse, nostr, Mastodon, and Bluesky."
 
 [lints]
 workspace = true
