@@ -25,7 +25,12 @@ struct TestHarnessArguments {
 /// otherwise noisy infra crates are silenced so muxsocial and the network SDKs
 /// stay readable. The GUI logs the same `log` events via `wasm_init` instead.
 fn configure_logging_listener(level: &str) {
-    let default_filter: String = format!("{level},hyper=off,reqwest=off,rustls=off,h2=off,hickory_resolver=off,hickory_proto=off,tokio_tungstenite=off,tungstenite=off,mio=off,want=off");
+    // The third-party social-network client SDKs are chatty at trace/debug; pin
+    // them to `warn` so muxsocial's own `sources::*` lines stay readable. Mastodon
+    // has no SDK (it's our own REST client over the HTTP transport).
+    let social_clients_at_warn: &str = "nostr=warn,nostr_sdk=warn,nostr_relay_pool=warn,nostr_database=warn,nostr_gossip=warn,async_wsocket=warn,atrium_api=warn,atrium_common=warn,atrium_xrpc=warn,hashiverse_lib=warn,hashiverse_client_rust=warn";
+    let noisy_infra_off: &str = "hyper=off,reqwest=off,rustls=off,h2=off,hickory_resolver=off,hickory_proto=off,tokio_tungstenite=off,tungstenite=off,mio=off,want=off";
+    let default_filter: String = format!("{level},{social_clients_at_warn},{noisy_infra_off}");
     let env_filter: EnvFilter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(default_filter));
 
     tracing_subscriber::registry().with(fmt::layer()).with(env_filter).init();
