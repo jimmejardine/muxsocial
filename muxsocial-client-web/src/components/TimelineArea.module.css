@@ -12,7 +12,11 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	/* Center the image + message at 1/3 of the area's height (higher than the
+	   default 50%): a bottom padding of 1/3 shrinks the centering box to the top
+	   2/3, so its midpoint sits at 1/3 from the top. */
 	justify-content: center;
+	padding-bottom: calc((100dvh - var(--mux-header-height) - var(--mux-footer-height)) / 3);
 	gap: var(--mantine-spacing-md);
 	width: 100%;
 	height: calc(100dvh - var(--mux-header-height) - var(--mux-footer-height));

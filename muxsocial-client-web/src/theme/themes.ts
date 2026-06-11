@@ -55,8 +55,8 @@ export const MUX_THEMES: MuxTheme[] = [
 	},
 ];
 
-/** The theme used when nothing is stored and on unknown ids. */
-export const DEFAULT_THEME_ID = "dark";
+/** The theme used when nothing is stored and on unknown ids — the default newcomers see. */
+export const DEFAULT_THEME_ID = "electric";
 
 /** Look up a theme by id, falling back to the default theme. */
 export function resolveTheme(id: string | null | undefined): MuxTheme {

@@ -19,14 +19,14 @@ interface MuxThemeContextValue {
 
 const MuxThemeContext = createContext<MuxThemeContextValue | null>(null);
 
-/** Pick the initial theme id: stored choice, else the OS color-scheme preference. */
+/** Pick the initial theme id: the stored choice if any, else the default theme
+ *  (electric) for newcomers. */
 function initial_theme_id(): string {
 	const stored = localStorage.getItem(STORAGE_KEY);
 	if (stored && MUX_THEMES.some((theme) => theme.id === stored)) {
 		return stored;
 	}
-	const prefers_dark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-	return prefers_dark ? "dark" : "light";
+	return DEFAULT_THEME_ID;
 }
 
 /**
