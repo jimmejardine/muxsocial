@@ -61,15 +61,8 @@ atrium-xrpc = "0.12"
 # Hashiverse: core protocol lib (native + wasm). The ergonomic native wrapper
 # (sqlite/disk/bootstrap defaults) is hashiverse-client-rust — native only, used
 # by the integration tests, never by muxsocial-lib (which must stay wasm-clean).
-#
-# TEMPORARY: pointed at the local hashiverse workspace to validate unpublished
-# changes (the browser runtime services moved into hashiverse-lib). Both crates
-# must share one source or two incompatible hashiverse-lib copies result. Revert
-# to crates.io once a release ships:
-#   hashiverse-lib = "1.0.8"
-#   hashiverse-client-rust = "1.0.8"
-hashiverse-lib = { path = "../../hashiverse/hashiverse-rust/hashiverse-lib" }
-hashiverse-client-rust = { path = "../../hashiverse/hashiverse-rust/hashiverse-client-rust" }
+hashiverse-lib = "1.0.8"
+hashiverse-client-rust = "1.0.8"
 
 # HTTP transport backends (cfg-gated in muxsocial-lib).
 # Native: reqwest with rustls (no native-tls/openssl).

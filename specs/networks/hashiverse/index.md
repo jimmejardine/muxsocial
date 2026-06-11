@@ -17,13 +17,6 @@ single-threaded PoW).
 already-constructed `HashiverseClient`; in the browser, muxsocial builds its own
 read-only **guest** client from `hashiverse-lib` (see below).
 
-> **Temporary (pending a 1.0.8 release):** the workspace `[workspace.dependencies]`
-> point `hashiverse-lib` **and** `hashiverse-client-rust` at the local
-> `../../hashiverse/hashiverse-rust` checkout (path deps), to validate unpublished
-> changes. Both must share one source or two incompatible `hashiverse-lib` copies
-> result (a mismatched `HashiverseClient` type). Revert both to crates.io version
-> strings once published.
-
 ## Browser guest client
 
 `sources::hashiverse::build_guest_client` (wasm32 only) assembles a guest
