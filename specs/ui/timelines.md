@@ -40,8 +40,12 @@ on success/failure.
   The initial pull (and the pull when a source changes) is automatic regardless. The flag is
   persisted per timeline (`TimelineConfig.autopoll`).
 - A **remove** (✕) button that opens a [`ConfirmModal`](#confirm-before-remove) before deleting.
-- A compact, single-line **source row** (scrolls horizontally when it overflows) that holds an
-  **add-source input** as its first item followed by one **source chip** per source. The add-source input is a `<form>`: paste an
+- A compact, single-line **source row** (scrolls horizontally when it overflows) that holds a
+  **paste button** + an **add-source input** as its first items, followed by one **source chip**
+  per source. The paste button (left of the input) reads the clipboard and adds it as a source
+  via the same parse-and-add path as the input — a valid id is added (success toast), an invalid
+  one or a clipboard-read failure raises an error toast; nothing goes into the input. The
+  add-source input is a `<form>`: paste an
   identifier and press Enter/Go, or tap the add (+) button, to add a source (the form submit
   works on mobile where a bare Enter keydown doesn't). It sits inline as the first chip (rather
   than in its own row) to save vertical space, and pulses (`.mux-throb`) while the lone timeline

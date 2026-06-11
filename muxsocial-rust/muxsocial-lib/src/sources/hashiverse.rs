@@ -80,7 +80,7 @@ async fn timeline_get_more(hashiverse_client: &HashiverseClient, user_id_hex: &s
     let (timeline_posts, _oldest_processed_time_millis) = hashiverse_client.single_timeline_get_more(BucketType::User, &user_id).await.context("reading hashiverse user timeline")?;
     log::debug!("hashiverse: read {} timeline post(s) for {user_id_hex}", timeline_posts.len());
 
-    Ok(timeline_posts.into_iter().map(|(bucket_location, encoded_post, _body_bytes, _was_healed)| map_encoded_post(encoded_post, &bucket_location)).collect())
+    Ok(timeline_posts.into_iter().map(|(bucket_location, encoded_post, _body_bytes, _was_healed)| map_encoded_post(encoded_post, &bucket_location, user_id_hex)).collect())
 }
 
 /// A timeline pager for a single Hashiverse user — a thin wrapper over
@@ -120,13 +120,15 @@ impl SourcePager for HashiversePager {
 /// `{base}/#/post/{post_id}/{bucket_location}`.
 const HASHIVERSE_POST_URL_BASE: &str = "https://app.hashiverse.com";
 
-fn map_encoded_post(encoded_post: EncodedPostV1, bucket_location: &BucketLocation) -> AggregatedPost {
+fn map_encoded_post(encoded_post: EncodedPostV1, bucket_location: &BucketLocation, author_id_hex: &str) -> AggregatedPost {
     let post_id_hex = encoded_post.post_id.to_hex_str();
     let post_url = format!("{HASHIVERSE_POST_URL_BASE}/#/post/{}/{}", percent_encode_component(&post_id_hex), percent_encode_component(&bucket_location.to_html_attr()),);
     AggregatedPost {
         source: SourceNetwork::Hashiverse,
         source_post_id: post_id_hex,
-        author_identifier: hex::encode(encoded_post.header.verification_key_bytes.0),
+        // The posts come from this user's bucket, so the author is the user id that
+        // was added (matching its source chip) — not the post's per-post verification key.
+        author_identifier: author_id_hex.to_string(),
         author_display_name: None,
         created_at_millis: encoded_post.header.time_millis.0,
         // Hashiverse post bodies are HTML; any media is inline there.

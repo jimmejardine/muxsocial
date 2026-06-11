@@ -32,5 +32,6 @@ async fn pulls_recent_posts_from_hashiverse() {
     for post in &posts {
         assert_eq!(post.source, SourceNetwork::Hashiverse);
         assert!(!post.source_post_id.is_empty(), "post should have an id");
+        assert_eq!(post.author_identifier, user_id_hex, "post should be attributed to the requested user id");
     }
 }
