@@ -11,7 +11,7 @@
 
 use anyhow::anyhow;
 use atrium_api::app::bsky::embed::record_with_media::ViewMediaRefs;
-use atrium_api::app::bsky::feed::defs::PostViewEmbedRefs;
+use atrium_api::app::bsky::feed::defs::{FeedViewPostReasonRefs, PostViewEmbedRefs};
 use atrium_api::app::bsky::feed::{get_author_feed, post};
 use atrium_api::app::bsky::richtext::facet::{Main as Facet, MainFeaturesItem};
 use atrium_api::types::string::AtIdentifier;
@@ -182,6 +182,19 @@ impl SourcePager for BlueskyPager {
     }
 }
 
+/// The reposter's friendly name (display name, else handle) when this feed item is
+/// a repost — in which case `post.author` is the *original* poster and `reason.by`
+/// is the account (the requested actor) that reposted it. `None` for ordinary posts.
+fn reposter_name(reason: &Option<Union<FeedViewPostReasonRefs>>) -> Option<String> {
+    match reason {
+        Some(Union::Refs(FeedViewPostReasonRefs::ReasonRepost(repost))) => {
+            let by = &repost.by;
+            Some(by.display_name.clone().filter(|name| !name.is_empty()).unwrap_or_else(|| by.handle.as_str().to_string()))
+        }
+        _ => None,
+    }
+}
+
 fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedViewPost) -> anyhow::Result<AggregatedPost> {
     let post_view = &feed_view_post.post;
 
@@ -199,11 +212,22 @@ fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedVi
 
     let created_at_millis = record_created_at_millis.or_else(|| parse_rfc3339_to_epoch_millis(post_view.indexed_at.as_str()).ok()).unwrap_or_default();
 
+    // getAuthorFeed includes the actor's reposts, whose `post.author` is the original
+    // poster. Label those "{reposter} → {original}" so a single source stays legible
+    // rather than silently showing many authors; non-reposts are unchanged.
+    let author_display_name = match reposter_name(&feed_view_post.reason) {
+        Some(reposter) => {
+            let original = post_view.author.display_name.clone().filter(|name| !name.is_empty()).unwrap_or_else(|| post_view.author.handle.as_str().to_string());
+            Some(format!("{reposter} → {original}"))
+        }
+        None => post_view.author.display_name.clone(),
+    };
+
     Ok(AggregatedPost {
         source: SourceNetwork::Bluesky,
         source_post_id: post_view.uri.clone(),
         author_identifier: post_view.author.handle.as_str().to_string(),
-        author_display_name: post_view.author.display_name.clone(),
+        author_display_name,
         created_at_millis,
         content_html,
         // Permalink from the stable DID + the AT-URI's rkey; the handle can change.
@@ -320,6 +344,19 @@ mod tests {
 
     fn facets_from_json(json: &str) -> Vec<Facet> {
         serde_json::from_str(json).expect("valid facets json")
+    }
+
+    #[test]
+    fn reposter_name_from_repost_reason() {
+        // Deserialize just the reason (avoids constructing a full PostView/CID).
+        let reason: Union<FeedViewPostReasonRefs> = serde_json::from_value(serde_json::json!({
+            "$type": "app.bsky.feed.defs#reasonRepost",
+            "by": { "did": "did:plc:abc123", "handle": "reposter.test", "displayName": "Reposter" },
+            "indexedAt": "2024-01-01T00:00:00.000Z"
+        }))
+        .expect("reasonRepost should deserialize");
+        assert_eq!(reposter_name(&Some(reason)).as_deref(), Some("Reposter"));
+        assert_eq!(reposter_name(&None), None);
     }
 
     #[test]

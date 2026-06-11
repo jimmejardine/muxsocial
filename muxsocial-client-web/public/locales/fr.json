@@ -7,6 +7,7 @@
 	"timeline.name_label": "Nom de la timeline",
 	"timeline.address_placeholder": "Collez une adresse et appuyez sur Entrée…",
 	"timeline.add_source": "Ajouter une source",
+	"timeline.paste": "Coller l'ID",
 	"timeline.no_sources": "Aucune source pour l'instant. Collez une adresse ci-dessus pour en ajouter une.",
 	"timeline.get_more": "Charger plus de publications",
 	"timeline.no_posts": "Aucune publication pour l'instant. Utilisez \"Charger plus de publications\" pour en récupérer.",
@@ -39,5 +40,6 @@
 	"toast.source_removed": "Source supprimée",
 	"toast.address_copied": "Adresse copiée dans le presse-papiers",
 	"toast.error_copy": "Échec de la copie : {{message}}",
+	"toast.error_paste": "Échec de la lecture du presse-papiers : {{message}}",
 	"toast.error_remove_source": "Échec de la suppression de la source : {{message}}"
 }

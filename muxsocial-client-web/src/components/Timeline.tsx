@@ -86,6 +86,22 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 		})();
 	};
 
+	// Add a source straight from the clipboard: hand the text to the same parse-and-add
+	// path as the textbox, which adds it (with a toast) when valid and toasts the parse
+	// error when not. This catch only fires when reading the clipboard itself fails.
+	const paste_address = () => {
+		void (async () => {
+			try {
+				const clipboard_text = (await navigator.clipboard.readText()).trim();
+				if (clipboard_text.length > 0) {
+					on_add_source(timeline.id, clipboard_text);
+				}
+			} catch (err) {
+				Toast.error(t("toast.error_paste", { message: err instanceof Error ? err.message : String(err) }));
+			}
+		})();
+	};
+
 	return (
 		<section className={classes.timeline} aria-label={default_title}>
 			<Group className={classes.miniToolbar} justify="space-between" wrap="nowrap" gap="xs">
@@ -128,6 +144,9 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 			    vertical space. A real form so the mobile keyboard's "Go" submits (a bare
 			    onKeyDown Enter doesn't fire reliably on phones); the add button is the tap target. */}
 			<Group className={classes.sourceChips} gap={4} wrap="nowrap">
+				<ActionIcon size="md" variant="light" radius="sm" aria-label={t("timeline.paste")} title={t("timeline.paste")} onClick={paste_address}>
+					<PasteIcon />
+				</ActionIcon>
 				<form
 					className={classes.addSourceForm}
 					onSubmit={(event) => {
@@ -220,6 +239,16 @@ function AddIcon() {
 	return (
 		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
 			<path d="M12 5v14m-7 -7h14" />
+		</svg>
+	);
+}
+
+/** A clipboard glyph, used on the paste-an-id button. Inherits `currentColor`. */
+function PasteIcon() {
+	return (
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+			<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+			<path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
 		</svg>
 	);
 }

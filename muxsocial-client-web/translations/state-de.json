@@ -7,6 +7,7 @@
 	"timeline.name_label": "2f00",
 	"timeline.address_placeholder": "7995",
 	"timeline.add_source": "6ea6",
+	"timeline.paste": "6664",
 	"timeline.no_sources": "2152",
 	"timeline.get_more": "c9f7",
 	"timeline.no_posts": "3fdb",
@@ -39,5 +40,6 @@
 	"toast.source_removed": "8d63",
 	"toast.address_copied": "b000",
 	"toast.error_copy": "c6d9",
+	"toast.error_paste": "b6a9",
 	"toast.error_remove_source": "30d3"
 }

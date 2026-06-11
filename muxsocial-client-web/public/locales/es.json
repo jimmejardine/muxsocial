@@ -7,6 +7,7 @@
 	"timeline.name_label": "Nombre de la cronología",
 	"timeline.address_placeholder": "Pega una dirección y pulsa Enter…",
 	"timeline.add_source": "Añadir fuente",
+	"timeline.paste": "Pegar ID",
 	"timeline.no_sources": "Aún no hay fuentes. Pega una dirección arriba para añadir una.",
 	"timeline.get_more": "Cargar más publicaciones",
 	"timeline.no_posts": "Aún no hay publicaciones. Usa \"Cargar más publicaciones\" para obtener algunas.",
@@ -39,5 +40,6 @@
 	"toast.source_removed": "Fuente eliminada",
 	"toast.address_copied": "Dirección copiada al portapapeles",
 	"toast.error_copy": "No se pudo copiar: {{message}}",
+	"toast.error_paste": "No se pudo leer el portapapeles: {{message}}",
 	"toast.error_remove_source": "No se pudo eliminar la fuente: {{message}}"
 }
