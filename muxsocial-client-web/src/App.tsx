@@ -133,7 +133,7 @@ export function App() {
 		<MuxsocialContext.Provider value={muxsocial_client}>
 			<AppShell header={{ height: HEADER_HEIGHT }} footer={{ height: FOOTER_HEIGHT }} padding={0} style={content_height_vars}>
 				<AppShell.Header>
-					<Toolbar on_add_timeline={add_timeline} />
+					<Toolbar on_add_timeline={add_timeline} highlight={timelines !== null && timelines.length === 0} />
 				</AppShell.Header>
 
 				<AppShell.Main>

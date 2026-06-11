@@ -17,6 +17,9 @@ on success/failure.
 
 - `Toolbar` (`components/Toolbar.tsx`) — the app logo + "mux.social" title (left) plus the
   [language](localization.md) and [theme](theming.md) switchers and an **Add timeline** button.
+  As an onboarding cue, the Add-timeline button pulses (the global `.mux-throb` glow,
+  reduced-motion aware) while there are no timelines; the address box pulses the same way when
+  the lone timeline still has no sources.
 - `StatusBar` (`components/StatusBar.tsx`) — the timeline count and a version link to the
   GitHub releases page (the version comes from the WASM `version()`).
 - `TimelineArea` (`components/TimelineArea.tsx`) — lays the columns side by side (each at least

@@ -32,7 +32,16 @@ export function TimelineArea({ timelines, on_remove, on_add_source, on_remove_so
 	return (
 		<div className={classes.area}>
 			{timelines.map((timeline, index) => (
-				<Timeline key={timeline.id} timeline={timeline} index={index} on_remove={on_remove} on_add_source={on_add_source} on_remove_source={on_remove_source} on_set_name={on_set_name} />
+				<Timeline
+					key={timeline.id}
+					timeline={timeline}
+					index={index}
+					highlight_add_source={timelines.length === 1 && timeline.sources.length === 0}
+					on_remove={on_remove}
+					on_add_source={on_add_source}
+					on_remove_source={on_remove_source}
+					on_set_name={on_set_name}
+				/>
 			))}
 		</div>
 	);

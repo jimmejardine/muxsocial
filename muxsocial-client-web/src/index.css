@@ -13,3 +13,25 @@ body {
 body {
 	background: var(--mux-app-bg, var(--mantine-color-body));
 }
+
+/* Onboarding attention cue: a pulsing glow ring (follows the element's own
+   border-radius, no layout shift). Applied to the Add-timeline button and the
+   address box at the relevant onboarding steps. */
+@keyframes mux-throb {
+	0% {
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--mantine-primary-color-filled) 95%, transparent);
+	}
+	100% {
+		box-shadow: 0 0 0 14px color-mix(in srgb, var(--mantine-primary-color-filled) 0%, transparent);
+	}
+}
+
+.mux-throb {
+	animation: mux-throb 1.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mux-throb {
+		animation: none;
+	}
+}

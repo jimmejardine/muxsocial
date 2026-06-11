@@ -16,6 +16,8 @@ import classes from "./Timeline.module.css";
 interface TimelineProps {
 	timeline: TimelineConfig;
 	index: number;
+	/** Pulse the address box for attention (the lone timeline has no sources yet). */
+	highlight_add_source?: boolean;
 	on_remove: (id: string) => void;
 	on_add_source: (id: string, address: string) => void;
 	on_remove_source: (id: string, network: string, source_id: string) => void;
@@ -30,7 +32,7 @@ interface TimelineProps {
  * sources come from the Rust snapshot; the posts come from {@link usePosts}, which
  * holds the rendered window and pages it via the Rust client.
  */
-export function Timeline({ timeline, index, on_remove, on_add_source, on_remove_source, on_set_name }: TimelineProps) {
+export function Timeline({ timeline, index, highlight_add_source, on_remove, on_add_source, on_remove_source, on_set_name }: TimelineProps) {
 	const { t } = useTranslation();
 	const [address, set_address] = useState("");
 	// Local draft of the custom name; the effective name (default) is the placeholder.
@@ -50,6 +52,15 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_remove_
 		if (trimmed_address.length > 0) {
 			on_add_source(timeline.id, trimmed_address);
 			set_address("");
+		}
+	};
+
+	// An empty timeline has nothing to lose, so skip the confirm dialog; otherwise ask.
+	const request_remove = () => {
+		if (timeline.sources.length === 0) {
+			on_remove(timeline.id);
+		} else {
+			confirm_handlers.open();
 		}
 	};
 
@@ -95,13 +106,14 @@ export function Timeline({ timeline, index, on_remove, on_add_source, on_remove_
 					<Button size="xs" variant="light" onClick={getMore} loading={loading}>
 						{t("timeline.get_more")}
 					</Button>
-					<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={confirm_handlers.open} />
+					<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={request_remove} />
 				</Group>
 			</Group>
 
 			<div className={classes.addressBar}>
 				<TextInput
 					size="xs"
+					classNames={{ input: highlight_add_source ? "mux-throb" : undefined }}
 					placeholder={t("timeline.address_placeholder")}
 					value={address}
 					onChange={(event) => set_address(event.currentTarget.value)}

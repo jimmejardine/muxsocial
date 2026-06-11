@@ -5,10 +5,12 @@ import { ThemeSwitcher } from "./ThemeSwitcher.tsx";
 
 interface ToolbarProps {
 	on_add_timeline: () => void;
+	/** Pulse the Add-timeline button for attention (no timelines yet). */
+	highlight?: boolean;
 }
 
 /** The top toolbar: app title, theme/language switchers, and the "Add timeline" button. */
-export function Toolbar({ on_add_timeline }: ToolbarProps) {
+export function Toolbar({ on_add_timeline, highlight }: ToolbarProps) {
 	const { t } = useTranslation();
 
 	return (
@@ -20,7 +22,7 @@ export function Toolbar({ on_add_timeline }: ToolbarProps) {
 			<Group gap="xs" wrap="nowrap">
 				<LanguageSwitcher />
 				<ThemeSwitcher />
-				<Button size="xs" onClick={on_add_timeline}>
+				<Button size="xs" onClick={on_add_timeline} className={highlight ? "mux-throb" : undefined}>
 					{t("toolbar.add_timeline")}
 				</Button>
 			</Group>
