@@ -198,11 +198,11 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 function SourceChip({ source, on_copy, on_remove, remove_label }: { source: SourceConfig; on_copy: () => void; on_remove: () => void; remove_label: string }) {
 	return (
 		<Badge
-			size="sm"
+			size="md"
 			variant="light"
 			radius="sm"
 			color={networkColor(source.network)}
-			rightSection={<CloseButton size="xs" aria-label={remove_label} title={remove_label} onClick={on_remove} />}
+			rightSection={<CloseButton size="sm" aria-label={remove_label} title={remove_label} onClick={on_remove} />}
 		>
 			{/* Click the label to copy the full address; the full id is also the tooltip. */}
 			<UnstyledButton onClick={on_copy} title={`${source.network}: ${source.id}`} style={{ font: "inherit", color: "inherit", cursor: "pointer" }}>
