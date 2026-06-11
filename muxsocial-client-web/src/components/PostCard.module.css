@@ -19,6 +19,8 @@
 	position: sticky;
 	top: 0;
 	z-index: 1;
+	/* Keep the translucent tint but frost whatever scrolls under the sticky bar. */
+	backdrop-filter: blur(6px);
 }
 
 /* When the source bar links to the original post, give it link affordance
@@ -56,7 +58,8 @@ a.sourceBar:hover {
 .content {
 	flex: 1;
 	min-width: 0;
-	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+	/* Extra bottom padding separates the message from the next post's sticky header. */
+	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm) var(--mantine-spacing-md);
 }
 
 /* Keep network-sourced HTML from breaking the column layout. */

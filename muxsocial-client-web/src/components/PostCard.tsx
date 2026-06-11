@@ -23,7 +23,13 @@ export function PostCard({ post }: PostCardProps) {
 	const author = post.author_display_name ?? truncate_source_id(post.source, post.author_identifier);
 
 	const color = networkColor(post.source);
-	const source_bar_style = { backgroundColor: `var(--mantine-color-${color}-light)`, color: `var(--mantine-color-${color}-light-color)` };
+	// Two stacked copies of the translucent `-light` tint raise its opacity a little
+	// (still see-through, so the sticky bar's backdrop blur keeps working).
+	const source_bar_style = {
+		backgroundColor: `var(--mantine-color-${color}-light)`,
+		backgroundImage: `linear-gradient(var(--mantine-color-${color}-light), var(--mantine-color-${color}-light))`,
+		color: `var(--mantine-color-${color}-light-color)`,
+	};
 	const source_label = <span className={classes.sourceLabel}>{author}</span>;
 	const source_date = (
 		<span className={classes.sourceDate}>
