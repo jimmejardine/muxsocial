@@ -40,17 +40,19 @@ on success/failure.
   The initial pull (and the pull when a source changes) is automatic regardless. The flag is
   persisted per timeline (`TimelineConfig.autopoll`).
 - A **remove** (✕) button that opens a [`ConfirmModal`](#confirm-before-remove) before deleting.
-- An **address bar** (a `<form>`): paste an identifier and press Enter/Go, or tap the add (+)
-  button, to add a source (the form submit works on mobile where a bare Enter keydown doesn't).
-  The Rust
+- A compact, single-line **source row** (scrolls horizontally when it overflows) that holds an
+  **add-source input** as its first item followed by one **source chip** per source. The add-source input is a `<form>`: paste an
+  identifier and press Enter/Go, or tap the add (+) button, to add a source (the form submit
+  works on mobile where a bare Enter keydown doesn't). It sits inline as the first chip (rather
+  than in its own row) to save vertical space, and pulses (`.mux-throb`) while the lone timeline
+  has no sources. The Rust
   `parse_source_address` (`timeline_registry.rs`) detects the network — an explicit
   `network:identifier` prefix (`nostr:` / `bluesky:`|`bsky:` / `mastodon:`|`masto:` /
   `hashiverse:`|`hash:`) always wins, otherwise `@user@host` → Mastodon, `npub1…` → nostr,
   `did:plc:…` or a bare dotted handle → Bluesky, and a bare 64-hex string → Hashiverse.
-- A compact row of **source chips** — one per source, colored by network
-  ([`theme/networkColors.ts`](theming.md)) and showing `network: id`. Long opaque ids
-  (Nostr `npub…`, Hashiverse hex) are shortened to `first8…last3` via
-  `truncate_source_id` (full id in the tooltip); Mastodon/Bluesky handles show in full.
+  Each source chip is colored by network ([`theme/networkColors.ts`](theming.md)) and shows
+  `network: id`. Long opaque ids (Nostr `npub…`, Hashiverse hex) are shortened to `first8…last3`
+  via `truncate_source_id` (full id in the tooltip); Mastodon/Bluesky handles show in full.
   Each chip has a `×` that removes the source (via `remove_source_from_timeline`) after the
   same `ConfirmModal`; clicking the chip label copies the full source address to the clipboard
   (with a toast).

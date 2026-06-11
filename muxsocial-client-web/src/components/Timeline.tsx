@@ -124,44 +124,44 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 				</Group>
 			</Group>
 
-			{/* A real form so the mobile keyboard's "Go" submits (a bare onKeyDown Enter
-			    doesn't fire reliably on phones); the add button is the tap target. */}
-			<form
-				className={classes.addressBar}
-				onSubmit={(event) => {
-					event.preventDefault();
-					submit_address();
-				}}
-			>
-				<TextInput
-					size="xs"
-					classNames={{ input: highlight_add_source ? "mux-throb" : undefined }}
-					placeholder={t("timeline.address_placeholder")}
-					value={address}
-					onChange={(event) => set_address(event.currentTarget.value)}
-					enterKeyHint="go"
-					rightSectionPointerEvents="all"
-					rightSection={
-						<ActionIcon type="submit" size="sm" variant="subtle" aria-label={t("timeline.add_source")} title={t("timeline.add_source")} disabled={address.trim().length === 0}>
-							<AddIcon />
-						</ActionIcon>
-					}
-				/>
-			</form>
-
-			{timeline.sources.length > 0 && (
-				<Group className={classes.sourceChips} gap={4} wrap="wrap">
-					{timeline.sources.map((source) => (
-						<SourceChip
-							key={`${source.network}:${source.id}`}
-							source={source}
-							on_copy={() => copy_address(source.id)}
-							on_remove={() => set_source_to_remove(source)}
-							remove_label={t("timeline.remove_source")}
-						/>
-					))}
-				</Group>
-			)}
+			{/* The add-source input is the first item in the chips row to save a row of
+			    vertical space. A real form so the mobile keyboard's "Go" submits (a bare
+			    onKeyDown Enter doesn't fire reliably on phones); the add button is the tap target. */}
+			<Group className={classes.sourceChips} gap={4} wrap="nowrap">
+				<form
+					className={classes.addSourceForm}
+					onSubmit={(event) => {
+						event.preventDefault();
+						submit_address();
+					}}
+				>
+					<TextInput
+						size="xs"
+						variant="filled"
+						radius="sm"
+						classNames={{ input: highlight_add_source ? "mux-throb" : undefined }}
+						placeholder={t("timeline.address_placeholder")}
+						value={address}
+						onChange={(event) => set_address(event.currentTarget.value)}
+						enterKeyHint="go"
+						rightSectionPointerEvents="all"
+						rightSection={
+							<ActionIcon type="submit" size="sm" variant="subtle" aria-label={t("timeline.add_source")} title={t("timeline.add_source")} disabled={address.trim().length === 0}>
+								<AddIcon />
+							</ActionIcon>
+						}
+					/>
+				</form>
+				{timeline.sources.map((source) => (
+					<SourceChip
+						key={`${source.network}:${source.id}`}
+						source={source}
+						on_copy={() => copy_address(source.id)}
+						on_remove={() => set_source_to_remove(source)}
+						remove_label={t("timeline.remove_source")}
+					/>
+				))}
+			</Group>
 
 			<div className={classes.body}>
 				<Virtuoso

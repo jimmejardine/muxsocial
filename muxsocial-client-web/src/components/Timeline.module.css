@@ -23,12 +23,6 @@
 	min-width: 0;
 }
 
-.addressBar {
-	flex: 0 0 auto;
-	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
-	border-bottom: 1px solid var(--mantine-color-default-border);
-}
-
 .body {
 	flex: 1;
 	/* min-height:0 lets the react-virtuoso scroller fill the flex column. */
@@ -39,6 +33,18 @@
 	flex: 0 0 auto;
 	padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
 	border-bottom: 1px solid var(--mantine-color-default-border);
-	max-height: 4.5rem;
-	overflow-y: auto;
+	/* A single row that scrolls horizontally rather than wrapping. */
+	overflow-x: auto;
+}
+
+/* Keep every chip at its natural width so the row scrolls instead of squashing them. */
+.sourceChips > * {
+	flex: 0 0 auto;
+}
+
+/* The add-source input as the first chip: fills spare width when few chips, shrinks
+   and wraps with the badges as more are added. */
+.addSourceForm {
+	flex: 0 0 auto;
+	width: 200px;
 }
