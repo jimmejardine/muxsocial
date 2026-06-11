@@ -40,6 +40,16 @@ All app state lives in Rust; the GUI is a view. There is **no async push** from 
 
 The Rust `TimelineRegistry` (`muxsocial-lib/src/timeline_registry.rs`) owns the timeline list; snapshots cross the boundary as `serde_wasm_bindgen` values (`TimelineConfig[]`). If state ever changes *without* a GUI action (e.g. live post streams), that is handled by per-component pull/poll, not a push channel.
 
+## Exposed methods
+
+`MuxsocialClientWasm` (`muxsocial-client-wasm/src/muxsocial_client_wasm.rs`) holds the `TimelineRegistry` (over the IndexedDB `ConfigStorage`), a `SharedSourceClients`, and a per-timeline-id map of live `MultiTimeline` trackers. The methods the proxy exposes:
+
+- Registry queries/commands returning the `TimelineConfig[]` snapshot: `list_timelines()`, `add_timeline()`, `remove_timeline(id)`, `add_source_to_timeline(id, address)`, `set_timeline_name(id, name)`.
+- Post paging: `get_more_posts(id, per_source_limit)` builds the timeline's tracker lazily (and rebuilds it when the source set changes), pages it, and returns just the newly-added batch; `timeline_posts(id)` returns the tracker's full accumulated list for reseeding a remounted view. See [timelines.md](timelines.md) and [../ui/posts.md](../ui/posts.md).
+- Misc: `version()` (the baked-in Cargo version, shown in the status bar) and `compose_greeting(name)`.
+
+Post paging is the "per-component pull" noted above — the GUI's `usePosts` hook drives it; the timeline trackers are in-memory only and rebuild from the registry after a reload.
+
 ## Typing
 
 `MuxsocialClientWasmProxy` is derived from the wasm-bindgen-generated `MuxsocialClientWasm` type: every public method is mirrored with its return type wrapped in a `Promise`. Lifecycle internals (`constructor`, `free`, `Symbol.dispose`) are excluded on the type level and blocked at runtime by the worker's `isExposedMethodName` check; the proxy instead offers `dispose(): Promise<void>` which frees the WASM client and terminates the worker.

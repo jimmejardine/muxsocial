@@ -6,9 +6,9 @@
 pinned at `0.44`. It builds for both native and wasm32 and brings its own
 WebSocket relay transport, so nostr does not use the shared HTTP transport.
 
-We pull with `default-features = false`; reading kind-1 notes needs only the
-core client + relay pool. (Parsing an `npub` bech32 key needs nostr's nip19
-support — pass a hex pubkey to avoid depending on it.)
+We pull with `default-features = false`; reading kind-1 notes needs only the core
+client + relay pool. nostr's nip19 (bech32) support is used to parse `npub` keys
+and to encode each post's permalink as an `nevent` (see below).
 
 ## Reading posts
 
@@ -21,15 +21,25 @@ support — pass a hex pubkey to avoid depending on it.)
 
 Note content is plain text, so `content_html` is produced by
 `crate::html::plain_text_to_html` (HTML-escape + newlines → `<br>`) to match the
-HTML the other sources emit. No URL/`nostr:` linkification is done.
+HTML the other sources emit. Inline body text is not linkified.
+
+**Permalink (`post_url`):** the mapper builds an `nevent` (`Nip19Event`: event id +
+author pubkey + the queried relays as hints, capped at two) and forms
+`https://njump.me/{nevent}`. Embedding the relays we fetched from keeps the link
+resolvable on the right relay; `None` if bech32 encoding fails.
+
+**Pagination:** `NostrPager` bounds the `Filter` by whole-second timestamps —
+`.since` (one second past the newest held) for `fetch_newer`, `.until` (one second
+before the oldest held) for `fetch_older`. It carries the queried relay URLs so the
+permalink hints match.
 
 Default relays: `wss://relay.damus.io`, `wss://nos.lol`.
 
 ## Test identifier
 
-jack — pubkey hex
-`82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2`
-(`npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m`).
+The integration harness pages a baked-in author,
+`NOSTR_AUTHOR_NPUB = npub1wmr34t36fy03m8hvgl96zl3znndyzyaqhwmwdtshwmtkg03fetaqhjg240`.
+Any author pubkey (hex or `npub`) works.
 
 ## WASM / build notes
 

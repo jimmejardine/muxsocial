@@ -23,6 +23,15 @@ Unauthenticated reads from the public AppView `https://public.api.bsky.app`:
    `display_name`, and the loosely-typed `post.record` (serialize to JSON, pull
    `text` and `createdAt`).
 
+**Permalink (`post_url`):** built from the post's AT-URI and the author's DID as
+`https://bsky.app/profile/{did}/post/{rkey}`, where `rkey` is the last segment of
+the `at://…/app.bsky.feed.post/{rkey}` URI. The DID is used (not the handle) because
+it is stable across handle changes.
+
+**Pagination:** `BlueskyPager` walks backward with the feed's opaque `cursor`
+(`None` for the top page, then the previous response's cursor for older pages);
+there is no "since", so `fetch_newer` re-fetches the top.
+
 ## Test identifier
 
 `bsky.app` (the official account). Any handle or DID works.

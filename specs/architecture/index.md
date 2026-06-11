@@ -58,4 +58,5 @@ npm install && npm run build                                       # from /muxso
 ## Files
 
 - [worker-rpc.md](worker-rpc.md) — the Web Worker / MessageChannel RPC design between the GUI and WASM
+- [timelines.md](timelines.md) — the timeline/pagination engine (`SourcePager`, `SourceTimeline`, `MultiTimeline`, `SharedSourceClients`)
 - [config-storage.md](config-storage.md) — the `ConfigStorage` key/value trait and its in-memory / IndexedDB backends

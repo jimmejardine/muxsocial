@@ -23,6 +23,13 @@ Then, unauthenticated, two calls:
 Each status maps to `AggregatedPost` (`id`, `created_at` RFC3339 → millis,
 `content` HTML, `account.acct` / `display_name`).
 
+**Permalink (`post_url`):** the status's own canonical `url` field, deserialized
+straight from the API response (absent for rare status types → `None`).
+
+**Pagination:** `MastodonPager` uses the statuses endpoint's id cursors — `min_id`
+(the newest held id) for `fetch_newer`, `max_id` (the oldest held id) for
+`fetch_older` — and caches the resolved `(instance base URL, account id)` pair.
+
 ## Test identifier
 
 `@Gargron@mastodon.social`.

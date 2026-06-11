@@ -1,9 +1,11 @@
 # Networks
 
 mux.social aggregates posts from four source networks. Each has a client in
-`muxsocial-lib/src/sources/` exposing an async `fetch_recent_posts(...)` that
-pulls recent posts for a well-known identifier and maps them into the normalized
-[`AggregatedPost`](#the-aggregated-post-model).
+`muxsocial-lib/src/sources/` that maps recent posts for a well-known identifier
+into the normalized [`AggregatedPost`](#the-aggregated-post-model). Clients expose
+both a one-shot async `fetch_recent_posts(...)` and a per-network `SourcePager`
+(`fetch_newer`/`fetch_older`) that the timeline engine pages through — see
+[`../architecture/timelines.md`](../architecture/timelines.md).
 
 Everything runs in the browser with no backend, so every client must build for
 both native (`x86_64`, for `cargo test` and the integration harness) and
@@ -22,6 +24,11 @@ every network maps into:
 - `content_html: String` — HTML for every source (Mastodon/Hashiverse native HTML;
   Bluesky rendered from text + facets; nostr plain text escaped + wrapped via
   `crate::html::plain_text_to_html`)
+- `post_url: Option<String>` — a canonical web permalink to the original post,
+  built by each mapper where the native ids allow it (`None` otherwise). The GUI's
+  source chip links to it; the per-network formats are njump `nevent` (nostr),
+  `bsky.app/profile/{did}/post/{rkey}` (Bluesky), the status `url` (Mastodon), and
+  the `app.hashiverse.com` post route (Hashiverse).
 
 This is deliberately minimal — enough to prove the pull-and-display pipeline.
 Richer versioned wire/bundle types come later.
@@ -61,10 +68,11 @@ same way. A proxy strategy for CORS-hostile networks is deferred.
 
 - nostr, Bluesky, Mastodon: implemented; live native pull-tests pass in
   `muxsocial-integration-tests/tests/network_pull_smoke.rs`.
-- Hashiverse: a first-class dependency (no feature gate); builds natively via a
-  local moka patch. Live test in `hashiverse_pull_smoke.rs` runs with a real user
-  id in `MUXSOCIAL_HASHIVERSE_TEST_USER_ID`. See
-  [hashiverse/index.md](hashiverse/index.md).
+- Hashiverse: a first-class dependency (no feature gate). Builds natively via a
+  local moka patch, and **reads in the browser** via a wasm guest client built from
+  `hashiverse-lib`'s own runtime services. Live native test in
+  `hashiverse_pull_smoke.rs` runs with a real user id in
+  `MUXSOCIAL_HASHIVERSE_TEST_USER_ID`. See [hashiverse/index.md](hashiverse/index.md).
 - WASM compile gate: **passes**. `muxsocial-lib` (all four networks) and
   `muxsocial-client-wasm` build for `wasm32-unknown-unknown`.
 
