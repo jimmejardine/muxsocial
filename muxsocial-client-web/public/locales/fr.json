@@ -1,5 +1,6 @@
 {
 	"toolbar.add_timeline": "Ajouter une timeline",
+	"toolbar.tagline": "ton tableau de bord unique pour <0>Hashiverse</0>, <1>Nostr</1>, <2>Mastodon</2> et <3>Bluesky</3>.",
 	"timeline.title": "Timeline {{number}}",
 	"timeline.remove": "Supprimer la timeline",
 	"timeline.name_label": "Nom de la timeline",
@@ -22,5 +23,18 @@
 	"toast.error_remove_timeline": "Échec de la suppression de la timeline : {{message}}",
 	"toast.error_add_source": "Échec de l'ajout de la source : {{message}}",
 	"toast.error_set_name": "Échec du renommage de la timeline : {{message}}",
-	"toast.error_get_more": "Échec du chargement des publications : {{message}}"
+	"toast.error_get_more": "Échec du chargement des publications : {{message}}",
+	"toolbar.menu_label": "Menu",
+	"post.open_original": "Ouvrir la publication d'origine",
+	"timeline.remove_confirm_title": "Supprimer la timeline",
+	"timeline.remove_confirm_message": "Supprimer cette timeline et ses sources ? Cette action est irréversible.",
+	"timeline.remove_source": "Supprimer la source",
+	"timeline.remove_source_confirm_title": "Supprimer la source",
+	"timeline.remove_source_confirm_message": "Supprimer {{source}} de cette timeline ?",
+	"common.cancel": "Annuler",
+	"common.remove": "Supprimer",
+	"toast.source_removed": "Source supprimée",
+	"toast.address_copied": "Adresse copiée dans le presse-papiers",
+	"toast.error_copy": "Échec de la copie : {{message}}",
+	"toast.error_remove_source": "Échec de la suppression de la source : {{message}}"
 }

@@ -40,7 +40,10 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 	const [confirm_opened, confirm_handlers] = useDisclosure(false);
 	// The source pending removal (drives the source-remove confirm dialog), or null.
 	const [source_to_remove, set_source_to_remove] = useState<SourceConfig | null>(null);
-	const { posts, firstItemIndex, loading, reachedOldest, getMore } = usePosts(timeline.id);
+	// A stable key of the current sources; changes when an address is added/removed,
+	// driving usePosts to auto-fetch (the truncated source_summary below is display only).
+	const sources_signature = timeline.sources.map((source) => `${source.network}:${source.id}`).join(",");
+	const { posts, firstItemIndex, loading, reachedOldest, getMore } = usePosts(timeline.id, sources_signature);
 
 	// The default title (placeholder for an unnamed timeline) summarizes the sources
 	// with the same id shortener as the chips; a custom name wins, index is the fallback.

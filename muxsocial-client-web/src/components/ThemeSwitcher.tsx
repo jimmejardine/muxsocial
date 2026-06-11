@@ -8,7 +8,7 @@ export function ThemeSwitcher() {
 	const { theme, themeId, setThemeId, themes } = useMuxTheme();
 
 	return (
-		<Menu position="bottom-end" withinPortal>
+		<Menu position="bottom-end" withinPortal={false}>
 			<Menu.Target>
 				<Button size="xs" variant="default">
 					{theme.label}

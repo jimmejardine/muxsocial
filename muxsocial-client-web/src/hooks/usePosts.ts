@@ -15,7 +15,7 @@
  * @module
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMuxsocial } from "../tools/MuxsocialContext.tsx";
 import type { Post } from "../tools/Post.ts";
@@ -23,6 +23,9 @@ import { Toast } from "../tools/Toast.ts";
 
 /** Posts fetched per source on each "get more" call. */
 const PER_SOURCE_LIMIT = 20;
+
+/** How often each timeline auto-pulls for newly-published posts. */
+const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
 /**
  * `react-virtuoso`'s anchor: the virtual index of `posts[0]`. Starts high and is
@@ -84,8 +87,13 @@ export interface UsePostsResult {
  * Holds and pages the posts of the timeline `timeline_id`. On (re)mount it
  * reseeds from the live tracker's accumulated posts (`timeline_posts`) without
  * re-fetching from the networks; `getMore` pulls and folds in the next delta.
+ *
+ * `getMore` also fires automatically: once whenever `sources_signature` changes
+ * (a source added/removed — so a freshly-added address loads without a click),
+ * and on a {@link POLL_INTERVAL_MS} timer so each timeline keeps pulling newly
+ * published posts.
  */
-export function usePosts(timeline_id: string): UsePostsResult {
+export function usePosts(timeline_id: string, sources_signature: string): UsePostsResult {
 	const { t } = useTranslation();
 	const muxsocial = useMuxsocial();
 	const [state, set_state] = useState<PostsState>(EMPTY_POSTS_STATE);
@@ -123,6 +131,25 @@ export function usePosts(timeline_id: string): UsePostsResult {
 			set_loading(false);
 		}
 	}, [muxsocial, timeline_id, t]);
+
+	// Keep a ref to the latest getMore so the auto/poll effects below don't need it
+	// in their dep arrays (no interval re-subscribe, no refetch on unrelated changes).
+	const get_more_ref = useRef(getMore);
+	useEffect(() => {
+		get_more_ref.current = getMore;
+	}, [getMore]);
+
+	// Auto-fetch when the source set changes (address added/removed); also fires on
+	// mount for a timeline that already has sources. Skip empty (nothing to pull).
+	useEffect(() => {
+		if (sources_signature) void get_more_ref.current();
+	}, [sources_signature]);
+
+	// Poll for newly-published posts while this timeline is mounted.
+	useEffect(() => {
+		const interval_id = setInterval(() => void get_more_ref.current(), POLL_INTERVAL_MS);
+		return () => clearInterval(interval_id);
+	}, []);
 
 	return { posts: state.posts, firstItemIndex: state.firstItemIndex, loading, reachedOldest: state.reachedOldest, getMore };
 }

@@ -1,5 +1,6 @@
 {
 	"toolbar.add_timeline": "Añadir cronología",
+	"toolbar.tagline": "tu panel único para <0>Hashiverse</0>, <1>Nostr</1>, <2>Mastodon</2> y <3>Bluesky</3>.",
 	"timeline.title": "Cronología {{number}}",
 	"timeline.remove": "Eliminar cronología",
 	"timeline.name_label": "Nombre de la cronología",
@@ -22,5 +23,18 @@
 	"toast.error_remove_timeline": "No se pudo eliminar la cronología: {{message}}",
 	"toast.error_add_source": "No se pudo añadir la fuente: {{message}}",
 	"toast.error_set_name": "No se pudo renombrar la cronología: {{message}}",
-	"toast.error_get_more": "No se pudieron cargar más publicaciones: {{message}}"
+	"toast.error_get_more": "No se pudieron cargar más publicaciones: {{message}}",
+	"toolbar.menu_label": "Menú",
+	"post.open_original": "Abrir publicación original",
+	"timeline.remove_confirm_title": "Eliminar cronología",
+	"timeline.remove_confirm_message": "¿Eliminar esta cronología y sus fuentes? Esto no se puede deshacer.",
+	"timeline.remove_source": "Eliminar fuente",
+	"timeline.remove_source_confirm_title": "Eliminar fuente",
+	"timeline.remove_source_confirm_message": "¿Eliminar {{source}} de esta cronología?",
+	"common.cancel": "Cancelar",
+	"common.remove": "Eliminar",
+	"toast.source_removed": "Fuente eliminada",
+	"toast.address_copied": "Dirección copiada al portapapeles",
+	"toast.error_copy": "No se pudo copiar: {{message}}",
+	"toast.error_remove_source": "No se pudo eliminar la fuente: {{message}}"
 }

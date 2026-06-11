@@ -1,5 +1,6 @@
 {
 	"toolbar.add_timeline": "Timeline hinzufügen",
+	"toolbar.tagline": "dein zentrales Dashboard für <0>Hashiverse</0>, <1>Nostr</1>, <2>Mastodon</2> & <3>Bluesky</3>.",
 	"timeline.title": "Timeline {{number}}",
 	"timeline.remove": "Timeline entfernen",
 	"timeline.name_label": "Timeline-Name",
@@ -22,5 +23,18 @@
 	"toast.error_remove_timeline": "Timeline konnte nicht entfernt werden: {{message}}",
 	"toast.error_add_source": "Quelle konnte nicht hinzugefügt werden: {{message}}",
 	"toast.error_set_name": "Timeline konnte nicht umbenannt werden: {{message}}",
-	"toast.error_get_more": "Beiträge konnten nicht geladen werden: {{message}}"
+	"toast.error_get_more": "Beiträge konnten nicht geladen werden: {{message}}",
+	"toolbar.menu_label": "Menü",
+	"post.open_original": "Originalbeitrag öffnen",
+	"timeline.remove_confirm_title": "Timeline entfernen",
+	"timeline.remove_confirm_message": "Diese Timeline und ihre Quellen entfernen? Das kann nicht rückgängig gemacht werden.",
+	"timeline.remove_source": "Quelle entfernen",
+	"timeline.remove_source_confirm_title": "Quelle entfernen",
+	"timeline.remove_source_confirm_message": "{{source}} aus dieser Timeline entfernen?",
+	"common.cancel": "Abbrechen",
+	"common.remove": "Entfernen",
+	"toast.source_removed": "Quelle entfernt",
+	"toast.address_copied": "Adresse in die Zwischenablage kopiert",
+	"toast.error_copy": "Kopieren fehlgeschlagen: {{message}}",
+	"toast.error_remove_source": "Quelle konnte nicht entfernt werden: {{message}}"
 }

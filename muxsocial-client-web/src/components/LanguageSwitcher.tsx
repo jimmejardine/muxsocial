@@ -9,7 +9,7 @@ export function LanguageSwitcher() {
 	const current_language = SUPPORTED_LANGUAGES.find((language) => language.value === i18n.language) ?? SUPPORTED_LANGUAGES[0];
 
 	return (
-		<Menu position="bottom-end" withinPortal>
+		<Menu position="bottom-end" withinPortal={false}>
 			<Menu.Target>
 				<Button size="xs" variant="default">
 					{current_language.label}

@@ -1,5 +1,6 @@
 {
 	"toolbar.add_timeline": "0d47",
+	"toolbar.tagline": "d225",
 	"timeline.title": "a5d2",
 	"timeline.remove": "a181",
 	"timeline.name_label": "2f00",
@@ -22,5 +23,18 @@
 	"toast.error_remove_timeline": "df28",
 	"toast.error_add_source": "c272",
 	"toast.error_set_name": "45a8",
-	"toast.error_get_more": "5dc5"
+	"toast.error_get_more": "5dc5",
+	"toolbar.menu_label": "99af",
+	"post.open_original": "1d88",
+	"timeline.remove_confirm_title": "a181",
+	"timeline.remove_confirm_message": "4b9d",
+	"timeline.remove_source": "f552",
+	"timeline.remove_source_confirm_title": "f552",
+	"timeline.remove_source_confirm_message": "741d",
+	"common.cancel": "1976",
+	"common.remove": "c381",
+	"toast.source_removed": "8d63",
+	"toast.address_copied": "b000",
+	"toast.error_copy": "c6d9",
+	"toast.error_remove_source": "30d3"
 }
