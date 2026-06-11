@@ -40,7 +40,9 @@ on success/failure.
   The initial pull (and the pull when a source changes) is automatic regardless. The flag is
   persisted per timeline (`TimelineConfig.autopoll`).
 - A **remove** (✕) button that opens a [`ConfirmModal`](#confirm-before-remove) before deleting.
-- An **address bar**: paste an identifier and press Enter to add a source. The Rust
+- An **address bar** (a `<form>`): paste an identifier and press Enter/Go, or tap the add (+)
+  button, to add a source (the form submit works on mobile where a bare Enter keydown doesn't).
+  The Rust
   `parse_source_address` (`timeline_registry.rs`) detects the network — an explicit
   `network:identifier` prefix (`nostr:` / `bluesky:`|`bsky:` / `mastodon:`|`masto:` /
   `hashiverse:`|`hash:`) always wins, otherwise `@user@host` → Mastodon, `npub1…` → nostr,

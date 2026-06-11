@@ -77,6 +77,13 @@ Deploys to production then run on a **`v*` tag push** (`git tag v1.0.9 && git pu
 or **manually** via Actions → CI → "Run workflow". (A manual run from a non-tag ref leaves the
 baked-in version at `0.0.0`; dispatch from a tag to stamp it.)
 
+## Install as a desktop app
+
+mux.social is a PWA: in Chrome/Edge (and on the deployed HTTPS site) an install icon appears in the
+address bar — "Install mux.social" adds it to the desktop and launches it in its own standalone
+window. This is driven by `public/manifest.webmanifest` and the service worker `public/sw.js`
+(registered in `src/index.tsx`), which also provides a basic offline fallback.
+
 ## License
 
 Dual-licensed under either of

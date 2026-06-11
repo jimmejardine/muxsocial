@@ -6,6 +6,7 @@
 	"timeline.remove": "Timeline entfernen",
 	"timeline.name_label": "Timeline-Name",
 	"timeline.address_placeholder": "Adresse einfügen und Enter drücken…",
+	"timeline.add_source": "Quelle hinzufügen",
 	"timeline.no_sources": "Noch keine Quellen. Füge oben eine Adresse ein, um eine hinzuzufügen.",
 	"timeline.get_more": "Mehr Beiträge laden",
 	"timeline.no_posts": "Noch keine Beiträge. Verwende \"Mehr Beiträge laden\", um welche abzurufen.",

@@ -124,21 +124,30 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 				</Group>
 			</Group>
 
-			<div className={classes.addressBar}>
+			{/* A real form so the mobile keyboard's "Go" submits (a bare onKeyDown Enter
+			    doesn't fire reliably on phones); the add button is the tap target. */}
+			<form
+				className={classes.addressBar}
+				onSubmit={(event) => {
+					event.preventDefault();
+					submit_address();
+				}}
+			>
 				<TextInput
 					size="xs"
 					classNames={{ input: highlight_add_source ? "mux-throb" : undefined }}
 					placeholder={t("timeline.address_placeholder")}
 					value={address}
 					onChange={(event) => set_address(event.currentTarget.value)}
-					onKeyDown={(event) => {
-						if (event.key === "Enter") {
-							event.preventDefault();
-							submit_address();
-						}
-					}}
+					enterKeyHint="go"
+					rightSectionPointerEvents="all"
+					rightSection={
+						<ActionIcon type="submit" size="sm" variant="subtle" aria-label={t("timeline.add_source")} title={t("timeline.add_source")} disabled={address.trim().length === 0}>
+							<AddIcon />
+						</ActionIcon>
+					}
 				/>
-			</div>
+			</form>
 
 			{timeline.sources.length > 0 && (
 				<Group className={classes.sourceChips} gap={4} wrap="wrap">
@@ -203,6 +212,15 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 				onClose={() => set_source_to_remove(null)}
 			/>
 		</section>
+	);
+}
+
+/** A plus icon, used on the add-source button. Inherits `currentColor`. */
+function AddIcon() {
+	return (
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+			<path d="M12 5v14m-7 -7h14" />
+		</svg>
 	);
 }
 

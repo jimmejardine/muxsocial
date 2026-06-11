@@ -26,3 +26,11 @@ createRoot(root_element).render(
 		</MuxThemeProvider>
 	</React.StrictMode>,
 );
+
+// Register the service worker so the app is installable to the desktop (and has a
+// basic offline fallback). Non-fatal if it fails (e.g. an untrusted dev cert).
+if ("serviceWorker" in navigator) {
+	window.addEventListener("load", () => {
+		navigator.serviceWorker.register("/sw.js").catch((error) => console.error("Service worker registration failed", error));
+	});
+}
