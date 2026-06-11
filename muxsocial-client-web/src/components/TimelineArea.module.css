@@ -6,6 +6,10 @@
 	/* Too many timelines to fit -> scroll them sideways. */
 	overflow-x: auto;
 	overflow-y: hidden;
+	/* When a sideways scroll settles near a timeline's left edge, snap it flush to
+	   the left; proximity (not mandatory) so it never fights mid-scroll or when a
+	   timeline is wider than the viewport. */
+	scroll-snap-type: x proximity;
 }
 
 .empty {
