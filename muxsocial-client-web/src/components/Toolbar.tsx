@@ -13,7 +13,10 @@ export function Toolbar({ on_add_timeline }: ToolbarProps) {
 
 	return (
 		<Group h="100%" px="sm" justify="space-between" wrap="nowrap">
-			<Title order={4}>mux.social</Title>
+			<Group gap="xs" wrap="nowrap">
+				<img src="/img/favicon/favicon.png" alt="" width={28} height={28} style={{ display: "block", borderRadius: 4 }} />
+				<Title order={4}>mux.social</Title>
+			</Group>
 			<Group gap="xs" wrap="nowrap">
 				<LanguageSwitcher />
 				<ThemeSwitcher />

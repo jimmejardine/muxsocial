@@ -15,12 +15,13 @@ mutation callback (`add_timeline` / `remove_timeline` / `add_source` / `set_name
 WASM command and replaces state with the returned snapshot, firing a [toast](notifications.md)
 on success/failure.
 
-- `Toolbar` (`components/Toolbar.tsx`) — the "mux.social" title plus the
+- `Toolbar` (`components/Toolbar.tsx`) — the app logo + "mux.social" title (left) plus the
   [language](localization.md) and [theme](theming.md) switchers and an **Add timeline** button.
 - `StatusBar` (`components/StatusBar.tsx`) — the timeline count and a version link to the
   GitHub releases page (the version comes from the WASM `version()`).
 - `TimelineArea` (`components/TimelineArea.tsx`) — lays the columns side by side (each at least
-  500px, horizontally scrolling when they overflow), with an empty-state message when there are
+  500px, horizontally scrolling when they overflow), with an empty state (the `muxsocial.jpg`
+  hero above the "add a timeline" hint) when there are
   no timelines. Columns are keyed by timeline id so per-column state survives re-renders.
 
 ## A timeline column

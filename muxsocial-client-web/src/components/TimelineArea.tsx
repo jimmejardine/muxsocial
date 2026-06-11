@@ -23,6 +23,7 @@ export function TimelineArea({ timelines, on_remove, on_add_source, on_remove_so
 	if (timelines.length === 0) {
 		return (
 			<div className={classes.empty}>
+				<img className={classes.emptyImage} src="/img/muxsocial.jpg" alt="mux.social" />
 				<Text c="dimmed">{t("timeline_area.empty")}</Text>
 			</div>
 		);
