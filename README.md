@@ -46,6 +46,18 @@ cargo run -p muxsocial-integration-tests --bin test-harness # long-running test 
 wasm-pack test --chrome --headless muxsocial-client-wasm    # WASM tests in headless Chrome
 ```
 
+### Running CI locally
+
+Before committing, run the full CI pipeline (rust fmt/clippy/tests, wasm build, web lint/tests/build)
+from the repo root:
+
+```
+node run_ci_checks.mjs
+```
+
+GitHub Actions runs this same file, so a green local run mirrors CI. It needs the same toolchain as a
+manual build (rust, the `wasm32-unknown-unknown` target, clang/LLVM, wasm-pack, and Node).
+
 ## License
 
 Dual-licensed under either of

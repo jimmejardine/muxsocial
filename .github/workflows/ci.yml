@@ -72,40 +72,14 @@ jobs:
       # from the lockfile) is computed before this bump.
       - uses: ./.github/actions/set-npm-version-from-tag
 
+      # All build/test/lint steps live in run_ci_checks.mjs so CI and the local
+      # pre-commit run (`node run_ci_checks.mjs`) can't drift. It runs, in order:
+      # rust fmt check, clippy (-D warnings), rust tests, wasm-pack build, npm ci,
+      # Biome lint, vitest, and the web build (which produces the dist below).
       # clippy/test run against muxsocial-lib on the host: the wasm crate has
-      # wasm32-only deps and is exercised via wasm-pack on its real target below.
-      - name: Rust format check
-        working-directory: muxsocial-rust
-        run: cargo fmt --all --check
-
-      - name: Rust clippy
-        working-directory: muxsocial-rust
-        run: cargo clippy -p muxsocial-lib --all-targets -- -D warnings
-
-      - name: Rust tests
-        working-directory: muxsocial-rust
-        run: cargo test -p muxsocial-lib
-
-      # Generates muxsocial-client-wasm/pkg/, which the web client imports.
-      - name: Build wasm
-        working-directory: muxsocial-rust
-        run: wasm-pack build muxsocial-client-wasm --release --target bundler
-
-      - name: Install web dependencies
-        working-directory: muxsocial-client-web
-        run: npm ci
-
-      - name: Web lint (Biome)
-        working-directory: muxsocial-client-web
-        run: npm run check:ci
-
-      - name: Web tests (vitest)
-        working-directory: muxsocial-client-web
-        run: npm test
-
-      - name: Build web client
-        working-directory: muxsocial-client-web
-        run: npm run build
+      # wasm32-only deps and is exercised via wasm-pack on its real target.
+      - name: Run CI checks and build
+        run: node run_ci_checks.mjs
 
       - name: Upload web dist
         uses: actions/upload-artifact@v4
