@@ -89,11 +89,12 @@ export interface UsePostsResult {
  * re-fetching from the networks; `getMore` pulls and folds in the next delta.
  *
  * `getMore` also fires automatically: once whenever `sources_signature` changes
- * (a source added/removed — so a freshly-added address loads without a click),
- * and on a {@link POLL_INTERVAL_MS} timer so each timeline keeps pulling newly
- * published posts.
+ * (a source added/removed — so a freshly-added address loads without a click;
+ * this initial pull is unconditional), and, only while `autopoll` is true, on a
+ * {@link POLL_INTERVAL_MS} timer so the timeline keeps pulling newly published
+ * posts.
  */
-export function usePosts(timeline_id: string, sources_signature: string): UsePostsResult {
+export function usePosts(timeline_id: string, sources_signature: string, autopoll: boolean): UsePostsResult {
 	const { t } = useTranslation();
 	const muxsocial = useMuxsocial();
 	const [state, set_state] = useState<PostsState>(EMPTY_POSTS_STATE);
@@ -145,9 +146,17 @@ export function usePosts(timeline_id: string, sources_signature: string): UsePos
 		if (sources_signature) void get_more_ref.current();
 	}, [sources_signature]);
 
-	// Poll for newly-published posts while this timeline is mounted.
+	// Poll for newly-published posts while this timeline is mounted — but only when
+	// autopoll is on. A live ref gates each tick so toggling doesn't re-subscribe
+	// the interval; a non-autopoll timeline simply no-ops on the tick.
+	const autopoll_ref = useRef(autopoll);
 	useEffect(() => {
-		const interval_id = setInterval(() => void get_more_ref.current(), POLL_INTERVAL_MS);
+		autopoll_ref.current = autopoll;
+	}, [autopoll]);
+	useEffect(() => {
+		const interval_id = setInterval(() => {
+			if (autopoll_ref.current) void get_more_ref.current();
+		}, POLL_INTERVAL_MS);
 		return () => clearInterval(interval_id);
 	}, []);
 

@@ -120,6 +120,19 @@ export function App() {
 		[t],
 	);
 
+	const set_autopoll = useCallback(
+		async (id: string, autopoll: boolean) => {
+			const muxsocial = muxsocial_ref.current;
+			if (!muxsocial) return;
+			try {
+				set_timelines((await muxsocial.set_timeline_autopoll(id, autopoll)) as TimelineConfig[]);
+			} catch (err) {
+				Toast.error(t("toast.error_set_autopoll", { message: error_message(err) }));
+			}
+		},
+		[t],
+	);
+
 	// The timeline area's height is calc(100dvh - header - footer); expose the
 	// header height as a CSS var so that calc stays in sync with AppShell. There is
 	// no footer anymore, so the footer var is zero.
@@ -141,7 +154,7 @@ export function App() {
 							<Loader />
 						</Center>
 					) : (
-						<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_remove_source={remove_source} on_set_name={set_name} />
+						<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_remove_source={remove_source} on_set_name={set_name} on_set_autopoll={set_autopoll} />
 					)}
 				</AppShell.Main>
 			</AppShell>

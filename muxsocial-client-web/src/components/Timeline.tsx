@@ -1,4 +1,4 @@
-import { Badge, Button, CloseButton, Group, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Badge, Button, CloseButton, Group, Text, TextInput, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ interface TimelineProps {
 	on_add_source: (id: string, address: string) => void;
 	on_remove_source: (id: string, network: string, source_id: string) => void;
 	on_set_name: (id: string, name: string) => void;
+	on_set_autopoll: (id: string, autopoll: boolean) => void;
 }
 
 /**
@@ -32,7 +33,7 @@ interface TimelineProps {
  * sources come from the Rust snapshot; the posts come from {@link usePosts}, which
  * holds the rendered window and pages it via the Rust client.
  */
-export function Timeline({ timeline, index, highlight_add_source, on_remove, on_add_source, on_remove_source, on_set_name }: TimelineProps) {
+export function Timeline({ timeline, index, highlight_add_source, on_remove, on_add_source, on_remove_source, on_set_name, on_set_autopoll }: TimelineProps) {
 	const { t } = useTranslation();
 	const [address, set_address] = useState("");
 	// Local draft of the custom name; the effective name (default) is the placeholder.
@@ -43,7 +44,7 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 	// A stable key of the current sources; changes when an address is added/removed,
 	// driving usePosts to auto-fetch (the truncated source_summary below is display only).
 	const sources_signature = timeline.sources.map((source) => `${source.network}:${source.id}`).join(",");
-	const { posts, firstItemIndex, loading, reachedOldest, getMore } = usePosts(timeline.id, sources_signature);
+	const { posts, firstItemIndex, loading, reachedOldest, getMore } = usePosts(timeline.id, sources_signature, timeline.autopoll);
 
 	// The default title (placeholder for an unnamed timeline) summarizes the sources
 	// with the same id shortener as the chips; a custom name wins, index is the fallback.
@@ -109,6 +110,16 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 					<Button size="xs" variant="light" onClick={getMore} loading={loading}>
 						{t("timeline.get_more")}
 					</Button>
+					<ActionIcon
+						size="md"
+						variant={timeline.autopoll ? "filled" : "default"}
+						aria-pressed={timeline.autopoll}
+						aria-label={t("timeline.autopoll")}
+						title={t("timeline.autopoll")}
+						onClick={() => on_set_autopoll(timeline.id, !timeline.autopoll)}
+					>
+						<ReloadIcon />
+					</ActionIcon>
 					<CloseButton aria-label={t("timeline.remove")} title={t("timeline.remove")} onClick={request_remove} />
 				</Group>
 			</Group>
@@ -192,6 +203,16 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 				onClose={() => set_source_to_remove(null)}
 			/>
 		</section>
+	);
+}
+
+/** A circular reload arrow, used on the autopoll toggle. Inherits `currentColor`. */
+function ReloadIcon() {
+	return (
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+			<path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+			<path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+		</svg>
 	);
 }
 

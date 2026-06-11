@@ -33,9 +33,9 @@ export function HeaderMenu({ version }: HeaderMenuProps) {
 					<LanguageSwitcher />
 					<ThemeSwitcher />
 					<NetworksMenu />
-						<Button component="a" href={GITHUB_URL} target="_blank" rel="noreferrer" size="xs" variant="default" title={t("status.github")}>
-							Github
-						</Button>
+					<Button component="a" href={GITHUB_URL} target="_blank" rel="noreferrer" size="xs" variant="default" title={t("status.github")}>
+						Github
+					</Button>
 					{version && (
 						<Button component="a" href={RELEASES_URL} target="_blank" rel="noreferrer" size="xs" variant="default" title={t("status.releases")}>
 							v{version}

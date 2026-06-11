@@ -10,6 +10,7 @@ interface TimelineAreaProps {
 	on_add_source: (id: string, address: string) => void;
 	on_remove_source: (id: string, network: string, source_id: string) => void;
 	on_set_name: (id: string, name: string) => void;
+	on_set_autopoll: (id: string, autopoll: boolean) => void;
 }
 
 /**
@@ -17,7 +18,7 @@ interface TimelineAreaProps {
  * 500px wide (or the screen width when it is narrower); they grow to fill the
  * space when few, and scroll horizontally when too many fit.
  */
-export function TimelineArea({ timelines, on_remove, on_add_source, on_remove_source, on_set_name }: TimelineAreaProps) {
+export function TimelineArea({ timelines, on_remove, on_add_source, on_remove_source, on_set_name, on_set_autopoll }: TimelineAreaProps) {
 	const { t } = useTranslation();
 
 	if (timelines.length === 0) {
@@ -41,6 +42,7 @@ export function TimelineArea({ timelines, on_remove, on_add_source, on_remove_so
 					on_add_source={on_add_source}
 					on_remove_source={on_remove_source}
 					on_set_name={on_set_name}
+					on_set_autopoll={on_set_autopoll}
 				/>
 			))}
 		</div>

@@ -104,6 +104,13 @@ impl MuxsocialClientWasm {
         snapshot_to_js(&snapshot)
     }
 
+    /// Set whether the timeline addressed by `id` auto-polls on the recurring
+    /// tick. Returns the new snapshot.
+    pub async fn set_timeline_autopoll(&mut self, id: String, autopoll: bool) -> Result<JsValue, JsValue> {
+        let snapshot = self.timeline_registry.set_timeline_autopoll(&id, autopoll).await.map_err(anyhow_to_js)?;
+        snapshot_to_js(&snapshot)
+    }
+
     /// Pull the next page of posts for the timeline `id`, fetching up to
     /// `per_source_limit` posts from each source. Returns only the **newly-added
     /// batch** (newest-first); the caller accumulates it into its own view and

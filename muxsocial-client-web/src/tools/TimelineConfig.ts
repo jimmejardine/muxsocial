@@ -20,4 +20,6 @@ export interface TimelineConfig {
 	/** The effective name to display (custom name, else the default from sources). */
 	display_name: string;
 	sources: SourceConfig[];
+	/** Whether this timeline auto-polls for new posts on the recurring tick. */
+	autopoll: boolean;
 }

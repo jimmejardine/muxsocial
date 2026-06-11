@@ -27,6 +27,16 @@ pub struct TimelineConfig {
     #[serde(default)]
     pub name: Option<String>,
     pub sources: Vec<Source>,
+    /// Whether this timeline auto-polls for new posts on the recurring tick. The
+    /// initial pull is automatic regardless; this only gates the periodic refresh.
+    /// Defaults to `true` so timelines persisted before the flag keep polling.
+    #[serde(default = "default_autopoll")]
+    pub autopoll: bool,
+}
+
+/// The default for [`TimelineConfig::autopoll`] (and pre-flag persisted timelines).
+fn default_autopoll() -> bool {
+    true
 }
 
 /// A timeline as handed to the GUI: the persisted fields plus the computed
@@ -38,6 +48,7 @@ pub struct TimelineView {
     pub name: Option<String>,
     pub display_name: String,
     pub sources: Vec<Source>,
+    pub autopoll: bool,
 }
 
 impl TimelineConfig {
@@ -58,6 +69,7 @@ impl TimelineConfig {
             name: self.name.clone(),
             display_name: self.display_name(),
             sources: self.sources.clone(),
+            autopoll: self.autopoll,
         }
     }
 }
@@ -110,6 +122,7 @@ impl TimelineRegistry {
             id: uuid::Uuid::new_v4().to_string(),
             name: None,
             sources: Vec::new(),
+            autopoll: default_autopoll(),
         });
         self.persist().await?;
         Ok(self.list())
@@ -150,6 +163,15 @@ impl TimelineRegistry {
         let trimmed = name.trim();
         let timeline = self.timeline_mut(id)?;
         timeline.name = if trimmed.is_empty() { None } else { Some(trimmed.to_string()) };
+        self.persist().await?;
+        Ok(self.list())
+    }
+
+    /// Set the timeline `id`'s autopoll flag (whether it refreshes on the
+    /// recurring tick). Returns the snapshot.
+    pub async fn set_timeline_autopoll(&mut self, id: &str, autopoll: bool) -> anyhow::Result<Vec<TimelineView>> {
+        let timeline = self.timeline_mut(id)?;
+        timeline.autopoll = autopoll;
         self.persist().await?;
         Ok(self.list())
     }
@@ -313,6 +335,24 @@ mod tests {
         assert_eq!(reloaded.len(), 1);
         assert_eq!(reloaded[0].id, id);
         assert_eq!(reloaded[0].sources, vec![Source::new(SourceNetwork::Nostr, "npub1xyz")]);
+    }
+
+    #[tokio::test]
+    async fn autopoll_defaults_on_and_toggles_and_persists() {
+        let storage: Arc<dyn ConfigStorage> = Arc::new(MemConfigStorage::new());
+        let mut registry = TimelineRegistry::new(storage.clone());
+        let id = registry.add_timeline().await.expect("add")[0].id.clone();
+
+        // New timelines default to autopoll on.
+        assert!(registry.list()[0].autopoll);
+
+        let after = registry.set_timeline_autopoll(&id, false).await.expect("set autopoll");
+        assert!(!after[0].autopoll);
+
+        // The toggled value survives a reload.
+        let mut reloaded = TimelineRegistry::new(storage.clone());
+        reloaded.load().await.expect("load");
+        assert!(!reloaded.list()[0].autopoll);
     }
 
     #[test]

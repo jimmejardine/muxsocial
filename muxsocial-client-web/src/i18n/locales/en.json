@@ -11,6 +11,7 @@
 	"timeline.get_more": "Get more posts",
 	"timeline.no_posts": "No posts yet. Use \"Get more posts\" to fetch some.",
 	"timeline.reached_oldest": "Reached the oldest posts.",
+	"timeline.autopoll": "Auto-refresh every 5 minutes",
 	"post.open_original": "Open original post",
 	"timeline.remove_confirm_title": "Remove timeline",
 	"timeline.remove_confirm_message": "Remove this timeline and its sources? This can't be undone.",
@@ -36,5 +37,6 @@
 	"toast.error_remove_timeline": "Failed to remove timeline: {{message}}",
 	"toast.error_add_source": "Failed to add source: {{message}}",
 	"toast.error_set_name": "Failed to rename timeline: {{message}}",
+	"toast.error_set_autopoll": "Failed to change auto-refresh: {{message}}",
 	"toast.error_get_more": "Failed to get more posts: {{message}}"
 }

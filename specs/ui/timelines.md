@@ -34,7 +34,11 @@ on success/failure.
 - An editable **name** input (commits on blur/Enter; with no custom name it shows a
   source-derived default — the source ids joined with the same `truncate_source_id` shortener
   as the chips — falling back to "Timeline N").
-- A **Get more posts** button → pages this timeline (see [posts.md](posts.md)).
+- A **Get more posts** button → pages this timeline (see [posts.md](posts.md)), with an
+  **autopoll** toggle next to it (a depressable reload-icon `ActionIcon`, default on/`filled`):
+  while on, the timeline auto-refreshes on the recurring 5-minute tick; while off it no-ops.
+  The initial pull (and the pull when a source changes) is automatic regardless. The flag is
+  persisted per timeline (`TimelineConfig.autopoll`).
 - A **remove** (✕) button that opens a [`ConfirmModal`](#confirm-before-remove) before deleting.
 - An **address bar**: paste an identifier and press Enter to add a source. The Rust
   `parse_source_address` (`timeline_registry.rs`) detects the network — an explicit
