@@ -36,6 +36,7 @@
 	"timeline.remove_source_confirm_title": "Eliminar fuente",
 	"timeline.remove_source_confirm_message": "¿Eliminar {{source}} de esta cronología?",
 	"common.cancel": "Cancelar",
+	"common.ok": "Aceptar",
 	"common.remove": "Eliminar",
 	"toast.source_removed": "Fuente eliminada",
 	"toast.address_copied": "Dirección copiada al portapapeles",

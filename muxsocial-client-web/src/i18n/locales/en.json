@@ -26,6 +26,7 @@
 	"theme.label": "Theme",
 	"language.label": "Language",
 	"common.cancel": "Cancel",
+	"common.ok": "OK",
 	"common.remove": "Remove",
 	"toast.timeline_added": "Timeline added",
 	"toast.timeline_removed": "Timeline removed",

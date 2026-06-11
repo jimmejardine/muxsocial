@@ -37,14 +37,7 @@
 	overflow-x: auto;
 }
 
-/* Keep every chip at its natural width so the row scrolls instead of squashing them. */
+/* Keep every chip/button at its natural width so the row scrolls instead of squashing them. */
 .sourceChips > * {
 	flex: 0 0 auto;
-}
-
-/* The add-source input as the first chip: fills spare width when few chips, shrinks
-   and wraps with the badges as more are added. */
-.addSourceForm {
-	flex: 0 0 auto;
-	width: 200px;
 }

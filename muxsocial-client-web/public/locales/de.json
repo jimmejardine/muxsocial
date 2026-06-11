@@ -36,6 +36,7 @@
 	"timeline.remove_source_confirm_title": "Quelle entfernen",
 	"timeline.remove_source_confirm_message": "{{source}} aus dieser Timeline entfernen?",
 	"common.cancel": "Abbrechen",
+	"common.ok": "OK",
 	"common.remove": "Entfernen",
 	"toast.source_removed": "Quelle entfernt",
 	"toast.address_copied": "Adresse in die Zwischenablage kopiert",

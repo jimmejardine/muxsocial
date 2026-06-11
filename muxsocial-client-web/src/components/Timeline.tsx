@@ -9,6 +9,7 @@ import type { Post } from "../tools/Post.ts";
 import { truncate_source_id } from "../tools/sourceLabel.ts";
 import type { SourceConfig, TimelineConfig } from "../tools/TimelineConfig.ts";
 import { Toast } from "../tools/Toast.ts";
+import { AddSourceModal } from "./AddSourceModal.tsx";
 import { ConfirmModal } from "./ConfirmModal.tsx";
 import { PostCard } from "./PostCard.tsx";
 import classes from "./Timeline.module.css";
@@ -27,18 +28,18 @@ interface TimelineProps {
 
 /**
  * A single timeline column: an editable name + a "get more posts" button + remove
- * button, an address textbox (paste + Enter adds a source), a compact row of the
- * timeline's sources, and a `react-virtuoso` body that lists the merged posts.
+ * button, an add-source button that opens a dialog (and a paste button), a compact
+ * row of the timeline's sources, and a `react-virtuoso` body that lists the merged posts.
  * Every action is addressed by the timeline's GUID (`timeline.id`). The name and
  * sources come from the Rust snapshot; the posts come from {@link usePosts}, which
  * holds the rendered window and pages it via the Rust client.
  */
 export function Timeline({ timeline, index, highlight_add_source, on_remove, on_add_source, on_remove_source, on_set_name, on_set_autopoll }: TimelineProps) {
 	const { t } = useTranslation();
-	const [address, set_address] = useState("");
 	// Local draft of the custom name; the effective name (default) is the placeholder.
 	const [name_draft, set_name_draft] = useState(timeline.name ?? "");
 	const [confirm_opened, confirm_handlers] = useDisclosure(false);
+	const [add_opened, add_handlers] = useDisclosure(false);
 	// The source pending removal (drives the source-remove confirm dialog), or null.
 	const [source_to_remove, set_source_to_remove] = useState<SourceConfig | null>(null);
 	// A stable key of the current sources; changes when an address is added/removed,
@@ -50,14 +51,6 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 	// with the same id shortener as the chips; a custom name wins, index is the fallback.
 	const source_summary = timeline.sources.map((source) => truncate_source_id(source.network, source.id)).join(", ");
 	const default_title = timeline.name || source_summary || t("timeline.title", { number: index + 1 });
-
-	const submit_address = () => {
-		const trimmed_address = address.trim();
-		if (trimmed_address.length > 0) {
-			on_add_source(timeline.id, trimmed_address);
-			set_address("");
-		}
-	};
 
 	// An empty timeline has nothing to lose, so skip the confirm dialog; otherwise ask.
 	const request_remove = () => {
@@ -140,37 +133,24 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 				</Group>
 			</Group>
 
-			{/* The add-source input is the first item in the chips row to save a row of
-			    vertical space. A real form so the mobile keyboard's "Go" submits (a bare
-			    onKeyDown Enter doesn't fire reliably on phones); the add button is the tap target. */}
+			{/* Paste-from-clipboard and an add (+) button that opens the add-source dialog,
+			    sitting as the first items in the chips row to save vertical space. The +
+			    button throbs while the lone timeline still has no sources. */}
 			<Group className={classes.sourceChips} gap={4} wrap="nowrap">
 				<ActionIcon size="md" variant="light" radius="sm" aria-label={t("timeline.paste")} title={t("timeline.paste")} onClick={paste_address}>
 					<PasteIcon />
 				</ActionIcon>
-				<form
-					className={classes.addSourceForm}
-					onSubmit={(event) => {
-						event.preventDefault();
-						submit_address();
-					}}
+				<ActionIcon
+					size="md"
+					variant="light"
+					radius="sm"
+					className={highlight_add_source ? "mux-throb" : undefined}
+					aria-label={t("timeline.add_source")}
+					title={t("timeline.add_source")}
+					onClick={add_handlers.open}
 				>
-					<TextInput
-						size="xs"
-						variant="filled"
-						radius="sm"
-						classNames={{ input: highlight_add_source ? "mux-throb" : undefined }}
-						placeholder={t("timeline.address_placeholder")}
-						value={address}
-						onChange={(event) => set_address(event.currentTarget.value)}
-						enterKeyHint="go"
-						rightSectionPointerEvents="all"
-						rightSection={
-							<ActionIcon type="submit" size="sm" variant="subtle" aria-label={t("timeline.add_source")} title={t("timeline.add_source")} disabled={address.trim().length === 0}>
-								<AddIcon />
-							</ActionIcon>
-						}
-					/>
-				</form>
+					<AddIcon />
+				</ActionIcon>
 				{timeline.sources.map((source) => (
 					<SourceChip
 						key={`${source.network}:${source.id}`}
@@ -204,6 +184,8 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 					}}
 				/>
 			</div>
+
+			<AddSourceModal opened={add_opened} onClose={add_handlers.close} onSubmit={(address) => on_add_source(timeline.id, address)} />
 
 			<ConfirmModal
 				opened={confirm_opened}

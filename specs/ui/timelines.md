@@ -41,15 +41,12 @@ on success/failure.
   persisted per timeline (`TimelineConfig.autopoll`).
 - A **remove** (✕) button that opens a [`ConfirmModal`](#confirm-before-remove) before deleting.
 - A compact, single-line **source row** (scrolls horizontally when it overflows) that holds a
-  **paste button** + an **add-source input** as its first items, followed by one **source chip**
-  per source. The paste button (left of the input) reads the clipboard and adds it as a source
-  via the same parse-and-add path as the input — a valid id is added (success toast), an invalid
-  one or a clipboard-read failure raises an error toast; nothing goes into the input. The
-  add-source input is a `<form>`: paste an
-  identifier and press Enter/Go, or tap the add (+) button, to add a source (the form submit
-  works on mobile where a bare Enter keydown doesn't). It sits inline as the first chip (rather
-  than in its own row) to save vertical space, and pulses (`.mux-throb`) while the lone timeline
-  has no sources. The Rust
+  **paste button** + a **"+" add button** as its first items, followed by one **source chip**
+  per source. The paste button reads the clipboard and adds it as a source via the parse-and-add
+  path — a valid id is added (success toast), an invalid one or a clipboard-read failure raises an
+  error toast. The "+" button opens an [`AddSourceModal`](#add-source-dialog) (a small dialog with
+  the "Paste an address" input and OK/Cancel) that adds the source via the same path; it pulses
+  (`.mux-throb`) while the lone timeline has no sources. The Rust
   `parse_source_address` (`timeline_registry.rs`) detects the network — an explicit
   `network:identifier` prefix (`nostr:` / `bluesky:`|`bsky:` / `mastodon:`|`masto:` /
   `hashiverse:`|`hash:`) always wins, otherwise `@user@host` → Mastodon, `npub1…` → nostr,
@@ -61,6 +58,14 @@ on success/failure.
   same `ConfirmModal`; clicking the chip label copies the full source address to the clipboard
   (with a toast).
 - The post list itself (see [posts.md](posts.md)).
+
+## Add-source dialog
+
+The "+" button opens `AddSourceModal` (`components/AddSourceModal.tsx`), a small Mantine `Modal`
+with a single auto-focused "Paste an address" input and an OK / Cancel button pair (focus trap +
+Escape/backdrop close). OK (or Enter) submits the trimmed address to the same parse-and-add path
+as the paste button; the modal owns the draft value and clears it on close so each open starts
+empty.
 
 ## Confirm before remove
 
