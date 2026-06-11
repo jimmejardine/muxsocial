@@ -58,6 +58,25 @@ node run_ci_checks.mjs
 GitHub Actions runs this same file, so a green local run mirrors CI. It needs the same toolchain as a
 manual build (rust, the `wasm32-unknown-unknown` target, clang/LLVM, wasm-pack, and Node).
 
+## Deployment
+
+The site is hosted on **Cloudflare Pages**. CI (`.github/workflows/ci.yml`) builds the web
+client and the `deploy` job direct-uploads `muxsocial-client-web/dist` to the Pages project
+**`muxsocial`** (production branch `main`) via `wrangler pages deploy … --branch=main`.
+
+One-time setup:
+
+1. Create the Pages project `muxsocial` with production branch `main` (Cloudflare dashboard →
+   Workers & Pages → create a Pages project via direct upload, or
+   `wrangler pages project create muxsocial --production-branch=main`).
+2. Create a Cloudflare API token with the **Cloudflare Pages: Edit** permission, and note your
+   **Account ID**.
+3. Add them as GitHub repository secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+Deploys to production then run on a **`v*` tag push** (`git tag v1.0.9 && git push origin v1.0.9`)
+or **manually** via Actions → CI → "Run workflow". (A manual run from a non-tag ref leaves the
+baked-in version at `0.0.0`; dispatch from a tag to stamp it.)
+
 ## License
 
 Dual-licensed under either of
