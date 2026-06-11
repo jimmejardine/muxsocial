@@ -7,10 +7,12 @@ interface ToolbarProps {
 	on_add_timeline: () => void;
 	/** Pulse the Add-timeline button for attention (no timelines yet). */
 	highlight?: boolean;
+	/** App version, shown in the hamburger menu; null until loaded. */
+	version?: string | null;
 }
 
 /** The top toolbar: app title, theme/language switchers, and the "Add timeline" button. */
-export function Toolbar({ on_add_timeline, highlight }: ToolbarProps) {
+export function Toolbar({ on_add_timeline, highlight, version }: ToolbarProps) {
 	const { t } = useTranslation();
 
 	return (
@@ -28,7 +30,7 @@ export function Toolbar({ on_add_timeline, highlight }: ToolbarProps) {
 				<Button size="xs" onClick={on_add_timeline} className={highlight ? "mux-throb" : undefined}>
 					{t("toolbar.add_timeline")}
 				</Button>
-				<HeaderMenu />
+				<HeaderMenu version={version} />
 			</Group>
 		</Group>
 	);

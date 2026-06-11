@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { networkColor } from "../theme/networkColors.ts";
 import type { Post } from "../tools/Post.ts";
 import { RelativeTimeAgo } from "../tools/RelativeTimeAgo.tsx";
+import { truncate_source_id } from "../tools/sourceLabel.ts";
 import { PostBody } from "./PostBody.tsx";
 import classes from "./PostCard.module.css";
 import { PostMedia } from "./PostMedia.tsx";
@@ -19,7 +20,7 @@ interface PostCardProps {
  */
 export function PostCard({ post }: PostCardProps) {
 	const { t } = useTranslation();
-	const author = post.author_display_name ?? post.author_identifier;
+	const author = post.author_display_name ?? truncate_source_id(post.source, post.author_identifier);
 	const timestamp = new Date(post.created_at_millis).toLocaleString();
 
 	const color = networkColor(post.source);

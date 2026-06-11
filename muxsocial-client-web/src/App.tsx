@@ -1,7 +1,6 @@
 import { AppShell, Center, Loader } from "@mantine/core";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StatusBar } from "./components/StatusBar.tsx";
 import { TimelineArea } from "./components/TimelineArea.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { Muxsocial, type MuxsocialClientWasmProxy } from "./Muxsocial.ts";
@@ -15,7 +14,6 @@ function error_message(err: unknown): string {
 }
 
 const HEADER_HEIGHT = 52;
-const FOOTER_HEIGHT = 32;
 
 /**
  * The app shell. All timeline state lives in the Rust layer; this component is a
@@ -123,17 +121,18 @@ export function App() {
 	);
 
 	// The timeline area's height is calc(100dvh - header - footer); expose the
-	// header/footer heights as CSS vars so that calc stays in sync with AppShell.
+	// header height as a CSS var so that calc stays in sync with AppShell. There is
+	// no footer anymore, so the footer var is zero.
 	const content_height_vars = {
 		"--mux-header-height": `${HEADER_HEIGHT}px`,
-		"--mux-footer-height": `${FOOTER_HEIGHT}px`,
+		"--mux-footer-height": "0px",
 	} as CSSProperties;
 
 	return (
 		<MuxsocialContext.Provider value={muxsocial_client}>
-			<AppShell header={{ height: HEADER_HEIGHT }} footer={{ height: FOOTER_HEIGHT }} padding={0} style={content_height_vars}>
+			<AppShell header={{ height: HEADER_HEIGHT }} padding={0} style={content_height_vars}>
 				<AppShell.Header>
-					<Toolbar on_add_timeline={add_timeline} highlight={timelines !== null && timelines.length === 0} />
+					<Toolbar on_add_timeline={add_timeline} highlight={timelines !== null && timelines.length === 0} version={app_version} />
 				</AppShell.Header>
 
 				<AppShell.Main>
@@ -145,10 +144,6 @@ export function App() {
 						<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_remove_source={remove_source} on_set_name={set_name} />
 					)}
 				</AppShell.Main>
-
-				<AppShell.Footer>
-					<StatusBar timeline_count={timelines?.length ?? 0} version={app_version} />
-				</AppShell.Footer>
 			</AppShell>
 		</MuxsocialContext.Provider>
 	);

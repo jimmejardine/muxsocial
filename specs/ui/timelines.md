@@ -20,8 +20,8 @@ on success/failure.
   As an onboarding cue, the Add-timeline button pulses (the global `.mux-throb` glow,
   reduced-motion aware) while there are no timelines; the address box pulses the same way when
   the lone timeline still has no sources.
-- `StatusBar` (`components/StatusBar.tsx`) — the timeline count and a version link to the
-  GitHub releases page (the version comes from the WASM `version()`).
+- There is no footer/status bar. The app version (from the WASM `version()`) is the first item
+  in the hamburger menu — a button linking to the GitHub releases page.
 - `TimelineArea` (`components/TimelineArea.tsx`) — lays the columns side by side (each at least
   500px, horizontally scrolling when they overflow), with an empty state (the `muxsocial.jpg`
   hero above the "add a timeline" hint) when there are

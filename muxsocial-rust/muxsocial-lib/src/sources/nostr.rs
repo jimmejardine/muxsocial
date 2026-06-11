@@ -143,7 +143,9 @@ fn map_event(event: Event, relay_hints: &[String]) -> AggregatedPost {
     AggregatedPost {
         source: SourceNetwork::Nostr,
         source_post_id: event.id.to_hex(),
-        author_identifier: event.pubkey.to_hex(),
+        // Show the npub (bech32) form so it matches the source the user added (and its chip),
+        // rather than the raw hex pubkey. Fall back to hex if bech32 encoding ever fails.
+        author_identifier: event.pubkey.to_bech32().unwrap_or_else(|_| event.pubkey.to_hex()),
         author_display_name: None,
         // nostr timestamps are whole seconds since the epoch.
         created_at_millis: event.created_at.as_secs() as i64 * 1000,

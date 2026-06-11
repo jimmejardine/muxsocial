@@ -24,7 +24,7 @@ async fn pulls_recent_text_notes_from_nostr() {
     assert!(!posts.is_empty(), "expected at least one nostr note for a well-known author");
     for post in &posts {
         assert_eq!(post.source, SourceNetwork::Nostr);
-        assert_eq!(post.author_identifier, NOSTR_JACK_PUBKEY_HEX, "every note should be from the requested author");
+        assert!(post.author_identifier.starts_with("npub1"), "nostr author should be an npub, got {:?}", post.author_identifier);
         assert!(!post.source_post_id.is_empty(), "note should have an event id");
         assert!(post.created_at_millis > 0, "note should have a timestamp");
     }

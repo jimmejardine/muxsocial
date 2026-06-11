@@ -42,7 +42,7 @@ pub struct AggregatedPost {
     pub source: SourceNetwork,
     /// The network-native, stable identifier of the post (hex id, AT-URI, event id, status id).
     pub source_post_id: String,
-    /// The network-native author identifier (pubkey hex, handle, acct, DID).
+    /// The network-native author identifier (nostr npub, Mastodon acct, Bluesky handle/DID, Hashiverse hex).
     pub author_identifier: String,
     /// A human-friendly author name when the network exposes one cheaply.
     pub author_display_name: Option<String>,
