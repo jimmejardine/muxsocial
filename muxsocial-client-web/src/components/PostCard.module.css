@@ -6,12 +6,19 @@
 
 /* Colored bar across the top showing the poster; the network's Mantine `light`
    variant background and text color are set inline per post, matching the source
-   chips at the top of the timeline. */
+   chips at the top of the timeline. Sticky so the title pins to the top of the
+   scroll area while its post is in view, then the next post's bar takes over (the
+   card's height bounds it; the opaque background lets the body scroll under it). */
 .sourceBar {
 	flex: 0 0 auto;
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
+	gap: var(--mantine-spacing-xs);
 	padding: 2px var(--mantine-spacing-sm);
+	position: sticky;
+	top: 0;
+	z-index: 1;
 }
 
 /* When the source bar links to the original post, give it link affordance
@@ -30,11 +37,20 @@ a.sourceBar:hover {
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	color: inherit;
-	/* Long handles/DIDs/pubkeys truncate rather than overflow the bar. */
+	/* Long handles/DIDs/pubkeys truncate rather than push the date off the bar. */
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 100%;
+	min-width: 0;
+}
+
+/* The post time, pinned to the right of the bar; never shrinks or wraps. */
+.sourceDate {
+	flex: 0 0 auto;
+	white-space: nowrap;
+	font-size: var(--mantine-font-size-xs);
+	color: inherit;
+	opacity: 0.8;
 }
 
 .content {

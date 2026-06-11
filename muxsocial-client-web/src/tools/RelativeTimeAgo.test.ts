@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { format_relative_time, refresh_interval_millis } from "./RelativeTimeAgo.tsx";
+import { format_relative_time, format_timestamp, refresh_interval_millis } from "./RelativeTimeAgo.tsx";
 
 const NOW = 1_700_000_000_000;
 const MINUTE = 60_000;
@@ -23,6 +23,17 @@ describe("format_relative_time (en)", () => {
 
 	it("handles future times", () => {
 		expect(format_relative_time(NOW + 10 * MINUTE, NOW, "en")).toBe("in 10 minutes");
+	});
+});
+
+describe("format_timestamp (en)", () => {
+	it("uses the relative form under 24h", () => {
+		expect(format_timestamp(NOW - 5 * MINUTE, NOW, "en")).toBe("5 minutes ago");
+		expect(format_timestamp(NOW - 3 * HOUR, NOW, "en")).toBe("3 hours ago");
+	});
+
+	it("uses the absolute local date-time at or beyond 24h", () => {
+		expect(format_timestamp(NOW - 2 * DAY, NOW, "en")).toBe(new Date(NOW - 2 * DAY).toLocaleString("en"));
 	});
 });
 

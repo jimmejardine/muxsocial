@@ -1,8 +1,9 @@
 /**
- * A live "5 minutes ago" relative timestamp, shown after a post's absolute time.
- * Mirrors hashiverse's `RelativeTimeAgo`: localized via `Intl.RelativeTimeFormat`
- * (no translation keys), and self-updating on an adaptive interval so it stays
- * current without re-rendering the whole timeline.
+ * A live post timestamp: the relative form ("5 minutes ago") while the post is
+ * under 24h old, otherwise the absolute local date-time. Localized via
+ * `Intl.RelativeTimeFormat` / `toLocaleString` (no translation keys), and
+ * self-updating on an adaptive interval so the relative form stays current
+ * without re-rendering the whole timeline.
  *
  * @module
  */
@@ -39,6 +40,21 @@ export function format_relative_time(date_millis: number, now_millis: number, lo
 	return formatter.format(0, "second");
 }
 
+/** Under this age a post reads as a relative time; at or beyond it, an absolute date. */
+const DAY_MILLIS = 24 * 60 * 60 * 1000;
+
+/**
+ * The post's displayed time: the relative form ("5 minutes ago") when under 24h
+ * old, otherwise the absolute local date-time (matching `Date.toLocaleString`).
+ * Pure (takes `now`), so it is unit-testable.
+ */
+export function format_timestamp(date_millis: number, now_millis: number, locale?: string): string {
+	if (Math.abs(now_millis - date_millis) < DAY_MILLIS) {
+		return format_relative_time(date_millis, now_millis, locale);
+	}
+	return new Date(date_millis).toLocaleString(locale);
+}
+
 /** How often to refresh, scaled to age: recent posts tick faster than old ones. */
 export function refresh_interval_millis(age_millis: number): number {
 	const age_seconds = Math.abs(age_millis) / 1000;
@@ -48,21 +64,27 @@ export function refresh_interval_millis(age_millis: number): number {
 	return 1_800_000;
 }
 
-/** A self-updating localized relative time for `date_millis` (Unix epoch ms). */
+/** A self-updating localized timestamp for `date_millis` (Unix epoch ms): relative
+ *  under 24h, absolute date-time beyond. */
 export function RelativeTimeAgo({ date_millis }: { date_millis: number }) {
 	const { i18n } = useTranslation();
-	const [text, set_text] = useState(() => format_relative_time(date_millis, Date.now(), i18n.language));
+	const [text, set_text] = useState(() => format_timestamp(date_millis, Date.now(), i18n.language));
 
 	useEffect(() => {
-		set_text(format_relative_time(date_millis, Date.now(), i18n.language));
+		set_text(format_timestamp(date_millis, Date.now(), i18n.language));
 		const interval_id = setInterval(
 			() => {
-				set_text(format_relative_time(date_millis, Date.now(), i18n.language));
+				set_text(format_timestamp(date_millis, Date.now(), i18n.language));
 			},
 			refresh_interval_millis(Date.now() - date_millis),
 		);
 		return () => clearInterval(interval_id);
 	}, [date_millis, i18n.language]);
 
-	return <time dateTime={new Date(date_millis).toISOString()}>{text}</time>;
+	// Always expose the exact local date-time on hover, even when showing the relative form.
+	return (
+		<time dateTime={new Date(date_millis).toISOString()} title={new Date(date_millis).toLocaleString(i18n.language)}>
+			{text}
+		</time>
+	);
 }

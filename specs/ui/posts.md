@@ -26,11 +26,15 @@ flips and the list shows an end marker.
 
 ## PostCard / PostBody
 
-`components/PostCard.tsx` renders one post: a thin left **source bar** in the network's color
-with the network name written vertically, then the author, the body, and the timestamp. When
-the post has a `post_url`, the source bar is a link (`target="_blank" rel="noreferrer"`) to the
-original post on its network (see the per-network permalink formats in
-[`../networks/index.md`](../networks/index.md)); otherwise it's a plain bar.
+`components/PostCard.tsx` renders one post: a **title bar** across the top in the network's
+color showing the poster (display name, else the identifier), then the body, media, and the
+timestamp. When the post has a `post_url`, the title bar is a link (`target="_blank"
+rel="noreferrer"`) to the original post on its network (see the per-network permalink formats in
+[`../networks/index.md`](../networks/index.md)); otherwise it's a plain bar. The title bar is
+`position: sticky` (top), so while scrolling it pins to the top of the column until its post
+scrolls past and the next post's bar takes over — a cascading sticky header within the virtuoso
+list (which renders items in normal flow, so plain CSS sticky works without touching the
+`firstItemIndex` prepend).
 
 `components/PostBody.tsx` renders `content_html`. Bodies are untrusted network HTML, so
 `sanitize_post_html` runs them through **DOMPurify** before `dangerouslySetInnerHTML`
