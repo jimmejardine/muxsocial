@@ -18,7 +18,7 @@ use anyhow::Context;
 use serde::Deserialize;
 
 use crate::http::{DefaultHttpTransport, HttpRequest, HttpTransport};
-use crate::post::{AggregatedPost, SourceNetwork, parse_rfc3339_to_epoch_millis};
+use crate::post::{AggregatedPost, PostMedia, SourceNetwork, parse_rfc3339_to_epoch_millis};
 use crate::timeline::SourcePager;
 
 /// Fetch up to `limit` recent public statuses for a fediverse `account` in the
@@ -131,6 +131,10 @@ struct MastodonStatus {
     /// some types). Used directly as the post permalink.
     #[serde(default)]
     url: Option<String>,
+    #[serde(default)]
+    media_attachments: Vec<MastodonMedia>,
+    #[serde(default)]
+    card: Option<MastodonCard>,
 }
 
 #[derive(Deserialize)]
@@ -139,9 +143,64 @@ struct MastodonStatusAccount {
     display_name: String,
 }
 
+/// A Mastodon media attachment. `type` is `image | gifv | video | audio | unknown`.
+#[derive(Deserialize)]
+struct MastodonMedia {
+    r#type: String,
+    url: String,
+    #[serde(default)]
+    preview_url: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
+}
+
+/// A Mastodon link-preview card.
+#[derive(Deserialize)]
+struct MastodonCard {
+    url: String,
+    #[serde(default)]
+    title: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
+    #[serde(default)]
+    image: Option<String>,
+}
+
+/// Map a status's attachments and (only when there are no attachments) its link
+/// card into our normalized [`PostMedia`] list.
+fn mastodon_media(media_attachments: Vec<MastodonMedia>, card: Option<MastodonCard>) -> Vec<PostMedia> {
+    let mut media: Vec<PostMedia> = media_attachments
+        .into_iter()
+        .filter_map(|attachment| match attachment.r#type.as_str() {
+            "image" => Some(PostMedia::Image { url: attachment.url, alt: attachment.description }),
+            "gifv" | "video" => Some(PostMedia::Video {
+                url: attachment.url,
+                poster: attachment.preview_url,
+                alt: attachment.description,
+            }),
+            // Audio and unknown types are not rendered.
+            _ => None,
+        })
+        .collect();
+
+    // Mastodon shows a link card only when the status has no media of its own.
+    if media.is_empty() {
+        if let Some(card) = card {
+            media.push(PostMedia::LinkCard {
+                url: card.url,
+                title: card.title,
+                description: card.description,
+                thumbnail_url: card.image,
+            });
+        }
+    }
+    media
+}
+
 fn map_status(status: MastodonStatus) -> anyhow::Result<AggregatedPost> {
     let created_at_millis = parse_rfc3339_to_epoch_millis(&status.created_at)?;
     let author_display_name = if status.account.display_name.is_empty() { None } else { Some(status.account.display_name) };
+    let media = mastodon_media(status.media_attachments, status.card);
 
     Ok(AggregatedPost {
         source: SourceNetwork::Mastodon,
@@ -152,6 +211,7 @@ fn map_status(status: MastodonStatus) -> anyhow::Result<AggregatedPost> {
         // Mastodon status content is sanitized HTML.
         content_html: status.content,
         post_url: status.url,
+        media,
     })
 }
 
@@ -203,5 +263,58 @@ mod tests {
         )
         .expect("valid status json");
         assert_eq!(map_status(status).expect("map").post_url, None);
+    }
+
+    #[test]
+    fn maps_image_and_video_attachments_to_media() {
+        let status: MastodonStatus = serde_json::from_str(
+            r#"{
+                "id": "1", "created_at": "2024-01-02T03:04:05.000Z", "content": "x",
+                "account": { "acct": "a", "display_name": "" },
+                "media_attachments": [
+                    { "type": "image", "url": "https://ex/i.png", "description": "a cat" },
+                    { "type": "video", "url": "https://ex/v.mp4", "preview_url": "https://ex/p.jpg" },
+                    { "type": "audio", "url": "https://ex/a.mp3" }
+                ]
+            }"#,
+        )
+        .expect("valid status json");
+        assert_eq!(
+            map_status(status).expect("map").media,
+            vec![
+                PostMedia::Image { url: "https://ex/i.png".to_string(), alt: Some("a cat".to_string()) },
+                PostMedia::Video { url: "https://ex/v.mp4".to_string(), poster: Some("https://ex/p.jpg".to_string()), alt: None },
+            ],
+            "image + video mapped; audio dropped"
+        );
+    }
+
+    #[test]
+    fn uses_the_link_card_only_when_there_are_no_attachments() {
+        let card_only: MastodonStatus = serde_json::from_str(
+            r#"{ "id": "1", "created_at": "2024-01-02T03:04:05.000Z", "content": "x",
+                "account": { "acct": "a", "display_name": "" },
+                "card": { "url": "https://ex/article", "title": "T", "description": "D", "image": "https://ex/c.jpg" } }"#,
+        )
+        .expect("valid");
+        assert_eq!(
+            map_status(card_only).expect("map").media,
+            vec![PostMedia::LinkCard {
+                url: "https://ex/article".to_string(),
+                title: Some("T".to_string()),
+                description: Some("D".to_string()),
+                thumbnail_url: Some("https://ex/c.jpg".to_string()),
+            }]
+        );
+
+        // With an attachment present, the card is suppressed.
+        let with_media: MastodonStatus = serde_json::from_str(
+            r#"{ "id": "1", "created_at": "2024-01-02T03:04:05.000Z", "content": "x",
+                "account": { "acct": "a", "display_name": "" },
+                "media_attachments": [{ "type": "image", "url": "https://ex/i.png" }],
+                "card": { "url": "https://ex/article" } }"#,
+        )
+        .expect("valid");
+        assert_eq!(map_status(with_media).expect("map").media, vec![PostMedia::Image { url: "https://ex/i.png".to_string(), alt: None }]);
     }
 }

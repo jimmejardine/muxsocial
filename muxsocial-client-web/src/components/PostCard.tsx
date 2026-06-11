@@ -5,6 +5,7 @@ import type { Post } from "../tools/Post.ts";
 import { RelativeTimeAgo } from "../tools/RelativeTimeAgo.tsx";
 import { PostBody } from "./PostBody.tsx";
 import classes from "./PostCard.module.css";
+import { PostMedia } from "./PostMedia.tsx";
 
 interface PostCardProps {
 	post: Post;
@@ -42,6 +43,7 @@ export function PostCard({ post }: PostCardProps) {
 				<div className={classes.body}>
 					<PostBody content_html={post.content_html} />
 				</div>
+				<PostMedia media={post.media} />
 				<Text size="xs" c="dimmed">
 					{timestamp} · <RelativeTimeAgo date_millis={post.created_at_millis} />
 				</Text>

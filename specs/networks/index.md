@@ -29,6 +29,11 @@ every network maps into:
   source chip links to it; the per-network formats are njump `nevent` (nostr),
   `bsky.app/profile/{did}/post/{rkey}` (Bluesky), the status `url` (Mastodon), and
   the `app.hashiverse.com` post route (Hashiverse).
+- `media: Vec<PostMedia>` — structured attached media the GUI renders below the
+  body: `PostMedia` is an enum (internally tagged on `kind`) of `Image { url, alt }`,
+  `Video { url, poster, alt }`, and `LinkCard { url, title, description, thumbnail_url }`.
+  Each mapper fills it from native data (see the per-network "Media" notes); empty
+  when the source keeps media inline in `content_html` (Hashiverse).
 
 This is deliberately minimal — enough to prove the pull-and-display pipeline.
 Richer versioned wire/bundle types come later.

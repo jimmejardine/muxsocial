@@ -47,6 +47,10 @@ the first time a timeline has a Hashiverse source (see
 `https://app.hashiverse.com/#/post/{post_id}/{bucket_location}`, with both segments
 percent-encoded (the post's `bucket_location` is carried through the mapper).
 
+**Media:** Hashiverse post bodies are native HTML, so any images/video stay inline
+in `content_html` (the GUI's sanitizer allows `<img>`/`<video>`); the structured
+`media` list is empty.
+
 **Pagination:** `HashiversePager` forwards both `fetch_newer` and `fetch_older` to
 `single_timeline_get_more`, which already returns the next latest-then-earlier
 deduped batch — so each `get_more` is effectively one call to it.

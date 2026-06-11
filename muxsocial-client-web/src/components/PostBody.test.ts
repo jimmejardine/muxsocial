@@ -20,4 +20,20 @@ describe("sanitize_post_html", () => {
 		expect(sanitized).toContain("<a");
 		expect(sanitized).toContain("https://example.com");
 	});
+
+	it("hardens links with target and rel", () => {
+		const sanitized = sanitize_post_html('<a href="https://example.com">link</a>');
+		expect(sanitized).toContain('target="_blank"');
+		expect(sanitized).toContain("noopener");
+		expect(sanitized).toContain("noreferrer");
+	});
+
+	it("keeps inline images and video (for Hashiverse bodies)", () => {
+		const sanitized = sanitize_post_html('<img src="https://ex/i.png"><video src="https://ex/v.mp4" controls></video>');
+		expect(sanitized).toContain("<img");
+		expect(sanitized).toContain("https://ex/i.png");
+		expect(sanitized).toContain('loading="lazy"');
+		expect(sanitized).toContain("<video");
+		expect(sanitized).toContain("https://ex/v.mp4");
+	});
 });

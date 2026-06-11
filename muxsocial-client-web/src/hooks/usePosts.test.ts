@@ -11,6 +11,7 @@ function post(source_post_id: string, created_at_millis: number): Post {
 		created_at_millis,
 		content_html: `<p>${source_post_id}</p>`,
 		post_url: null,
+		media: [],
 	};
 }
 

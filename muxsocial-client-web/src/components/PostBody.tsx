@@ -1,5 +1,24 @@
 import DOMPurify from "dompurify";
 
+// Harden links (nostr linkifies URLs) and lazy-load inline images (Hashiverse
+// bodies can carry <img>/<video>). Registered once at module load.
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+	if (node.tagName === "A") {
+		node.setAttribute("target", "_blank");
+		node.setAttribute("rel", "noopener noreferrer");
+	}
+	if (node.tagName === "IMG") {
+		node.setAttribute("loading", "lazy");
+	}
+});
+
+// Keep DOMPurify's broad default allowlist (Hashiverse bodies are rich HTML) and
+// additionally permit inline media + the attributes the hook sets.
+const SANITIZE_CONFIG = {
+	ADD_TAGS: ["video", "source"],
+	ADD_ATTR: ["target", "rel", "loading", "controls", "poster"],
+};
+
 /**
  * Sanitize a post's `content_html` for safe rendering. Post bodies are HTML from
  * untrusted networks (Mastodon/Hashiverse native HTML, nostr/Bluesky rendered to
@@ -7,7 +26,7 @@ import DOMPurify from "dompurify";
  * sanitization is unit-testable without rendering.
  */
 export function sanitize_post_html(content_html: string): string {
-	return DOMPurify.sanitize(content_html);
+	return DOMPurify.sanitize(content_html, SANITIZE_CONFIG);
 }
 
 interface PostBodyProps {

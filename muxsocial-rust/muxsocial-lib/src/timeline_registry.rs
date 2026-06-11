@@ -155,8 +155,8 @@ impl TimelineRegistry {
 /// An explicit `network:identifier` prefix (`nostr:`, `bluesky:`/`bsky:`,
 /// `mastodon:`/`masto:`, `hashiverse:`/`hash:`) always wins. Otherwise:
 /// `@user@host` → Mastodon, `npub1…` → nostr, `did:plc:…` or a bare dotted handle
-/// → Bluesky, and a bare 64-char hex id → Hashiverse (a hex *nostr* key must use
-/// the `nostr:` prefix). Anything else is an error.
+/// (with an optional single leading `@`) → Bluesky, and a bare 64-char hex id →
+/// Hashiverse (a hex *nostr* key must use the `nostr:` prefix). Anything else is an error.
 pub fn parse_source_address(address: &str) -> anyhow::Result<Source> {
     let trimmed = address.trim();
     anyhow::ensure!(!trimmed.is_empty(), "empty address");
@@ -164,8 +164,11 @@ pub fn parse_source_address(address: &str) -> anyhow::Result<Source> {
     // Explicit "network:identifier" prefix wins.
     if let Some((scheme, identifier)) = trimmed.split_once(':') {
         if let Some(network) = network_from_scheme(scheme) {
-            anyhow::ensure!(!identifier.trim().is_empty(), "empty identifier after {scheme:?} prefix");
-            return Ok(Source::new(network, identifier.trim()));
+            let identifier = identifier.trim();
+            // ATProto handles have no leading '@'; tolerate one if pasted.
+            let identifier = if network == SourceNetwork::Bluesky { identifier.trim_start_matches('@') } else { identifier };
+            anyhow::ensure!(!identifier.is_empty(), "empty identifier after {scheme:?} prefix");
+            return Ok(Source::new(network, identifier));
         }
         // A `:` that is not a known scheme (e.g. `did:plc:…`) falls through.
     }
@@ -181,9 +184,9 @@ pub fn parse_source_address(address: &str) -> anyhow::Result<Source> {
         return Ok(Source::new(SourceNetwork::Nostr, trimmed));
     }
 
-    // Bluesky: a DID, or a bare dotted handle (no '@').
-    if trimmed.starts_with("did:plc:") || (trimmed.contains('.') && !trimmed.contains('@')) {
-        return Ok(Source::new(SourceNetwork::Bluesky, trimmed));
+    // Bluesky: a DID, or a bare dotted handle (optionally with a single leading '@').
+    if without_leading_at.starts_with("did:plc:") || (without_leading_at.contains('.') && !without_leading_at.contains('@')) {
+        return Ok(Source::new(SourceNetwork::Bluesky, without_leading_at));
     }
 
     // A bare 64-char hex id is a Hashiverse user id.
@@ -294,6 +297,12 @@ mod tests {
             ("nostr:ddd86177", SourceNetwork::Nostr, "ddd86177"),
             ("hashiverse:ddd86177", SourceNetwork::Hashiverse, "ddd86177"),
             ("bsky:jay.bsky.team", SourceNetwork::Bluesky, "jay.bsky.team"),
+            // A Bluesky handle pasted with a leading '@' is still Bluesky; the '@' is stripped.
+            ("@sherif.eurosky.social", SourceNetwork::Bluesky, "sherif.eurosky.social"),
+            ("sherif.eurosky.social", SourceNetwork::Bluesky, "sherif.eurosky.social"),
+            ("@jay.bsky.team", SourceNetwork::Bluesky, "jay.bsky.team"),
+            ("bluesky:@sherif.eurosky.social", SourceNetwork::Bluesky, "sherif.eurosky.social"),
+            ("bsky:@jay.bsky.team", SourceNetwork::Bluesky, "jay.bsky.team"),
             // A bare 64-char hex id defaults to Hashiverse.
             (
                 "ddd86177f252f0d33f32aa3e59fb6b554969faad48af443347c5b72ac2e186f0",

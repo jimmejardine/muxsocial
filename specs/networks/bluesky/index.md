@@ -28,6 +28,11 @@ Unauthenticated reads from the public AppView `https://public.api.bsky.app`:
 the `at://…/app.bsky.feed.post/{rkey}` URI. The DID is used (not the handle) because
 it is stable across handle changes.
 
+**Media:** `embed_to_media` maps `post.embed` — `images#view` → `Image` (fullsize +
+alt), `video#view` → `Video` (HLS `playlist` + `thumbnail` poster), `external#view`
+→ `LinkCard`, and `recordWithMedia#view` → its media side. Quote-only `record#view`
+embeds carry no media of their own and are skipped for now.
+
 **Pagination:** `BlueskyPager` walks backward with the feed's opaque `cursor`
 (`None` for the top page, then the previous response's cursor for older pages);
 there is no "since", so `fetch_newer` re-fetches the top.

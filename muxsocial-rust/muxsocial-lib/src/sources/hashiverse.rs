@@ -129,9 +129,10 @@ fn map_encoded_post(encoded_post: EncodedPostV1, bucket_location: &BucketLocatio
         author_identifier: hex::encode(encoded_post.header.verification_key_bytes.0),
         author_display_name: None,
         created_at_millis: encoded_post.header.time_millis.0,
-        // Hashiverse post bodies are HTML.
+        // Hashiverse post bodies are HTML; any media is inline there.
         content_html: encoded_post.post,
         post_url: Some(post_url),
+        media: Vec::new(),
     }
 }
 

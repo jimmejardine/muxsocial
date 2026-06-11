@@ -34,7 +34,19 @@ original post on its network (see the per-network permalink formats in
 
 `components/PostBody.tsx` renders `content_html`. Bodies are untrusted network HTML, so
 `sanitize_post_html` runs them through **DOMPurify** before `dangerouslySetInnerHTML`
-(exported separately so the sanitization is unit-tested).
+(exported separately so the sanitization is unit-tested). It keeps DOMPurify's broad default
+allowlist (Hashiverse bodies are rich HTML), additionally permits inline `<video>`/`<source>`,
+and registers an `afterSanitizeAttributes` hook that forces `target="_blank"
+rel="noopener noreferrer"` on links (nostr linkifies URLs) and `loading="lazy"` on images.
+
+## Media
+
+`components/PostMedia.tsx` renders the post's structured `media` (see
+[`../networks/index.md`](../networks/index.md)) below the body: `image` → a lazy `<img>`
+linking to the full image; `video` → a `<video controls poster>` (Bluesky video is HLS, which
+plays only in Safari without hls.js — a deferred follow-up; the poster still shows); `link_card`
+→ an external-link card with thumbnail, title, description, and host. Media that the source
+keeps inline (Hashiverse) renders through `PostBody` instead.
 
 ## Relative timestamps
 

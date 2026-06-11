@@ -84,6 +84,7 @@ pub(crate) mod test_support {
             created_at_millis,
             content_html: format!("<p>{source_post_id}</p>"),
             post_url: None,
+            media: Vec::new(),
         }
     }
 

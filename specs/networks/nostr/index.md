@@ -28,6 +28,11 @@ author pubkey + the queried relays as hints, capped at two) and forms
 `https://njump.me/{nevent}`. Embedding the relays we fetched from keeps the link
 resolvable on the right relay; `None` if bech32 encoding fails.
 
+**Media:** notes have no structured media, so `render_nostr_content` scans the
+text — an `http(s)` URL ending in an image extension (`jpg/jpeg/png/gif/webp/avif`)
+becomes a `PostMedia::Image` (and is dropped from the text), and any other URL is
+linkified into `<a href>` in `content_html`.
+
 **Pagination:** `NostrPager` bounds the `Filter` by whole-second timestamps —
 `.since` (one second past the newest held) for `fetch_newer`, `.until` (one second
 before the oldest held) for `fetch_older`. It carries the queried relay URLs so the

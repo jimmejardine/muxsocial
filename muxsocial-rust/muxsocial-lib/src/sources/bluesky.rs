@@ -10,6 +10,8 @@
 //! works from a browser too.
 
 use anyhow::anyhow;
+use atrium_api::app::bsky::embed::record_with_media::ViewMediaRefs;
+use atrium_api::app::bsky::feed::defs::PostViewEmbedRefs;
 use atrium_api::app::bsky::feed::{get_author_feed, post};
 use atrium_api::app::bsky::richtext::facet::{Main as Facet, MainFeaturesItem};
 use atrium_api::types::string::AtIdentifier;
@@ -18,7 +20,7 @@ use atrium_xrpc::{HttpClient, OutputDataOrBytes, XrpcClient, XrpcRequest};
 use http::{Method, Request, Response};
 
 use crate::http::{DefaultHttpTransport, HttpRequest, HttpTransport};
-use crate::post::{AggregatedPost, SourceNetwork, parse_rfc3339_to_epoch_millis};
+use crate::post::{AggregatedPost, PostMedia, SourceNetwork, parse_rfc3339_to_epoch_millis};
 use crate::timeline::SourcePager;
 
 /// The unauthenticated public AppView base URL.
@@ -206,7 +208,55 @@ fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedVi
         content_html,
         // Permalink from the stable DID + the AT-URI's rkey; the handle can change.
         post_url: bluesky_post_url(&post_view.uri, post_view.author.did.as_str()),
+        media: post_view.embed.as_ref().map_or_else(Vec::new, embed_to_media),
     })
+}
+
+/// Map a post's view embed into normalized [`PostMedia`] — images, video, and
+/// external link cards (including the media side of a quote-with-media). A
+/// quote-only record carries no media of its own and is skipped for now.
+fn embed_to_media(embed: &Union<PostViewEmbedRefs>) -> Vec<PostMedia> {
+    let Union::Refs(refs) = embed else { return Vec::new() };
+    match refs {
+        PostViewEmbedRefs::AppBskyEmbedImagesView(view) => images_view_to_media(view),
+        PostViewEmbedRefs::AppBskyEmbedVideoView(view) => vec![video_view_to_media(view)],
+        PostViewEmbedRefs::AppBskyEmbedExternalView(view) => vec![external_view_to_media(view)],
+        PostViewEmbedRefs::AppBskyEmbedRecordWithMediaView(view) => match &view.media {
+            Union::Refs(ViewMediaRefs::AppBskyEmbedImagesView(images)) => images_view_to_media(images),
+            Union::Refs(ViewMediaRefs::AppBskyEmbedVideoView(video)) => vec![video_view_to_media(video)],
+            Union::Refs(ViewMediaRefs::AppBskyEmbedExternalView(external)) => vec![external_view_to_media(external)],
+            Union::Unknown(_) => Vec::new(),
+        },
+        PostViewEmbedRefs::AppBskyEmbedRecordView(_) => Vec::new(),
+    }
+}
+
+fn images_view_to_media(view: &atrium_api::app::bsky::embed::images::View) -> Vec<PostMedia> {
+    view.images
+        .iter()
+        .map(|image| PostMedia::Image {
+            url: image.fullsize.clone(),
+            alt: Some(image.alt.clone()).filter(|alt| !alt.is_empty()),
+        })
+        .collect()
+}
+
+fn video_view_to_media(view: &atrium_api::app::bsky::embed::video::View) -> PostMedia {
+    PostMedia::Video {
+        url: view.playlist.clone(),
+        poster: view.thumbnail.clone(),
+        alt: view.alt.clone(),
+    }
+}
+
+fn external_view_to_media(view: &atrium_api::app::bsky::embed::external::View) -> PostMedia {
+    let external = &view.external;
+    PostMedia::LinkCard {
+        url: external.uri.clone(),
+        title: Some(external.title.clone()).filter(|title| !title.is_empty()),
+        description: Some(external.description.clone()).filter(|description| !description.is_empty()),
+        thumbnail_url: external.thumb.clone(),
+    }
 }
 
 /// Build the bsky.app permalink for a post from its AT-URI

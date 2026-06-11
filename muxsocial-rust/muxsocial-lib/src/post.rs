@@ -40,6 +40,30 @@ pub struct AggregatedPost {
     /// be built (njump for nostr, bsky.app for Bluesky, the status URL for
     /// Mastodon, the Hashiverse app route). `None` when no link is available.
     pub post_url: Option<String>,
+    /// Structured media attached to the post (images, video, link cards),
+    /// rendered by the GUI below the body. Empty when the source carries no
+    /// separate media (Hashiverse keeps any media inline in `content_html`).
+    #[serde(default)]
+    pub media: Vec<PostMedia>,
+}
+
+/// A piece of media attached to a post. Serialized internally-tagged on `kind`
+/// (`image` / `video` / `link_card`) so the GUI can switch on it as a
+/// discriminated union.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum PostMedia {
+    /// A still image (or animated GIF rendered as one).
+    Image { url: String, alt: Option<String> },
+    /// A video; `poster` is a still frame/thumbnail to show before playback.
+    Video { url: String, poster: Option<String>, alt: Option<String> },
+    /// An external link preview card.
+    LinkCard {
+        url: String,
+        title: Option<String>,
+        description: Option<String>,
+        thumbnail_url: Option<String>,
+    },
 }
 
 /// Parse an RFC3339 / ISO-8601 timestamp (as emitted by Mastodon and Bluesky)

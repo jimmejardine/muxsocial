@@ -26,6 +26,10 @@ Each status maps to `AggregatedPost` (`id`, `created_at` RFC3339 → millis,
 **Permalink (`post_url`):** the status's own canonical `url` field, deserialized
 straight from the API response (absent for rare status types → `None`).
 
+**Media:** `media_attachments` map by `type` — `image` → `Image`, `gifv`/`video` →
+`Video` (with `preview_url` as poster); audio/unknown are dropped. A status's link
+`card` becomes a single `LinkCard` only when it has no attachments of its own.
+
 **Pagination:** `MastodonPager` uses the statuses endpoint's id cursors — `min_id`
 (the newest held id) for `fetch_newer`, `max_id` (the oldest held id) for
 `fetch_older` — and caches the resolved `(instance base URL, account id)` pair.

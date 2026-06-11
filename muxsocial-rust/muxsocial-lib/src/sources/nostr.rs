@@ -4,8 +4,8 @@
 //! by `nostr-sdk`), so it does not go through [`crate::http`]. We connect to a
 //! few public relays, request recent kind-1 (text note) events for an author,
 //! and map them into [`AggregatedPost`]. Note content is plain text, so we wrap
-//! it into HTML (escape + newlines → `<br>`) to match the other sources; no URL
-//! linkification is done.
+//! it into HTML (escape + newlines → `<br>`) to match the other sources; image
+//! URLs are pulled out as media and other URLs are linkified.
 //!
 //! Paging is by timestamp: [`NostrPager`] uses the `Filter` `.since`/`.until`
 //! bounds (whole seconds) to fetch newer/older than the posts already held.
@@ -15,7 +15,7 @@ use std::time::Duration;
 use anyhow::Context;
 use nostr_sdk::prelude::*;
 
-use crate::post::{AggregatedPost, SourceNetwork};
+use crate::post::{AggregatedPost, PostMedia, SourceNetwork};
 use crate::timeline::SourcePager;
 
 /// The nostr SDK client type, re-exported so an owner can hold a shared,
@@ -137,6 +137,9 @@ fn ensure_default_crypto_provider() {
 
 fn map_event(event: Event, relay_hints: &[String]) -> AggregatedPost {
     let post_url = njump_event_url(&event, relay_hints);
+    // nostr notes are plain text: escape + wrap, pull out image URLs as media, and
+    // linkify the remaining URLs.
+    let (content_html, media) = render_nostr_content(&event.content);
     AggregatedPost {
         source: SourceNetwork::Nostr,
         source_post_id: event.id.to_hex(),
@@ -144,10 +147,66 @@ fn map_event(event: Event, relay_hints: &[String]) -> AggregatedPost {
         author_display_name: None,
         // nostr timestamps are whole seconds since the epoch.
         created_at_millis: event.created_at.as_secs() as i64 * 1000,
-        // nostr note content is plain text; wrap it into HTML like the other sources.
-        content_html: crate::html::plain_text_to_html(&event.content),
+        content_html,
         post_url,
+        media,
     }
+}
+
+/// Image extensions whose URLs become inline images rather than links.
+const NOSTR_IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp", "avif"];
+
+/// Render nostr note text to inline HTML and extract image media. Text is escaped
+/// with newlines → `<br>` (via [`crate::html::plain_text_to_html`]); an `http(s)`
+/// URL ending in an image extension becomes a [`PostMedia::Image`] and is dropped
+/// from the text, while any other URL is linkified (`<a href=…>`). The GUI's
+/// sanitizer hardens links with `target`/`rel`.
+fn render_nostr_content(text: &str) -> (String, Vec<PostMedia>) {
+    let mut html = String::with_capacity(text.len());
+    let mut media: Vec<PostMedia> = Vec::new();
+    let mut rest = text;
+
+    while let Some(start) = find_url_start(rest) {
+        let (before, from_url) = rest.split_at(start);
+        html.push_str(&crate::html::plain_text_to_html(before));
+
+        let token_len = url_token_len(from_url);
+        let (token, after) = from_url.split_at(token_len);
+        // Trailing sentence punctuation is not part of the URL.
+        let url = token.trim_end_matches(['.', ',', ')', ']', '!', '?', ';', ':']);
+        let trimmed_tail = &token[url.len()..];
+
+        if is_image_url(url) {
+            media.push(PostMedia::Image { url: url.to_string(), alt: None });
+        } else {
+            html.push_str(&format!("<a href=\"{}\">{}</a>", crate::html::escape_attribute(url), crate::html::escape_text(url)));
+        }
+        html.push_str(&crate::html::plain_text_to_html(trimmed_tail));
+        rest = after;
+    }
+    html.push_str(&crate::html::plain_text_to_html(rest));
+    (html, media)
+}
+
+/// The earliest `http://` / `https://` start in `s`, if any.
+fn find_url_start(s: &str) -> Option<usize> {
+    match (s.find("http://"), s.find("https://")) {
+        (Some(a), Some(b)) => Some(a.min(b)),
+        (Some(a), None) => Some(a),
+        (None, b) => b,
+    }
+}
+
+/// Byte length of the URL token at the start of `s` — up to the first whitespace
+/// or `<`/`>`/`"`.
+fn url_token_len(s: &str) -> usize {
+    s.char_indices().find(|(_, character)| character.is_whitespace() || matches!(character, '<' | '>' | '"')).map_or(s.len(), |(index, _)| index)
+}
+
+/// Whether `url`'s path (ignoring query/fragment) ends in an image extension.
+fn is_image_url(url: &str) -> bool {
+    let path = url.split(['?', '#']).next().unwrap_or(url).to_ascii_lowercase();
+    NOSTR_IMAGE_EXTENSIONS.iter().any(|extension| path.ends_with(&format!(".{extension}")))
 }
 
 /// Build the njump permalink for an event: an `nevent` (bech32) carrying the event
@@ -157,4 +216,40 @@ fn njump_event_url(event: &Event, relay_hints: &[String]) -> Option<String> {
     let relay_urls: Vec<RelayUrl> = relay_hints.iter().take(2).filter_map(|relay_url| RelayUrl::parse(relay_url).ok()).collect();
     let nip19_event = Nip19Event::new(event.id).author(event.pubkey).relays(relay_urls);
     nip19_event.to_bech32().ok().map(|nevent| format!("https://njump.me/{nevent}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::post::PostMedia;
+
+    #[test]
+    fn extracts_image_urls_as_media_and_drops_them_from_text() {
+        let (html, media) = render_nostr_content("see https://example.com/cat.jpg now");
+        assert_eq!(media, vec![PostMedia::Image { url: "https://example.com/cat.jpg".to_string(), alt: None }]);
+        assert!(!html.contains("cat.jpg"), "image url should be removed from text: {html}");
+        assert!(html.contains("see") && html.contains("now"));
+    }
+
+    #[test]
+    fn linkifies_non_image_urls() {
+        let (html, media) = render_nostr_content("look https://example.com here");
+        assert!(media.is_empty());
+        assert!(html.contains("<a href=\"https://example.com\">https://example.com</a>"), "{html}");
+    }
+
+    #[test]
+    fn escapes_plain_text_and_keeps_newlines() {
+        let (html, media) = render_nostr_content("a < b
+c");
+        assert!(media.is_empty());
+        assert_eq!(html, "a &lt; b<br>c");
+    }
+
+    #[test]
+    fn trailing_punctuation_is_not_part_of_the_url() {
+        let (html, _) = render_nostr_content("(see https://example.com).");
+        assert!(html.contains("<a href=\"https://example.com\">"), "{html}");
+        assert!(html.contains(")."), "trailing punctuation kept as text: {html}");
+    }
 }
