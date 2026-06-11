@@ -1,3 +1,5 @@
+<img align="right" width="150" src="muxsocial-client-web/public/img/favicon/muxsocial-icon-256.png" alt="mux.social icon">
+
 # mux.social
 
 An open source social media tool that aggregates posts from the top tier open source social media networks: Hashiverse, nostr, Mastodon, and Bluesky.
