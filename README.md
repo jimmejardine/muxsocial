@@ -4,7 +4,7 @@ An open source social media tool that aggregates posts from the top tier open so
 
 mux.social is a serverless SPA (single page application). There is no server other than the hosting of the SPA — everything lives in the browser. The heavy lifting is done in Rust compiled to WASM; the GUI is React/Mantine.
 
-![CI](https://github.com/jimmejardine/muxsocial/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/jimmejardine/muxsocial/actions/workflows/ci.yml/badge.svg)](https://github.com/jimmejardine/muxsocial/actions/workflows/ci.yml)
 [![check-translations](https://github.com/jimmejardine/muxsocial/actions/workflows/check-translations.yml/badge.svg)](https://github.com/jimmejardine/muxsocial/actions/workflows/check-translations.yml)
 
 The `check-translations` badge goes red when a locale falls behind the English source — run `node muxsocial-client-web/translations/check-translations.mjs` and feed its JSON output into a Claude Code session to update the flagged strings.
