@@ -2,6 +2,7 @@
 	"toolbar.add_timeline": "Add timeline",
 	"toolbar.menu_label": "Menu",
 	"toolbar.tagline": "your singular dashboard for <0>Hashiverse</0>, <1>Nostr</1>, <2>Mastodon</2> & <3>Bluesky</3>.",
+	"toolbar.networks": "Networks",
 	"timeline.title": "Timeline {{number}}",
 	"timeline.remove": "Remove timeline",
 	"timeline.name_label": "Timeline name",

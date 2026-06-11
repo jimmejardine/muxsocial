@@ -1,6 +1,7 @@
 {
 	"toolbar.add_timeline": "Añadir cronología",
 	"toolbar.tagline": "tu panel único para <0>Hashiverse</0>, <1>Nostr</1>, <2>Mastodon</2> y <3>Bluesky</3>.",
+	"toolbar.networks": "Redes",
 	"timeline.title": "Cronología {{number}}",
 	"timeline.remove": "Eliminar cronología",
 	"timeline.name_label": "Nombre de la cronología",

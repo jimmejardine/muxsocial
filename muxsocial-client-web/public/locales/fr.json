@@ -1,6 +1,7 @@
 {
 	"toolbar.add_timeline": "Ajouter une timeline",
 	"toolbar.tagline": "ton tableau de bord unique pour <0>Hashiverse</0>, <1>Nostr</1>, <2>Mastodon</2> et <3>Bluesky</3>.",
+	"toolbar.networks": "Réseaux",
 	"timeline.title": "Timeline {{number}}",
 	"timeline.remove": "Supprimer la timeline",
 	"timeline.name_label": "Nom de la timeline",

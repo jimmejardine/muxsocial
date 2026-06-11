@@ -2,6 +2,7 @@ import { Burger, Popover, Stack } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher.tsx";
+import { NetworksMenu } from "./NetworksMenu.tsx";
 import { ThemeSwitcher } from "./ThemeSwitcher.tsx";
 
 /**
@@ -20,6 +21,7 @@ export function HeaderMenu() {
 			</Popover.Target>
 			<Popover.Dropdown p="xs">
 				<Stack gap="xs">
+					<NetworksMenu />
 					<ThemeSwitcher />
 					<LanguageSwitcher />
 				</Stack>

@@ -1,6 +1,7 @@
 {
 	"toolbar.add_timeline": "Timeline hinzufügen",
 	"toolbar.tagline": "dein zentrales Dashboard für <0>Hashiverse</0>, <1>Nostr</1>, <2>Mastodon</2> & <3>Bluesky</3>.",
+	"toolbar.networks": "Netzwerke",
 	"timeline.title": "Timeline {{number}}",
 	"timeline.remove": "Timeline entfernen",
 	"timeline.name_label": "Timeline-Name",
