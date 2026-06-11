@@ -16,6 +16,20 @@ pub enum SourceNetwork {
     Bluesky,
 }
 
+impl SourceNetwork {
+    /// Parse the serialized variant name (`"Hashiverse"`, `"Nostr"`, …) back into
+    /// the enum — the form the GUI sends across the wasm boundary.
+    pub fn from_name(name: &str) -> Option<SourceNetwork> {
+        match name {
+            "Hashiverse" => Some(SourceNetwork::Hashiverse),
+            "Nostr" => Some(SourceNetwork::Nostr),
+            "Mastodon" => Some(SourceNetwork::Mastodon),
+            "Bluesky" => Some(SourceNetwork::Bluesky),
+            _ => None,
+        }
+    }
+}
+
 /// A single post normalized across all source networks.
 ///
 /// `content_html` is HTML for every source: Mastodon and Hashiverse bodies are

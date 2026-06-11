@@ -1,18 +1,17 @@
 .card {
 	display: flex;
-	align-items: stretch;
+	flex-direction: column;
 	border-bottom: 1px solid var(--mantine-color-default-border);
 }
 
-/* Colored strip on the left; the network's Mantine `light` variant background and
-   text color are set inline per post, matching the source chips at the top of the
-   timeline. */
+/* Colored bar across the top showing the poster; the network's Mantine `light`
+   variant background and text color are set inline per post, matching the source
+   chips at the top of the timeline. */
 .sourceBar {
 	flex: 0 0 auto;
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	padding: 0 2px;
+	padding: 2px var(--mantine-spacing-sm);
 }
 
 /* When the source bar links to the original post, give it link affordance
@@ -27,14 +26,15 @@ a.sourceBar:hover {
 }
 
 .sourceLabel {
-	writing-mode: vertical-rl;
-	/* Rotate so the name reads bottom-to-top, centered along the bar. */
-	transform: rotate(180deg);
-	text-align: center;
 	font-size: var(--mantine-font-size-xs);
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	color: inherit;
+	/* Long handles/DIDs/pubkeys truncate rather than overflow the bar. */
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
 }
 
 .content {

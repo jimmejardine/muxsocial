@@ -27,8 +27,9 @@ on success/failure.
 
 `Timeline.tsx` renders one column:
 
-- An editable **name** input (commits on blur/Enter; empty reverts to the source-derived
-  `display_name`, falling back to "Timeline N").
+- An editable **name** input (commits on blur/Enter; with no custom name it shows a
+  source-derived default — the source ids joined with the same `truncate_source_id` shortener
+  as the chips — falling back to "Timeline N").
 - A **Get more posts** button → pages this timeline (see [posts.md](posts.md)).
 - A **remove** (✕) button that opens a [`ConfirmModal`](#confirm-before-remove) before deleting.
 - An **address bar**: paste an identifier and press Enter to add a source. The Rust
@@ -37,7 +38,12 @@ on success/failure.
   `hashiverse:`|`hash:`) always wins, otherwise `@user@host` → Mastodon, `npub1…` → nostr,
   `did:plc:…` or a bare dotted handle → Bluesky, and a bare 64-hex string → Hashiverse.
 - A compact row of **source chips** — one per source, colored by network
-  ([`theme/networkColors.ts`](theming.md)) and showing `network: id`.
+  ([`theme/networkColors.ts`](theming.md)) and showing `network: id`. Long opaque ids
+  (Nostr `npub…`, Hashiverse hex) are shortened to `first8…last3` via
+  `truncate_source_id` (full id in the tooltip); Mastodon/Bluesky handles show in full.
+  Each chip has a `×` that removes the source (via `remove_source_from_timeline`) after the
+  same `ConfirmModal`; clicking the chip label copies the full source address to the clipboard
+  (with a toast).
 - The post list itself (see [posts.md](posts.md)).
 
 ## Confirm before remove

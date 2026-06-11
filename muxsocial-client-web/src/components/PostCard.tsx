@@ -12,9 +12,10 @@ interface PostCardProps {
 }
 
 /**
- * One post in a timeline: a thin left bar in the source network's color (with the
- * network name written vertically) that links to the original post when a
- * permalink is available, then the author, sanitized body, and time.
+ * One post in a timeline: a bar across the top in the source network's color
+ * showing the poster (display name, or identifier when there is none) that links
+ * to the original post when a permalink is available, then the sanitized body,
+ * media, and time. The network is conveyed by the bar's color.
  */
 export function PostCard({ post }: PostCardProps) {
 	const { t } = useTranslation();
@@ -23,7 +24,7 @@ export function PostCard({ post }: PostCardProps) {
 
 	const color = networkColor(post.source);
 	const source_bar_style = { backgroundColor: `var(--mantine-color-${color}-light)`, color: `var(--mantine-color-${color}-light-color)` };
-	const source_label = <span className={classes.sourceLabel}>{post.source}</span>;
+	const source_label = <span className={classes.sourceLabel}>{author}</span>;
 
 	return (
 		<div className={classes.card}>
@@ -37,9 +38,6 @@ export function PostCard({ post }: PostCardProps) {
 				</div>
 			)}
 			<Stack gap={4} className={classes.content}>
-				<Text size="sm" fw={600} truncate>
-					{author}
-				</Text>
 				<div className={classes.body}>
 					<PostBody content_html={post.content_html} />
 				</div>

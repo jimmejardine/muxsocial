@@ -135,6 +135,15 @@ impl TimelineRegistry {
         Ok(self.list())
     }
 
+    /// Remove `source` from the timeline `id`'s sources (a no-op if absent).
+    /// Returns the snapshot.
+    pub async fn remove_source_from_timeline(&mut self, id: &str, source: &Source) -> anyhow::Result<Vec<TimelineView>> {
+        let timeline = self.timeline_mut(id)?;
+        timeline.sources.retain(|existing| existing != source);
+        self.persist().await?;
+        Ok(self.list())
+    }
+
     /// Set (or clear) the timeline `id`'s custom name. An empty/whitespace name
     /// clears it, reverting to the source-derived default. Returns the snapshot.
     pub async fn set_timeline_name(&mut self, id: &str, name: &str) -> anyhow::Result<Vec<TimelineView>> {
@@ -235,6 +244,25 @@ mod tests {
 
         let after_remove = timeline_registry.remove_timeline(&timeline_id).await.expect("remove");
         assert!(after_remove.is_empty());
+    }
+
+    #[tokio::test]
+    async fn removes_one_source_and_keeps_the_other() {
+        let mut timeline_registry = registry();
+        let id = timeline_registry.add_timeline().await.expect("add")[0].id.clone();
+        timeline_registry.add_source_to_timeline(&id, "npub1abc").await.expect("add nostr");
+        timeline_registry.add_source_to_timeline(&id, "@Gargron@mastodon.social").await.expect("add masto");
+
+        let after = timeline_registry
+            .remove_source_from_timeline(&id, &Source::new(SourceNetwork::Nostr, "npub1abc"))
+            .await
+            .expect("remove source");
+        assert_eq!(after[0].sources, vec![Source::new(SourceNetwork::Mastodon, "@Gargron@mastodon.social")]);
+
+        // Persisted: a fresh registry over the same storage sees the removal.
+        let mut reloaded = TimelineRegistry::new(timeline_registry.storage.clone());
+        reloaded.load().await.expect("load");
+        assert_eq!(reloaded.list()[0].sources.len(), 1);
     }
 
     #[tokio::test]

@@ -95,6 +95,20 @@ export function App() {
 		[t],
 	);
 
+	const remove_source = useCallback(
+		async (id: string, network: string, source_id: string) => {
+			const muxsocial = muxsocial_ref.current;
+			if (!muxsocial) return;
+			try {
+				set_timelines((await muxsocial.remove_source_from_timeline(id, network, source_id)) as TimelineConfig[]);
+				Toast.success(t("toast.source_removed"));
+			} catch (err) {
+				Toast.error(t("toast.error_remove_source", { message: error_message(err) }));
+			}
+		},
+		[t],
+	);
+
 	const set_name = useCallback(
 		async (id: string, name: string) => {
 			const muxsocial = muxsocial_ref.current;
@@ -128,7 +142,7 @@ export function App() {
 							<Loader />
 						</Center>
 					) : (
-						<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_set_name={set_name} />
+						<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_remove_source={remove_source} on_set_name={set_name} />
 					)}
 				</AppShell.Main>
 

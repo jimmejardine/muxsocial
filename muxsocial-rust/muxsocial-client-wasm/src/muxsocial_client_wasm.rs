@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use muxsocial_lib::config_storage::ConfigStorage;
 use muxsocial_lib::greeting::compose_greeting_message;
-use muxsocial_lib::post::AggregatedPost;
-use muxsocial_lib::timeline::{MultiTimeline, NetworkPager, SharedSourceClients};
+use muxsocial_lib::post::{AggregatedPost, SourceNetwork};
+use muxsocial_lib::timeline::{MultiTimeline, NetworkPager, SharedSourceClients, Source};
 use muxsocial_lib::timeline_registry::{TimelineRegistry, TimelineView};
 use wasm_bindgen::prelude::*;
 
@@ -82,6 +82,16 @@ impl MuxsocialClientWasm {
     /// Returns the new snapshot.
     pub async fn add_source_to_timeline(&mut self, id: String, address: String) -> Result<JsValue, JsValue> {
         let snapshot = self.timeline_registry.add_source_to_timeline(&id, &address).await.map_err(anyhow_to_js)?;
+        // The source set changed; drop the tracker so it rebuilds over the new sources.
+        self.trackers.remove(&id);
+        snapshot_to_js(&snapshot)
+    }
+
+    /// Remove the source (`network` + `source_id`) from the timeline addressed by
+    /// `id`. Returns the new snapshot.
+    pub async fn remove_source_from_timeline(&mut self, id: String, network: String, source_id: String) -> Result<JsValue, JsValue> {
+        let network = SourceNetwork::from_name(&network).ok_or_else(|| JsValue::from_str(&format!("unknown network {network:?}")))?;
+        let snapshot = self.timeline_registry.remove_source_from_timeline(&id, &Source::new(network, source_id)).await.map_err(anyhow_to_js)?;
         // The source set changed; drop the tracker so it rebuilds over the new sources.
         self.trackers.remove(&id);
         snapshot_to_js(&snapshot)
