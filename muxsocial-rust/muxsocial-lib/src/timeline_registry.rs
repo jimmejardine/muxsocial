@@ -275,10 +275,7 @@ mod tests {
         timeline_registry.add_source_to_timeline(&id, "npub1abc").await.expect("add nostr");
         timeline_registry.add_source_to_timeline(&id, "@Gargron@mastodon.social").await.expect("add masto");
 
-        let after = timeline_registry
-            .remove_source_from_timeline(&id, &Source::new(SourceNetwork::Nostr, "npub1abc"))
-            .await
-            .expect("remove source");
+        let after = timeline_registry.remove_source_from_timeline(&id, &Source::new(SourceNetwork::Nostr, "npub1abc")).await.expect("remove source");
         assert_eq!(after[0].sources, vec![Source::new(SourceNetwork::Mastodon, "@Gargron@mastodon.social")]);
 
         // Persisted: a fresh registry over the same storage sees the removal.

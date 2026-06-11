@@ -180,7 +180,8 @@ fn render_nostr_content(text: &str) -> (String, Vec<PostMedia>) {
 
         if is_image_url(url) {
             media.push(PostMedia::Image { url: url.to_string(), alt: None });
-        } else {
+        }
+        else {
             html.push_str(&format!("<a href=\"{}\">{}</a>", crate::html::escape_attribute(url), crate::html::escape_text(url)));
         }
         html.push_str(&crate::html::plain_text_to_html(trimmed_tail));
@@ -228,7 +229,13 @@ mod tests {
     #[test]
     fn extracts_image_urls_as_media_and_drops_them_from_text() {
         let (html, media) = render_nostr_content("see https://example.com/cat.jpg now");
-        assert_eq!(media, vec![PostMedia::Image { url: "https://example.com/cat.jpg".to_string(), alt: None }]);
+        assert_eq!(
+            media,
+            vec![PostMedia::Image {
+                url: "https://example.com/cat.jpg".to_string(),
+                alt: None
+            }]
+        );
         assert!(!html.contains("cat.jpg"), "image url should be removed from text: {html}");
         assert!(html.contains("see") && html.contains("now"));
     }
@@ -242,8 +249,10 @@ mod tests {
 
     #[test]
     fn escapes_plain_text_and_keeps_newlines() {
-        let (html, media) = render_nostr_content("a < b
-c");
+        let (html, media) = render_nostr_content(
+            "a < b
+c",
+        );
         assert!(media.is_empty());
         assert_eq!(html, "a &lt; b<br>c");
     }

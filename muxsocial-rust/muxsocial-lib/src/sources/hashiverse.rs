@@ -62,7 +62,11 @@ pub async fn build_guest_client() -> anyhow::Result<Arc<HashiverseClient>> {
     let transport_factory: Arc<dyn TransportFactory> = Arc::new(WasmTransportFactory::default());
     let time_provider: Arc<dyn TimeProvider> = Arc::new(RealTimeProvider::default());
     let pow_generator: Arc<dyn PowGenerator> = Arc::new(SingleThreadedPowGenerator::new());
-    let runtime_services = Arc::new(RuntimeServices { time_provider, transport_factory, pow_generator });
+    let runtime_services = Arc::new(RuntimeServices {
+        time_provider,
+        transport_factory,
+        pow_generator,
+    });
     let hashiverse_client = HashiverseClient::new(runtime_services, client_storage, key_locker, Args::new()).await?;
     Ok(Arc::new(hashiverse_client))
 }
@@ -118,11 +122,7 @@ const HASHIVERSE_POST_URL_BASE: &str = "https://app.hashiverse.com";
 
 fn map_encoded_post(encoded_post: EncodedPostV1, bucket_location: &BucketLocation) -> AggregatedPost {
     let post_id_hex = encoded_post.post_id.to_hex_str();
-    let post_url = format!(
-        "{HASHIVERSE_POST_URL_BASE}/#/post/{}/{}",
-        percent_encode_component(&post_id_hex),
-        percent_encode_component(&bucket_location.to_html_attr()),
-    );
+    let post_url = format!("{HASHIVERSE_POST_URL_BASE}/#/post/{}/{}", percent_encode_component(&post_id_hex), percent_encode_component(&bucket_location.to_html_attr()),);
     AggregatedPost {
         source: SourceNetwork::Hashiverse,
         source_post_id: post_id_hex,

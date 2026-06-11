@@ -172,7 +172,10 @@ fn mastodon_media(media_attachments: Vec<MastodonMedia>, card: Option<MastodonCa
     let mut media: Vec<PostMedia> = media_attachments
         .into_iter()
         .filter_map(|attachment| match attachment.r#type.as_str() {
-            "image" => Some(PostMedia::Image { url: attachment.url, alt: attachment.description }),
+            "image" => Some(PostMedia::Image {
+                url: attachment.url,
+                alt: attachment.description,
+            }),
             "gifv" | "video" => Some(PostMedia::Video {
                 url: attachment.url,
                 poster: attachment.preview_url,
@@ -258,10 +261,7 @@ mod tests {
 
     #[test]
     fn map_status_has_no_permalink_when_url_absent() {
-        let status: MastodonStatus = serde_json::from_str(
-            r#"{ "id": "1", "created_at": "2024-01-02T03:04:05.000Z", "content": "x", "account": { "acct": "a", "display_name": "" } }"#,
-        )
-        .expect("valid status json");
+        let status: MastodonStatus = serde_json::from_str(r#"{ "id": "1", "created_at": "2024-01-02T03:04:05.000Z", "content": "x", "account": { "acct": "a", "display_name": "" } }"#).expect("valid status json");
         assert_eq!(map_status(status).expect("map").post_url, None);
     }
 
@@ -282,8 +282,15 @@ mod tests {
         assert_eq!(
             map_status(status).expect("map").media,
             vec![
-                PostMedia::Image { url: "https://ex/i.png".to_string(), alt: Some("a cat".to_string()) },
-                PostMedia::Video { url: "https://ex/v.mp4".to_string(), poster: Some("https://ex/p.jpg".to_string()), alt: None },
+                PostMedia::Image {
+                    url: "https://ex/i.png".to_string(),
+                    alt: Some("a cat".to_string())
+                },
+                PostMedia::Video {
+                    url: "https://ex/v.mp4".to_string(),
+                    poster: Some("https://ex/p.jpg".to_string()),
+                    alt: None
+                },
             ],
             "image + video mapped; audio dropped"
         );
@@ -315,6 +322,12 @@ mod tests {
                 "card": { "url": "https://ex/article" } }"#,
         )
         .expect("valid");
-        assert_eq!(map_status(with_media).expect("map").media, vec![PostMedia::Image { url: "https://ex/i.png".to_string(), alt: None }]);
+        assert_eq!(
+            map_status(with_media).expect("map").media,
+            vec![PostMedia::Image {
+                url: "https://ex/i.png".to_string(),
+                alt: None
+            }]
+        );
     }
 }

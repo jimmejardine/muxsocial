@@ -216,7 +216,10 @@ fn map_feed_view_post(feed_view_post: &atrium_api::app::bsky::feed::defs::FeedVi
 /// external link cards (including the media side of a quote-with-media). A
 /// quote-only record carries no media of its own and is skipped for now.
 fn embed_to_media(embed: &Union<PostViewEmbedRefs>) -> Vec<PostMedia> {
-    let Union::Refs(refs) = embed else { return Vec::new() };
+    let Union::Refs(refs) = embed
+    else {
+        return Vec::new();
+    };
     match refs {
         PostViewEmbedRefs::AppBskyEmbedImagesView(view) => images_view_to_media(view),
         PostViewEmbedRefs::AppBskyEmbedVideoView(view) => vec![video_view_to_media(view)],

@@ -17,12 +17,12 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::http::{DefaultHttpTransport, default_http_transport};
 use crate::post::SourceNetwork;
 use crate::sources::bluesky::BlueskyPager;
 use crate::sources::hashiverse::{Client as HashiverseClient, HashiversePager};
 use crate::sources::mastodon::MastodonPager;
 use crate::sources::nostr::{self, Client as NostrClient, NostrPager};
-use crate::http::{DefaultHttpTransport, default_http_transport};
 use crate::timeline::{MultiTimeline, NetworkPager, Source, SourceTimeline};
 
 /// How long a nostr relay fetch waits before giving up.
