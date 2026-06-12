@@ -1,0 +1,40 @@
+.content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--mantine-spacing-md);
+}
+
+.image {
+	/* Fill the content width so the modal body's padding gives equal spacing on the
+	   top/left/right of the image (a max-width would re-center it and make the side
+	   gaps differ from the top). */
+	width: 100%;
+	height: auto;
+	border-radius: var(--mantine-radius-md);
+}
+
+.text {
+	text-align: center;
+	max-width: 46ch;
+	/* Reserve height so paging between shorter/longer copy doesn't jump the layout. */
+	min-height: 4.5rem;
+}
+
+.dots {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+}
+
+.dot,
+.dotActive {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: var(--mantine-color-default-border);
+}
+
+.dotActive {
+	background-color: var(--mantine-primary-color-filled);
+}

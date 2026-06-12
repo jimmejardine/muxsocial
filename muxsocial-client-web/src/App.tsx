@@ -1,6 +1,8 @@
 import { AppShell, Center, Loader } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { HelpWizard } from "./components/HelpWizard.tsx";
 import { TimelineArea } from "./components/TimelineArea.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { Muxsocial, type MuxsocialClientWasmProxy } from "./Muxsocial.ts";
@@ -29,6 +31,9 @@ export function App() {
 	// Provided via context so per-timeline post lists can call the client.
 	const [muxsocial_client, set_muxsocial_client] = useState<MuxsocialClientWasmProxy | null>(null);
 	const [app_version, set_app_version] = useState<string | null>(null);
+	const [help_opened, help_handlers] = useDisclosure(false);
+	// Auto-open the getting-started wizard once when the app first loads with no timelines.
+	const has_auto_opened_help = useRef(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -53,6 +58,13 @@ export function App() {
 			cancelled = true;
 		};
 	}, [t]);
+
+	useEffect(() => {
+		if (timelines !== null && timelines.length === 0 && !has_auto_opened_help.current) {
+			has_auto_opened_help.current = true;
+			help_handlers.open();
+		}
+	}, [timelines, help_handlers]);
 
 	const add_timeline = useCallback(async () => {
 		const muxsocial = muxsocial_ref.current;
@@ -145,7 +157,7 @@ export function App() {
 		<MuxsocialContext.Provider value={muxsocial_client}>
 			<AppShell header={{ height: HEADER_HEIGHT }} padding={0} style={content_height_vars}>
 				<AppShell.Header>
-					<Toolbar on_add_timeline={add_timeline} highlight={timelines !== null && timelines.length === 0} version={app_version} />
+					<Toolbar on_add_timeline={add_timeline} highlight={timelines !== null && timelines.length === 0} version={app_version} on_open_help={help_handlers.open} />
 				</AppShell.Header>
 
 				<AppShell.Main>
@@ -154,10 +166,19 @@ export function App() {
 							<Loader />
 						</Center>
 					) : (
-						<TimelineArea timelines={timelines} on_remove={remove_timeline} on_add_source={add_source} on_remove_source={remove_source} on_set_name={set_name} on_set_autopoll={set_autopoll} />
+						<TimelineArea
+							timelines={timelines}
+							on_remove={remove_timeline}
+							on_add_source={add_source}
+							on_remove_source={remove_source}
+							on_set_name={set_name}
+							on_set_autopoll={set_autopoll}
+							on_open_help={help_handlers.open}
+						/>
 					)}
 				</AppShell.Main>
 			</AppShell>
+			<HelpWizard opened={help_opened} onClose={help_handlers.close} />
 		</MuxsocialContext.Provider>
 	);
 }

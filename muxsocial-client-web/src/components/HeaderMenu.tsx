@@ -11,15 +11,17 @@ const RELEASES_URL = "https://github.com/jimmejardine/muxsocial/releases";
 interface HeaderMenuProps {
 	/** App version shown as the first menu item (links to releases); null until loaded. */
 	version?: string | null;
+	/** Open the "Getting started" help wizard. */
+	on_open_help: () => void;
 }
 
 /**
- * A hamburger that tucks the version link, networks, theme and language switchers
- * away to the right of the toolbar's primary actions. The switchers keep their own
- * dropdowns, rendered in-place (not portalled) so opening one does not dismiss
- * this popover.
+ * A hamburger that tucks the help wizard, version link, networks, theme and language
+ * switchers away to the right of the toolbar's primary actions. The switchers keep
+ * their own dropdowns, rendered in-place (not portalled) so opening one does not
+ * dismiss this popover.
  */
-export function HeaderMenu({ version }: HeaderMenuProps) {
+export function HeaderMenu({ version, on_open_help }: HeaderMenuProps) {
 	const { t } = useTranslation();
 	const [opened, handlers] = useDisclosure(false);
 
@@ -30,6 +32,16 @@ export function HeaderMenu({ version }: HeaderMenuProps) {
 			</Popover.Target>
 			<Popover.Dropdown p="xs">
 				<Stack gap="xs">
+					<Button
+						size="xs"
+						variant="default"
+						onClick={() => {
+							handlers.close();
+							on_open_help();
+						}}
+					>
+						{t("wizard.open")}
+					</Button>
 					<LanguageSwitcher />
 					<ThemeSwitcher />
 					<NetworksMenu />
