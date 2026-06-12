@@ -13,6 +13,8 @@ interface HeaderMenuProps {
 	version?: string | null;
 	/** Open the "Getting started" help wizard. */
 	on_open_help: () => void;
+	/** Open the config import/export dialog. */
+	on_open_config: () => void;
 }
 
 /**
@@ -21,7 +23,7 @@ interface HeaderMenuProps {
  * their own dropdowns, rendered in-place (not portalled) so opening one does not
  * dismiss this popover.
  */
-export function HeaderMenu({ version, on_open_help }: HeaderMenuProps) {
+export function HeaderMenu({ version, on_open_help, on_open_config }: HeaderMenuProps) {
 	const { t } = useTranslation();
 	const [opened, handlers] = useDisclosure(false);
 
@@ -45,6 +47,16 @@ export function HeaderMenu({ version, on_open_help }: HeaderMenuProps) {
 					<LanguageSwitcher />
 					<ThemeSwitcher />
 					<NetworksMenu />
+					<Button
+						size="xs"
+						variant="default"
+						onClick={() => {
+							handlers.close();
+							on_open_config();
+						}}
+					>
+						{t("config.open")}
+					</Button>
 					<Button component="a" href={GITHUB_URL} target="_blank" rel="noreferrer" size="xs" variant="default" title={t("status.github")}>
 						Github
 					</Button>

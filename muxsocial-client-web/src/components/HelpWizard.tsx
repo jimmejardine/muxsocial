@@ -10,14 +10,14 @@ interface WizardPage {
 	textKey: string;
 }
 
-// TODO: give each page its own art (same dimensions as the welcome image),
-// e.g. /img/wizard/about.jpg etc. For now they reuse the welcome image as a placeholder.
+// Page 1 reuses the existing welcome banner; pages 2–4 have their own art (same
+// 1024×512 dimensions) under /img/wizard/.
 const WELCOME_IMAGE = "/img/muxsocial.jpg";
 const WIZARD_PAGES: WizardPage[] = [
 	{ image: WELCOME_IMAGE, textKey: "wizard.page1" },
-	{ image: WELCOME_IMAGE, textKey: "wizard.page2" },
-	{ image: WELCOME_IMAGE, textKey: "wizard.page3" },
-	{ image: WELCOME_IMAGE, textKey: "wizard.page4" },
+	{ image: "/img/wizard/timelines.jpg", textKey: "wizard.page2" },
+	{ image: "/img/wizard/add-source.jpg", textKey: "wizard.page3" },
+	{ image: "/img/wizard/done.jpg", textKey: "wizard.page4" },
 ];
 
 /** The paged wizard body: an image above text, step dots, and Back / Next (the last

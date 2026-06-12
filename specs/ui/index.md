@@ -15,3 +15,5 @@ worker-backed `MuxsocialClientWasmProxy` and is a pull-based view over Rust-owne
   language switcher.
 - [theming.md](theming.md) — the pluggable theme system: data-driven theme registry,
   forced Mantine color schemes, runtime Google Fonts loading, and per-theme backgrounds.
+- [config-transfer.md](config-transfer.md) — the Config dialog: the whole configuration
+  (timelines + GUI settings) as one copy/paste JSON document, with Apply/Revert.

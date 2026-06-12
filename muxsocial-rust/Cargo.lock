@@ -2793,6 +2793,7 @@ dependencies = [
  "http",
  "log",
  "nostr-sdk",
+ "regex",
  "reqwest 0.13.4",
  "rustls",
  "serde",

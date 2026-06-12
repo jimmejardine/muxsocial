@@ -2,6 +2,7 @@ import { AppShell, Center, Loader } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ConfigDialog } from "./components/ConfigDialog.tsx";
 import { HelpWizard } from "./components/HelpWizard.tsx";
 import { TimelineArea } from "./components/TimelineArea.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
@@ -32,6 +33,7 @@ export function App() {
 	const [muxsocial_client, set_muxsocial_client] = useState<MuxsocialClientWasmProxy | null>(null);
 	const [app_version, set_app_version] = useState<string | null>(null);
 	const [help_opened, help_handlers] = useDisclosure(false);
+	const [config_opened, config_handlers] = useDisclosure(false);
 	// Auto-open the getting-started wizard once when the app first loads with no timelines.
 	const has_auto_opened_help = useRef(false);
 
@@ -157,7 +159,13 @@ export function App() {
 		<MuxsocialContext.Provider value={muxsocial_client}>
 			<AppShell header={{ height: HEADER_HEIGHT }} padding={0} style={content_height_vars}>
 				<AppShell.Header>
-					<Toolbar on_add_timeline={add_timeline} highlight={timelines !== null && timelines.length === 0} version={app_version} on_open_help={help_handlers.open} />
+					<Toolbar
+						on_add_timeline={add_timeline}
+						highlight={timelines !== null && timelines.length === 0}
+						version={app_version}
+						on_open_help={help_handlers.open}
+						on_open_config={config_handlers.open}
+					/>
 				</AppShell.Header>
 
 				<AppShell.Main>
@@ -179,6 +187,7 @@ export function App() {
 				</AppShell.Main>
 			</AppShell>
 			<HelpWizard opened={help_opened} onClose={help_handlers.close} />
+			<ConfigDialog opened={config_opened} onClose={config_handlers.close} on_timelines_imported={set_timelines} />
 		</MuxsocialContext.Provider>
 	);
 }

@@ -111,6 +111,23 @@ impl MuxsocialClientWasm {
         snapshot_to_js(&snapshot)
     }
 
+    /// The whole timeline list as a JSON string — the `"timelines"` root element
+    /// of the GUI's config-transfer dialog.
+    pub fn export_timelines_json(&self) -> Result<String, JsValue> {
+        self.timeline_registry.export_timelines_json().map_err(anyhow_to_js)
+    }
+
+    /// Replace the whole timeline list with one parsed from `timelines_json` (the
+    /// export shape). All-or-nothing: on any validation error nothing changes.
+    /// Returns the new snapshot.
+    pub async fn import_timelines_json(&mut self, timelines_json: String) -> Result<JsValue, JsValue> {
+        let snapshot = self.timeline_registry.import_timelines_json(&timelines_json).await.map_err(anyhow_to_js)?;
+        // Any timeline's sources may have changed; drop all live pagination state
+        // so each timeline rebuilds over its imported sources.
+        self.trackers.clear();
+        snapshot_to_js(&snapshot)
+    }
+
     /// Pull the next page of posts for the timeline `id`, fetching up to
     /// `per_source_limit` posts from each source. Returns only the **newly-added
     /// batch** (newest-first); the caller accumulates it into its own view and

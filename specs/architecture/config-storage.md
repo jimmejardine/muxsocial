@@ -51,6 +51,8 @@ the async methods.
 
 Delivered: the trait, both backends, and the shared test suite (native runs;
 the IndexedDB wasm-bindgen-test is build-verified, needs a headless browser to
-run). Not yet done: wiring concrete config (network identifiers, prefs) through
-the trait, and exposing it over the worker RPC ([worker-rpc.md](worker-rpc.md))
-to the TS GUI.
+run). The timeline list is persisted through it by `TimelineRegistry` (key
+`"timelines"`), which also exports/imports that key as JSON for the GUI's
+[config-transfer dialog](../ui/config-transfer.md). Not yet done: wiring other
+concrete config (network identifiers, prefs) through the trait, and exposing it
+over the worker RPC ([worker-rpc.md](worker-rpc.md)) to the TS GUI.

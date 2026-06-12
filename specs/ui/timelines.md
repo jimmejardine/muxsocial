@@ -47,10 +47,17 @@ on success/failure.
   error toast. The "+" button opens an [`AddSourceModal`](#add-source-dialog) (a small dialog with
   the "Paste an address" input and OK/Cancel) that adds the source via the same path; it pulses
   (`.mux-throb`) while the lone timeline has no sources. The Rust
-  `parse_source_address` (`timeline_registry.rs`) detects the network — an explicit
-  `network:identifier` prefix (`nostr:` / `bluesky:`|`bsky:` / `mastodon:`|`masto:` /
-  `hashiverse:`|`hash:`) always wins, otherwise `@user@host` → Mastodon, `npub1…` → nostr,
-  `did:plc:…` or a bare dotted handle → Bluesky, and a bare 64-hex string → Hashiverse.
+  `parse_source_address` (`timeline_registry.rs`) detects the network through four fall-through
+  layers, each reusing the previous one to classify: **(1)** an explicit `network:identifier`
+  prefix (`nostr:` / `bluesky:`|`bsky:` / `mastodon:`|`masto:` / `hashiverse:`|`hash:`); **(2)** a
+  bare id — `@user@host` → Mastodon, `npub1…`/`nprofile1…` → nostr, `did:plc:…` or a dotted handle
+  → Bluesky, a 64-hex string → Hashiverse; **(3)** a **profile URL** (scheme optional, any host —
+  networks self-host on any domain — matched by *structure*: an `npub`/`nprofile` token → nostr, a
+  64-hex path segment → Hashiverse, a `/profile/<handle|did>` path → Bluesky, a `/@user[@host]` or
+  `/users/<user>` path → Mastodon, with the URL host filling in a Mastodon home instance when the
+  path omits it); and **(4)** a URL (or bare `npub`) **embedded in surrounding text**. Layer 2
+  ignores anything containing whitespace or `/`, so a schemeless URL falls through to layer 3. An
+  `nprofile` is decoded (via nostr-sdk NIP-19) to its `npub`.
   Each source chip is colored by network ([`theme/networkColors.ts`](theming.md)) and shows
   `network: id`. Long opaque ids (Nostr `npub…`, Hashiverse hex) are shortened to `first8…last3`
   via `truncate_source_id` (full id in the tooltip); Mastodon/Bluesky handles show in full.

@@ -11,10 +11,12 @@ interface ToolbarProps {
 	version?: string | null;
 	/** Open the "Getting started" help wizard (from the hamburger menu). */
 	on_open_help: () => void;
+	/** Open the config import/export dialog (from the hamburger menu). */
+	on_open_config: () => void;
 }
 
 /** The top toolbar: app title, theme/language switchers, and the "Add timeline" button. */
-export function Toolbar({ on_add_timeline, highlight, version, on_open_help }: ToolbarProps) {
+export function Toolbar({ on_add_timeline, highlight, version, on_open_help, on_open_config }: ToolbarProps) {
 	const { t } = useTranslation();
 
 	return (
@@ -32,7 +34,7 @@ export function Toolbar({ on_add_timeline, highlight, version, on_open_help }: T
 				<Button size="xs" onClick={on_add_timeline} className={highlight ? "mux-throb" : undefined}>
 					{t("toolbar.add_timeline")}
 				</Button>
-				<HeaderMenu version={version} on_open_help={on_open_help} />
+				<HeaderMenu version={version} on_open_help={on_open_help} on_open_config={on_open_config} />
 			</Group>
 		</Group>
 	);

@@ -36,6 +36,8 @@ muxsocial-lib = { path = "muxsocial-lib", version = "0.0.0" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 hex = "0.4.3"
+# Pure-Rust regex (wasm-clean) used by the source-address URL parser.
+regex = "1"
 # Boxed async fns in object-safe traits (ConfigStorage). `?Send` on wasm.
 async-trait = "0.1.89"
 # Browser key/value persistence for the GUI ConfigStorage backend (wasm only).
