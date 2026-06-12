@@ -140,6 +140,7 @@ export function App() {
 			if (!muxsocial) return;
 			try {
 				set_timelines((await muxsocial.set_timeline_autopoll(id, autopoll)) as TimelineConfig[]);
+				Toast.success(t(autopoll ? "toast.autorefresh_on" : "toast.autorefresh_off"));
 			} catch (err) {
 				Toast.error(t("toast.error_set_autopoll", { message: error_message(err) }));
 			}

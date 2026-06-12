@@ -50,6 +50,16 @@ export function ConfigDialog({ opened, onClose, on_timelines_imported }: ConfigD
 		}
 	}, [opened, load_current_config]);
 
+	// Copy the textbox contents (including any unsaved edits) to the clipboard.
+	const copy = async () => {
+		try {
+			await navigator.clipboard.writeText(config_text);
+			Toast.success(t("toast.config_copied"));
+		} catch (err) {
+			Toast.error(t("toast.error_copy", { message: error_message(err) }));
+		}
+	};
+
 	const apply = async () => {
 		if (!muxsocial) return;
 		set_applying(true);
@@ -91,13 +101,18 @@ export function ConfigDialog({ opened, onClose, on_timelines_imported }: ConfigD
 				styles={{ input: { fontFamily: "var(--mantine-font-family-monospace)", fontSize: "var(--mantine-font-size-xs)" } }}
 				aria-label={t("config.title")}
 			/>
-			<Group justify="flex-end" gap="xs" mt="md">
-				<Button variant="default" onClick={load_current_config} disabled={applying}>
-					{t("config.revert")}
+			<Group justify="space-between" gap="xs" mt="md">
+				<Button variant="default" onClick={copy} disabled={applying}>
+					{t("config.copy")}
 				</Button>
-				<Button onClick={apply} loading={applying}>
-					{t("config.apply")}
-				</Button>
+				<Group gap="xs">
+					<Button variant="default" onClick={load_current_config} disabled={applying}>
+						{t("config.revert")}
+					</Button>
+					<Button onClick={apply} loading={applying}>
+						{t("config.apply")}
+					</Button>
+				</Group>
 			</Group>
 		</Modal>
 	);

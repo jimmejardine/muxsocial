@@ -44,6 +44,8 @@ The split mirrors the architecture, so each layer validates what it owns:
 ## Dialog behaviour
 
 - The textarea is seeded from the current configuration each time the dialog opens.
+- **Copy** puts the textbox contents (including any unsaved edits) on the clipboard, with a
+  success/error toast — same pattern as the source-chip address copy in `Timeline.tsx`.
 - **Apply** parses/validates the text; the Rust import runs first (all-or-nothing), then the
   settings are applied (`setThemeId`, `set_language` — both persist themselves), the app's
   timeline state is replaced with the returned snapshot, a success toast shows, and the dialog
