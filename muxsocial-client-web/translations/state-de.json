@@ -59,6 +59,8 @@
 	"common.ok": "5653",
 	"common.remove": "c381",
 	"toast.source_removed": "8d63",
+	"toast.autorefresh_on": "ed5f",
+	"toast.autorefresh_off": "123c",
 	"toast.address_copied": "b000",
 	"toast.error_copy": "c6d9",
 	"toast.error_paste": "b6a9",

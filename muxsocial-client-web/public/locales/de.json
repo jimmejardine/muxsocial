@@ -59,6 +59,8 @@
 	"common.ok": "OK",
 	"common.remove": "Entfernen",
 	"toast.source_removed": "Quelle entfernt",
+	"toast.autorefresh_on": "Automatische Aktualisierung EIN",
+	"toast.autorefresh_off": "Automatische Aktualisierung AUS",
 	"toast.address_copied": "Adresse in die Zwischenablage kopiert",
 	"toast.error_copy": "Kopieren fehlgeschlagen: {{message}}",
 	"toast.error_paste": "Zwischenablage konnte nicht gelesen werden: {{message}}",

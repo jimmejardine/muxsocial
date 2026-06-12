@@ -59,6 +59,8 @@
 	"common.ok": "Aceptar",
 	"common.remove": "Eliminar",
 	"toast.source_removed": "Fuente eliminada",
+	"toast.autorefresh_on": "Actualización automática ACTIVADA",
+	"toast.autorefresh_off": "Actualización automática DESACTIVADA",
 	"toast.address_copied": "Dirección copiada al portapapeles",
 	"toast.error_copy": "No se pudo copiar: {{message}}",
 	"toast.error_paste": "No se pudo leer el portapapeles: {{message}}",

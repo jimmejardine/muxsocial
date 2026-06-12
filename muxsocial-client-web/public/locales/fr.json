@@ -59,6 +59,8 @@
 	"common.ok": "OK",
 	"common.remove": "Supprimer",
 	"toast.source_removed": "Source supprimée",
+	"toast.autorefresh_on": "Actualisation automatique ACTIVÉE",
+	"toast.autorefresh_off": "Actualisation automatique DÉSACTIVÉE",
 	"toast.address_copied": "Adresse copiée dans le presse-papiers",
 	"toast.error_copy": "Échec de la copie : {{message}}",
 	"toast.error_paste": "Échec de la lecture du presse-papiers : {{message}}",
