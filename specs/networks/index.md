@@ -71,19 +71,7 @@ same way. A proxy strategy for CORS-hostile networks is deferred.
 | [Mastodon](mastodon/index.md) | our own thin REST client | HTTP | `acct` + instance URL |
 | [Hashiverse](hashiverse/index.md) | `hashiverse-lib` | DHT + proof-of-work | 32-byte `Id` (hex) |
 
-## Status (first feasibility step)
-
-- nostr, Bluesky, Mastodon: implemented; live native pull-tests pass in
-  `muxsocial-integration-tests/tests/network_pull_smoke.rs`.
-- Hashiverse: a first-class dependency (no feature gate). Builds natively via a
-  local moka patch, and **reads in the browser** via a wasm guest client built from
-  `hashiverse-lib`'s own runtime services. Live native test in
-  `hashiverse_pull_smoke.rs` runs with a real user id in
-  `MUXSOCIAL_HASHIVERSE_TEST_USER_ID`. See [hashiverse/index.md](hashiverse/index.md).
-- WASM compile gate: **passes**. `muxsocial-lib` (all four networks) and
-  `muxsocial-client-wasm` build for `wasm32-unknown-unknown`.
-
-### WASM build prerequisite — LLVM/clang
+## WASM build prerequisite — LLVM/clang
 
 nostr's `secp256k1`/`secp256k1-sys` (and, under the hashiverse feature,
 `blake3`) compile bundled C via the `cc` crate, which needs `clang` to target
