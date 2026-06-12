@@ -44,9 +44,10 @@ The Rust `TimelineRegistry` (`muxsocial-lib/src/timeline_registry.rs`) owns the 
 
 `MuxsocialClientWasm` (`muxsocial-client-wasm/src/muxsocial_client_wasm.rs`) holds the `TimelineRegistry` (over the IndexedDB `ConfigStorage`), a `SharedSourceClients`, and a per-timeline-id map of live `MultiTimeline` trackers. The methods the proxy exposes:
 
-- Registry queries/commands returning the `TimelineConfig[]` snapshot: `list_timelines()`, `add_timeline()`, `remove_timeline(id)`, `add_source_to_timeline(id, address)`, `set_timeline_name(id, name)`.
+- Registry queries/commands returning the `TimelineConfig[]` snapshot: `list_timelines()`, `add_timeline()`, `remove_timeline(id)`, `add_source_to_timeline(id, address)`, `remove_source_from_timeline(id, network, source_id)`, `set_timeline_name(id, name)`, `set_timeline_autopoll(id, autopoll)`.
+- Config transfer: `export_timelines_json()` / `import_timelines_json(json)` — the `"timelines"` half of the GUI's [config-transfer dialog](../ui/config-transfer.md); the import also drops all live pagination trackers so every timeline rebuilds over its imported sources.
 - Post paging: `get_more_posts(id, per_source_limit)` builds the timeline's tracker lazily (and rebuilds it when the source set changes), pages it, and returns just the newly-added batch; `timeline_posts(id)` returns the tracker's full accumulated list for reseeding a remounted view. See [timelines.md](timelines.md) and [../ui/posts.md](../ui/posts.md).
-- Misc: `version()` (the baked-in Cargo version, shown in the status bar) and `compose_greeting(name)`.
+- Misc: `version()` (the baked-in Cargo version, shown in the hamburger menu) and `compose_greeting(name)`.
 
 Post paging is the "per-component pull" noted above — the GUI's `usePosts` hook drives it; the timeline trackers are in-memory only and rebuild from the registry after a reload.
 

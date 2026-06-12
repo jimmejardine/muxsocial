@@ -51,8 +51,9 @@ loads that theme's fonts, sets `--mux-app-bg` on `<body>` (painted by an `index.
 and exposes `useMuxTheme()`. The `ThemeSwitcher` in the toolbar (`src/components/`) lists
 the registry and calls `setThemeId`.
 
-The chosen theme persists to `localStorage["mux-theme"]`; with nothing stored, the initial
-theme follows the OS `prefers-color-scheme`. When configuration is exposed to the TS GUI
+The chosen theme persists to `localStorage["mux-theme"]`; with nothing stored, newcomers get
+the default theme (`DEFAULT_THEME_ID` — **Electric**, which is also the fallback for unknown
+stored ids). When configuration is exposed to the TS GUI
 over the worker RPC (see [../architecture/config-storage.md](../architecture/config-storage.md)),
 persistence can move to `ConfigStorage` — a one-line swap in the provider.
 

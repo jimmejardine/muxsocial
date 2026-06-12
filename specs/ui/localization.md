@@ -26,6 +26,16 @@ first render):
 `components/LanguageSwitcher.tsx` (in the [toolbar](timelines.md)) lists `SUPPORTED_LANGUAGES`
 and calls `set_language`.
 
+## Translation staleness gate
+
+`translations/check-translations.mjs` keeps the fetched locales honest against the English
+source: `translations/state-<lang>.json` records, per key, a short hash of the English string
+that the translation was made from. The checker reports keys that are **missing**, **stale**
+(the English changed since), or **orphaned** (removed from English), emits a JSON work order
+(designed to be fed to an AI session), and exits non-zero while work remains. Fixing a key
+means updating both the locale value and its recorded hash. The `check-translations` GitHub
+workflow runs it (the README badge goes red when a locale falls behind).
+
 ## Notes
 
 - Translation keys live in `i18n/locales/*.json`; the runtime-fetched copies are served from

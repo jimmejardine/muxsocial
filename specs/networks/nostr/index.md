@@ -17,11 +17,13 @@ and to encode each post's permalink as an `nevent` (see below).
 1. Parse the author `PublicKey` (hex or `npub`).
 2. `Client::default()`, `add_relay(..)` for each relay, `connect()`.
 3. `fetch_events(Filter::new().author(pk).kind(Kind::TextNote).limit(n), timeout)`.
-4. Map each `Event` → `AggregatedPost` (id hex, pubkey hex, `created_at` seconds → millis, content).
+4. Map each `Event` → `AggregatedPost` (id hex; author as the `npub` bech32 form —
+   matching what the user added as the source — with hex as a fallback if encoding
+   fails; `created_at` seconds → millis; content).
 
 Note content is plain text, so `content_html` is produced by
 `crate::html::plain_text_to_html` (HTML-escape + newlines → `<br>`) to match the
-HTML the other sources emit. Inline body text is not linkified.
+HTML the other sources emit; URLs in the text are linkified (see Media below).
 
 **Permalink (`post_url`):** the mapper builds an `nevent` (`Nip19Event`: event id +
 author pubkey + the queried relays as hints, capped at two) and forms

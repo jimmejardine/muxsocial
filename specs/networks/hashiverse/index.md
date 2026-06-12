@@ -33,8 +33,10 @@ the first time a timeline has a Hashiverse source (see
 
 1. Parse the user `Id` from hex (`Id::from_hex_str`).
 2. `client.single_timeline_get_more(BucketType::User, &id)`.
-3. Map each `EncodedPostV1` → `AggregatedPost` (`post_id` hex,
-   `header.verification_key_bytes` hex, `header.time_millis`, `post` HTML body).
+3. Map each `EncodedPostV1` → `AggregatedPost` (`post_id` hex; the author is the
+   **requested user id** — the bucket's owner, so the post header matches the
+   added source/chip, not the post's per-post verification key;
+   `header.time_millis`; `post` HTML body).
 
 **Permalink (`post_url`):** the Hashiverse web app's hash route,
 `https://app.hashiverse.com/#/post/{post_id}/{bucket_location}`, with both segments

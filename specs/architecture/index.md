@@ -41,6 +41,23 @@ The build toolchain mirrors the one proven in the Hashiverse project.
 - Docs: TypeDoc.
 - The WASM package is imported by **relative path** (`../../muxsocial-rust/muxsocial-client-wasm/pkg`), not as an npm dependency, so the WASM build must run before the web client builds. `pkg/` is gitignored; `package-lock.json` is committed.
 
+### PWA / installability
+
+The web client is an installable PWA (Chrome/Edge show an install icon; "Install
+mux.social" opens a standalone desktop window):
+
+- `public/manifest.webmanifest` — `id`/`start_url`/`scope` `/`, `display:
+  standalone`, electric-dark theme/background colors, the 256/512 favicon icons,
+  and `screenshots` (one `form_factor: wide` desktop shot + one `narrow` mobile
+  shot under `public/img/screenshots/`) for the richer install dialog. Linked from
+  `public/index.html`.
+- `public/sw.js` — a minimal service worker (Chromium requires a fetch handler for
+  installability), registered on load in `src/index.tsx`. Same-origin GETs are
+  **network-first** (assets are content-hashed) with the response cached, falling
+  back to the cache — then `/` — when offline, giving an app-shell offline
+  fallback. Cross-origin requests (network APIs, relays) and non-GETs are left to
+  the browser. Excluded from Biome (service-worker globals) via `biome.json`.
+
 ## Logging
 
 The `log` crate is the single facade used throughout `muxsocial-lib` (source clients and the HTTP transports emit `log::` records). Each surface installs its own listener for those records:
@@ -54,6 +71,19 @@ The `log` crate is the single facade used throughout `muxsocial-lib` (source cli
 wasm-pack build muxsocial-client-wasm --release --target bundler   # from /muxsocial-rust
 npm install && npm run build                                       # from /muxsocial-client-web
 ```
+
+## CI
+
+`run_ci_checks.mjs` (repo root, plain Node, no dependencies) is the single source
+of truth for the build/test/lint pipeline, run fail-fast in order: `cargo fmt
+--check`, `cargo clippy -p muxsocial-lib --all-targets -- -D warnings`, `cargo test
+-p muxsocial-lib`, the wasm-pack build, `npm ci`, Biome (`npm run check:ci`),
+vitest, and the web build. Developers run `node run_ci_checks.mjs` locally before
+committing; `.github/workflows/ci.yml` runs the same file (its other steps are
+environment setup, tag→version stamping, and artifact upload), so CI and local
+can't drift. A separate `deploy` job publishes `muxsocial-client-web/dist` to
+Cloudflare Pages on `v*` tags or manual dispatch; a separate `check-translations`
+workflow is the i18n staleness gate (see [../ui/localization.md](../ui/localization.md)).
 
 ## Files
 

@@ -18,15 +18,17 @@ every network maps into:
 
 - `source: SourceNetwork` — `Hashiverse | Nostr | Mastodon | Bluesky`
 - `source_post_id: String` — network-native stable id (hex id, AT-URI, event id, status id)
-- `author_identifier: String` — pubkey hex, handle, acct, or DID
+- `author_identifier: String` — the author in the same user-facing form a source is
+  added as, so the post header matches the source chip: nostr `npub` (bech32; hex
+  fallback), Bluesky handle, Mastodon acct, Hashiverse user id hex
 - `author_display_name: Option<String>`
 - `created_at_millis: i64` — Unix epoch milliseconds (UTC); `parse_rfc3339_to_epoch_millis` normalizes ISO timestamps
 - `content_html: String` — HTML for every source (Mastodon/Hashiverse native HTML;
   Bluesky rendered from text + facets; nostr plain text escaped + wrapped via
   `crate::html::plain_text_to_html`)
 - `post_url: Option<String>` — a canonical web permalink to the original post,
-  built by each mapper where the native ids allow it (`None` otherwise). The GUI's
-  source chip links to it; the per-network formats are njump `nevent` (nostr),
+  built by each mapper where the native ids allow it (`None` otherwise). The post's
+  title bar links to it; the per-network formats are njump `nevent` (nostr),
   `bsky.app/profile/{did}/post/{rkey}` (Bluesky), the status `url` (Mastodon), and
   the `app.hashiverse.com` post route (Hashiverse).
 - `media: Vec<PostMedia>` — structured attached media the GUI renders below the

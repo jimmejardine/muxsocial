@@ -20,8 +20,17 @@ Unauthenticated reads from the public AppView `https://public.api.bsky.app`:
    `actor`, `filter = "posts_no_replies"`, `limit`.
 2. `send_xrpc::<Parameters, (), Output, Error>(..)`.
 3. For each `FeedViewPost`, read `post.uri`, `post.author.handle` /
-   `display_name`, and the loosely-typed `post.record` (serialize to JSON, pull
-   `text` and `createdAt`).
+   `display_name`, and decode the loosely-typed `post.record` into the typed post
+   `RecordData` (`try_from_unknown`) — `content_html` is rendered from its `text`
+   plus richtext **facets** (`render_facets_to_html`: link/mention/hashtag byte
+   ranges become `<a>`s, the rest is escaped, newlines → `<br>`).
+
+**Reposts:** the author feed includes the actor's reposts (`filter =
+"posts_no_replies"` drops replies but not reposts), whose `post.author` is the
+*original* poster. They are kept, and labeled: when a feed item's `reason` is
+`reasonRepost`, `author_display_name` becomes `"{reposter} → {original author}"`
+(names fall back to handles), so one source showing other authors reads as the
+repost it is. The permalink still points at the original post.
 
 **Permalink (`post_url`):** built from the post's AT-URI and the author's DID as
 `https://bsky.app/profile/{did}/post/{rkey}`, where `rkey` is the last segment of

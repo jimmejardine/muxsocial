@@ -24,13 +24,22 @@ The "Get more posts" button is non-directional — Rust decides newer-vs-older p
 single page can both prepend and append. When a page returns nothing new, `reachedOldest`
 flips and the list shows an end marker.
 
+`getMore` also fires automatically: once whenever the timeline's source set changes (a
+`sources_signature` string computed in `Timeline.tsx` — so a freshly-added address loads
+without a click, and a populated timeline loads on mount), and on a 5-minute interval gated by
+the timeline's [autopoll flag](timelines.md) (live refs keep the interval subscription stable
+across re-renders). Auto-fetches drive the same `loading` flag, so the "Get more posts" button
+shows its spinner as if pressed.
+
 ## PostCard / PostBody
 
 `components/PostCard.tsx` renders one post: a **title bar** across the top in the network's
-color showing the poster (display name, else the identifier), then the body, media, and the
-timestamp. When the post has a `post_url`, the title bar is a link (`target="_blank"
-rel="noreferrer"`) to the original post on its network (see the per-network permalink formats in
-[`../networks/index.md`](../networks/index.md)); otherwise it's a plain bar. The title bar is
+color with the poster on the left (display name, else the identifier shortened by the same
+`truncate_source_id` shrinker as the source chips) and the [timestamp](#timestamps) on the
+right, then the body and media. When the post has a `post_url`, the title bar is a link
+(`target="_blank" rel="noreferrer"`) to the original post on its network (see the per-network
+permalink formats in [`../networks/index.md`](../networks/index.md)); otherwise it's a plain
+bar. The title bar is
 `position: sticky` (top), so while scrolling it pins to the top of the column until its post
 scrolls past and the next post's bar takes over — a cascading sticky header within the virtuoso
 list (which renders items in normal flow, so plain CSS sticky works without touching the
@@ -52,10 +61,13 @@ plays only in Safari without hls.js — a deferred follow-up; the poster still s
 → an external-link card with thumbnail, title, description, and host. Media that the source
 keeps inline (Hashiverse) renders through `PostBody` instead.
 
-## Relative timestamps
+## Timestamps
 
-`tools/RelativeTimeAgo.tsx` shows a live "5 minutes ago" after the absolute time. It formats
-via `Intl.RelativeTimeFormat` in the active [i18n](localization.md) language (no translation
+`tools/RelativeTimeAgo.tsx` renders the single timestamp in the title bar:
+`format_timestamp` shows the **relative** form ("5 minutes ago") while the post is under 24h
+old, and the **absolute** local date-time (`toLocaleString`) beyond that. The relative form
+uses `Intl.RelativeTimeFormat` in the active [i18n](localization.md) language (no translation
 keys) and self-updates on an adaptive interval (10s when under a minute old, then 30s / 5m /
-30m as the post ages), rendered as a semantic `<time>` element. The formatting function takes
-`now` as a parameter so it is pure and testable.
+30m as the post ages); the exact local date-time is always available as the `<time>` element's
+hover tooltip. The formatting functions take `now` as a parameter so they are pure and
+testable.
