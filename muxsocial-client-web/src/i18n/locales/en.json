@@ -17,7 +17,7 @@
 	"timeline.remove": "Remove timeline",
 	"timeline.name_label": "Timeline name",
 	"timeline.address_placeholder": "Paste an address and press Enter…",
-	"timeline.add_source": "Add source",
+	"timeline.add_identifier": "Add public identifier",
 	"timeline.paste": "Paste id",
 	"timeline.no_sources": "No sources yet. Paste an address above to add one.",
 	"timeline.get_more": "Get more posts",

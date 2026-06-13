@@ -145,8 +145,8 @@ export function Timeline({ timeline, index, highlight_add_source, on_remove, on_
 					variant="light"
 					radius="sm"
 					className={highlight_add_source ? "mux-throb" : undefined}
-					aria-label={t("timeline.add_source")}
-					title={t("timeline.add_source")}
+					aria-label={t("timeline.add_identifier")}
+					title={t("timeline.add_identifier")}
 					onClick={add_handlers.open}
 				>
 					<AddIcon />

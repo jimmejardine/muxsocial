@@ -16,7 +16,7 @@
 	"timeline.remove": "Supprimer la timeline",
 	"timeline.name_label": "Nom de la timeline",
 	"timeline.address_placeholder": "Collez une adresse et appuyez sur Entrée…",
-	"timeline.add_source": "Ajouter une source",
+	"timeline.add_identifier": "Ajouter un identifiant public",
 	"timeline.paste": "Coller l'ID",
 	"timeline.no_sources": "Aucune source pour l'instant. Collez une adresse ci-dessus pour en ajouter une.",
 	"timeline.get_more": "Charger plus de publications",

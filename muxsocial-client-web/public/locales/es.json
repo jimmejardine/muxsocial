@@ -16,7 +16,7 @@
 	"timeline.remove": "Eliminar cronología",
 	"timeline.name_label": "Nombre de la cronología",
 	"timeline.address_placeholder": "Pega una dirección y pulsa Enter…",
-	"timeline.add_source": "Añadir fuente",
+	"timeline.add_identifier": "Añadir identificador público",
 	"timeline.paste": "Pegar ID",
 	"timeline.no_sources": "Aún no hay fuentes. Pega una dirección arriba para añadir una.",
 	"timeline.get_more": "Cargar más publicaciones",

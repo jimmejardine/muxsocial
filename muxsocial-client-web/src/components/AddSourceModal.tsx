@@ -32,7 +32,7 @@ export function AddSourceModal({ opened, onClose, onSubmit }: AddSourceModalProp
 	};
 
 	return (
-		<Modal opened={opened} onClose={close} title={t("timeline.add_source")} size="sm" centered>
+		<Modal opened={opened} onClose={close} title={t("timeline.add_identifier")} size="sm" centered>
 			<form
 				onSubmit={(event) => {
 					event.preventDefault();
