@@ -19,6 +19,7 @@ use serde::Deserialize;
 
 use crate::http::{DefaultHttpTransport, HttpRequest, HttpTransport};
 use crate::post::{AggregatedPost, PostMedia, SourceNetwork, parse_rfc3339_to_epoch_millis};
+use crate::posting::{ComposeRequest, PublishedPostReference, SourcePoster};
 use crate::timeline::SourcePager;
 
 /// Fetch up to `limit` recent public statuses for a fediverse `account` in the
@@ -104,6 +105,48 @@ impl SourcePager for MastodonPager {
     async fn reset(&mut self) -> anyhow::Result<()> {
         // The resolved account id is stable; nothing to clear.
         Ok(())
+    }
+}
+
+/// Publishes statuses for one authenticated Mastodon account. Holds the OAuth
+/// bearer token (decrypted for the session) and posts via the public REST API.
+pub struct MastodonPoster {
+    http_transport: DefaultHttpTransport,
+    instance_base_url: String,
+    access_token: String,
+}
+
+impl MastodonPoster {
+    pub fn new(http_transport: DefaultHttpTransport, instance_base_url: impl Into<String>, access_token: impl Into<String>) -> Self {
+        Self {
+            http_transport,
+            instance_base_url: instance_base_url.into(),
+            access_token: access_token.into(),
+        }
+    }
+}
+
+impl SourcePoster for MastodonPoster {
+    async fn publish_post(&mut self, request: &ComposeRequest) -> anyhow::Result<PublishedPostReference> {
+        let url = format!("{}/api/v1/statuses", self.instance_base_url);
+        let payload = serde_json::json!({ "status": request.text });
+        let http_request = HttpRequest {
+            method: "POST".to_string(),
+            url,
+            headers: vec![
+                ("Authorization".to_string(), format!("Bearer {}", self.access_token)),
+                ("Content-Type".to_string(), "application/json".to_string()),
+                ("Accept".to_string(), "application/json".to_string()),
+            ],
+            body: serde_json::to_vec(&payload)?,
+        };
+        let response = self.http_transport.execute(http_request).await?;
+        anyhow::ensure!(response.is_success(), "Mastodon post failed: HTTP {} {}", response.status, String::from_utf8_lossy(&response.body));
+        let status: MastodonStatus = serde_json::from_slice(&response.body).context("parsing Mastodon post response")?;
+        Ok(PublishedPostReference {
+            native_post_id: Some(status.id),
+            post_url: status.url,
+        })
     }
 }
 

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Authorizing…</title>
+	</head>
+	<body>
+		<p>You can close this window.</p>
+		<script>
+			// OAuth redirect landing for the popup flow: hand the callback query
+			// (?code=…&state=…) back to the opener (the main app) and close. Same-origin
+			// as the app, so window.opener and postMessage are available.
+			(function () {
+				try {
+					if (window.opener) {
+						window.opener.postMessage({ type: "muxsocial-oauth-callback", query: window.location.search }, window.location.origin);
+					}
+				} catch (error) {
+					// Ignore — the opener will time out and surface a clear error.
+				}
+				window.close();
+			})();
+		</script>
+	</body>
+</html>

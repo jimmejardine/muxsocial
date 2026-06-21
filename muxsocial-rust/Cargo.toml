@@ -36,6 +36,17 @@ muxsocial-lib = { path = "muxsocial-lib", version = "0.0.0" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 hex = "0.4.3"
+# base64 for serializing encrypted-credential blobs into the string KV config store.
+base64 = "0.22"
+# At-rest credential encryption (cross-post account keys): Argon2id KDF over the
+# master password + XChaCha20-Poly1305 AEAD. Both pure-Rust, build clean on wasm32.
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+# SHA-256 for the OAuth PKCE S256 code challenge (pure-Rust, wasm-clean).
+sha2 = "0.10"
+# CSPRNG bytes for salts/nonces; the `js` feature (wired on wasm targets in the
+# crates that need it) routes getrandom to the browser crypto API.
+getrandom = "0.2"
 # Pure-Rust regex (wasm-clean) used by the source-address URL parser.
 regex = "1"
 # Boxed async fns in object-safe traits (ConfigStorage). `?Send` on wasm.
@@ -60,6 +71,13 @@ nostr-sdk = { version = "0.44", default-features = false }
 # `agent` module (and its tokio/sync pull) we don't use.
 atrium-api = { version = "0.25", default-features = false, features = ["namespace-appbsky"] }
 atrium-xrpc = "0.12"
+# Bluesky (ATProto) OAuth + DPoP, driven over our own HttpClient (default-features
+# off drops the reqwest default client); pure-Rust p256/jose crypto, wasm-clean.
+atrium-oauth = { version = "0.1.7", default-features = false }
+# Identity (DID/handle) resolvers and the key/value Store trait used by the OAuth
+# client; pulled directly so muxsocial-lib can name their types.
+atrium-identity = "0.1.9"
+atrium-common = "0.1.4"
 # Hashiverse: core protocol lib (native + wasm). The ergonomic native wrapper
 # (sqlite/disk/bootstrap defaults) is hashiverse-client-rust — native only, used
 # by the integration tests, never by muxsocial-lib (which must stay wasm-clean).
@@ -76,6 +94,9 @@ rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs"] 
 # Wasm: gloo-net over the browser Fetch API.
 gloo-net = { version = "0.7", default-features = false, features = ["http"] }
 wasm-bindgen-futures = "0.4.58"
+# Browser interop for the wasm transport (request bodies as Uint8Array) and the
+# wall-clock (Date.now) for post timestamps.
+js-sys = "0.3"
 
 # Published hashiverse-lib 1.0.7 uses `moka::ExternalClock`, a seam that only
 # exists in hashiverse's vendored moka fork, not upstream crates.io moka. The

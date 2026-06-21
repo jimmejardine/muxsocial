@@ -20,3 +20,6 @@ worker-backed `MuxsocialClientWasmProxy` and is a pull-based view over Rust-owne
   (timelines + GUI settings) as one copy/paste JSON document, with Apply/Revert.
 - [help-wizard.md](help-wizard.md) — the paged "Getting started" onboarding overlay:
   auto-opened for newcomers, relaunchable from the hamburger and the empty state.
+- [compose.md](compose.md) — the cross-post UI: the Post button, the ComposeModal
+  (draft persistence, master-password unlock gate, per-account results) and the
+  AccountsModal (per-network add buttons, removable account list).

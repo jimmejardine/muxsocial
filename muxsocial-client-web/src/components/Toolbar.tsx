@@ -5,6 +5,8 @@ import { HeaderMenu } from "./HeaderMenu.tsx";
 
 interface ToolbarProps {
 	on_add_timeline: () => void;
+	/** Open the compose / cross-post dialog. */
+	on_open_compose: () => void;
 	/** Pulse the Add-timeline button for attention (no timelines yet). */
 	highlight?: boolean;
 	/** App version, shown in the hamburger menu; null until loaded. */
@@ -13,10 +15,22 @@ interface ToolbarProps {
 	on_open_help: () => void;
 	/** Open the config import/export dialog (from the hamburger menu). */
 	on_open_config: () => void;
+	/** Open the "My accounts" dialog (from the hamburger menu). */
+	on_open_accounts: () => void;
 }
 
-/** The top toolbar: app title, theme/language switchers, and the "Add timeline" button. */
-export function Toolbar({ on_add_timeline, highlight, version, on_open_help, on_open_config }: ToolbarProps) {
+/** A simple quill/pen glyph for the Post button. */
+function PenIcon() {
+	return (
+		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+			<path d="M12 20h9" />
+			<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+		</svg>
+	);
+}
+
+/** The top toolbar: app title, theme/language switchers, and the Post / Add-timeline buttons. */
+export function Toolbar({ on_add_timeline, on_open_compose, highlight, version, on_open_help, on_open_config, on_open_accounts }: ToolbarProps) {
 	const { t } = useTranslation();
 
 	return (
@@ -31,10 +45,13 @@ export function Toolbar({ on_add_timeline, highlight, version, on_open_help, on_
 				</Text>
 			</Group>
 			<Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+				<Button size="xs" variant="default" leftSection={<PenIcon />} onClick={on_open_compose}>
+					{t("compose.open")}
+				</Button>
 				<Button size="xs" onClick={on_add_timeline} className={highlight ? "mux-throb" : undefined}>
 					{t("toolbar.add_timeline")}
 				</Button>
-				<HeaderMenu version={version} on_open_help={on_open_help} on_open_config={on_open_config} />
+				<HeaderMenu version={version} on_open_help={on_open_help} on_open_config={on_open_config} on_open_accounts={on_open_accounts} />
 			</Group>
 		</Group>
 	);

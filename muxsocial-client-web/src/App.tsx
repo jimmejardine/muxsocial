@@ -2,6 +2,8 @@ import { AppShell, Center, Loader } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AccountsModal } from "./components/AccountsModal.tsx";
+import { ComposeModal } from "./components/ComposeModal.tsx";
 import { ConfigDialog } from "./components/ConfigDialog.tsx";
 import { HelpWizard } from "./components/HelpWizard.tsx";
 import { TimelineArea } from "./components/TimelineArea.tsx";
@@ -34,6 +36,10 @@ export function App() {
 	const [app_version, set_app_version] = useState<string | null>(null);
 	const [help_opened, help_handlers] = useDisclosure(false);
 	const [config_opened, config_handlers] = useDisclosure(false);
+	const [compose_opened, compose_handlers] = useDisclosure(false);
+	const [accounts_opened, accounts_handlers] = useDisclosure(false);
+	// Bumped on account add/remove so an open ComposeModal refreshes its list.
+	const [accounts_version, set_accounts_version] = useState(0);
 	// Auto-open the getting-started wizard once when the app first loads with no timelines.
 	const has_auto_opened_help = useRef(false);
 
@@ -162,10 +168,12 @@ export function App() {
 				<AppShell.Header>
 					<Toolbar
 						on_add_timeline={add_timeline}
+						on_open_compose={compose_handlers.open}
 						highlight={timelines !== null && timelines.length === 0}
 						version={app_version}
 						on_open_help={help_handlers.open}
 						on_open_config={config_handlers.open}
+						on_open_accounts={accounts_handlers.open}
 					/>
 				</AppShell.Header>
 
@@ -189,6 +197,8 @@ export function App() {
 			</AppShell>
 			<HelpWizard opened={help_opened} onClose={help_handlers.close} />
 			<ConfigDialog opened={config_opened} onClose={config_handlers.close} on_timelines_imported={set_timelines} />
+			<ComposeModal opened={compose_opened} onClose={compose_handlers.close} onOpenAccounts={accounts_handlers.open} accountsVersion={accounts_version} />
+			<AccountsModal opened={accounts_opened} onClose={accounts_handlers.close} onAccountsChanged={() => set_accounts_version((version) => version + 1)} />
 		</MuxsocialContext.Provider>
 	);
 }

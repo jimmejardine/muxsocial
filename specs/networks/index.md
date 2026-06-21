@@ -80,9 +80,19 @@ wasm build. Native (MSVC) builds don't need it. Install LLVM and ensure
 `clang`/`llvm-ar` are on `PATH` (e.g. `C:\Program Files\LLVM\bin`) before running
 `cargo build --target wasm32-unknown-unknown`.
 
+## Posting (cross-post)
+
+The networks above are read-side. Writing — connecting accounts and cross-posting
+one message to all of them — is specced separately in
+[compose/index.md](compose/index.md) (architecture + per-network posters) and
+[compose/credentials.md](compose/credentials.md) (account model, at-rest
+encryption, session unlock).
+
 ## Files
 
 - [nostr/index.md](nostr/index.md)
 - [bluesky/index.md](bluesky/index.md)
 - [mastodon/index.md](mastodon/index.md)
 - [hashiverse/index.md](hashiverse/index.md)
+- [compose/index.md](compose/index.md)
+- [compose/credentials.md](compose/credentials.md)

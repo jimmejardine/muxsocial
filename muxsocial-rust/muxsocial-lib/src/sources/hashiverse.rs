@@ -27,6 +27,7 @@ use hashiverse_lib::tools::types::Id;
 pub use hashiverse_lib::client::hashiverse_client::HashiverseClient as Client;
 
 use crate::post::{AggregatedPost, SourceNetwork};
+use crate::posting::{ComposeRequest, PublishedPostReference, SourcePoster};
 use crate::timeline::SourcePager;
 
 /// Fetch a page of recent posts for the Hashiverse user identified by
@@ -36,18 +37,42 @@ pub async fn fetch_recent_posts(hashiverse_client: &HashiverseClient, user_id_he
     timeline_get_more(hashiverse_client, user_id_hex).await
 }
 
-/// Build a read-only **guest** [`HashiverseClient`] for the browser, wiring
-/// hashiverse-lib's own wasm runtime services (IndexedDB key locker + storage,
-/// fetch transport) with the single-threaded PoW generator — reading a timeline
-/// needs no PoW workers. Guest mode is the empty keyphrase. wasm32 only; native
-/// callers inject a client built by `hashiverse-client-rust` instead.
+/// Build a read-only **guest** [`HashiverseClient`] for the browser. Guest mode
+/// is the empty keyphrase. wasm32 only; native callers inject a client built by
+/// `hashiverse-client-rust` instead.
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub async fn build_guest_client() -> anyhow::Result<Arc<HashiverseClient>> {
+    // Empty keyphrase = the deterministic read-only guest identity.
+    build_client_with_keyphrase(String::new()).await
+}
+
+/// Build a **write-capable** [`HashiverseClient`] for the browser from the
+/// user's `keyphrase`, unlocking their real identity in hashiverse-lib's key
+/// locker so it can sign + PoW posts. wasm32 only; native callers inject a
+/// client built by `hashiverse-client-rust` instead.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub async fn build_authenticated_client(keyphrase: &str) -> anyhow::Result<Arc<HashiverseClient>> {
+    build_client_with_keyphrase(keyphrase.to_string()).await
+}
+
+/// Assemble a browser [`HashiverseClient`] over hashiverse-lib's wasm runtime
+/// services (IndexedDB post cache, fetch transport) with the single-threaded PoW
+/// generator. The `keyphrase` selects the identity: empty for the read-only
+/// guest, the user's phrase for a write-capable client.
+///
+/// The key locker is **in-memory** ([`MemKeyLockerManager`]), not the persistent
+/// `WasmKeyLockerManager`: muxsocial's encrypted `AccountStore` is the single
+/// source of truth for the keyphrase (decrypted on unlock), so hashiverse-lib
+/// must not also persist the key to its own IndexedDB. A reload re-derives this
+/// ephemeral locker from the decrypted keyphrase. (The `WasmClientStorage` post
+/// cache below is non-secret, so persisting it stays fine.)
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+async fn build_client_with_keyphrase(keyphrase: String) -> anyhow::Result<Arc<HashiverseClient>> {
     use hashiverse_lib::client::args::Args;
     use hashiverse_lib::client::client_storage::client_storage::ClientStorage;
     use hashiverse_lib::client::client_storage::wasm_client_storage::WasmClientStorage;
     use hashiverse_lib::client::key_locker::key_locker::{KeyLocker, KeyLockerManager};
-    use hashiverse_lib::client::key_locker::wasm_key_locker::WasmKeyLockerManager;
+    use hashiverse_lib::client::key_locker::mem_key_locker::MemKeyLockerManager;
     use hashiverse_lib::tools::pow_generator::pow_generator::PowGenerator;
     use hashiverse_lib::tools::pow_generator::single_threaded_pow_generator::SingleThreadedPowGenerator;
     use hashiverse_lib::tools::runtime_services::RuntimeServices;
@@ -55,9 +80,8 @@ pub async fn build_guest_client() -> anyhow::Result<Arc<HashiverseClient>> {
     use hashiverse_lib::transport::transport::TransportFactory;
     use hashiverse_lib::transport::wasm_transport::WasmTransportFactory;
 
-    let key_locker_manager = WasmKeyLockerManager::new().await?;
-    // Empty keyphrase = the deterministic read-only guest identity.
-    let key_locker: Arc<dyn KeyLocker> = key_locker_manager.create(String::new()).await?;
+    let key_locker_manager = MemKeyLockerManager::new().await?;
+    let key_locker: Arc<dyn KeyLocker> = key_locker_manager.create(keyphrase).await?;
     let client_storage: Arc<dyn ClientStorage> = WasmClientStorage::new().await?;
     let transport_factory: Arc<dyn TransportFactory> = Arc::new(WasmTransportFactory::default());
     let time_provider: Arc<dyn TimeProvider> = Arc::new(RealTimeProvider::default());
@@ -116,6 +140,32 @@ impl SourcePager for HashiversePager {
 
     async fn reset(&mut self) -> anyhow::Result<()> {
         self.client.single_timeline_reset().await.context("resetting hashiverse timeline")
+    }
+}
+
+/// Publishes posts for one authenticated Hashiverse identity. Wraps an
+/// already-unlocked [`HashiverseClient`] (built from the user's keyphrase via
+/// [`build_authenticated_client`] on wasm, or injected on native); the client
+/// owns signing + proof-of-work, so publishing is one `submit_post` call.
+pub struct HashiversePoster {
+    client: Arc<HashiverseClient>,
+}
+
+impl HashiversePoster {
+    pub fn new(client: Arc<HashiverseClient>) -> Self {
+        Self { client }
+    }
+}
+
+impl SourcePoster for HashiversePoster {
+    async fn publish_post(&mut self, request: &ComposeRequest) -> anyhow::Result<PublishedPostReference> {
+        let (_commit_tokens, (encoded_post, _body_bytes)) = self.client.submit_post(&request.text).await.context("submitting hashiverse post")?;
+        Ok(PublishedPostReference {
+            native_post_id: Some(encoded_post.post_id.to_hex_str()),
+            // The single-post permalink needs the post's bucket location, which
+            // submit_post doesn't return; left for a later refinement.
+            post_url: None,
+        })
     }
 }
 

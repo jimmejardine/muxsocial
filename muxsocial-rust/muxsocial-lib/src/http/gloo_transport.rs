@@ -28,15 +28,11 @@ impl Default for DefaultHttpTransport {
 
 impl HttpTransport for DefaultHttpTransport {
     async fn execute(&self, request: HttpRequest) -> anyhow::Result<HttpResponse> {
-        // The source clients only ever issue bodyless GETs (Mastodon REST and
-        // Bluesky XRPC reads); request bodies on wasm aren't needed yet.
-        if !request.body.is_empty() {
-            bail!("request bodies are not yet supported on the wasm transport");
-        }
-
         let mut request_builder: RequestBuilder = match request.method.as_str() {
             "GET" => Request::get(&request.url),
             "POST" => Request::post(&request.url),
+            "PUT" => Request::put(&request.url),
+            "DELETE" => Request::delete(&request.url),
             other_method => bail!("unsupported HTTP method {other_method:?} on the wasm transport"),
         };
         for (header_name, header_value) in &request.headers {
@@ -45,8 +41,16 @@ impl HttpTransport for DefaultHttpTransport {
 
         // gloo-net's error type is not Send/Sync, so flatten it to a string
         // before it touches anyhow.
-        log::debug!("http: {} {}", request.method, request.url);
-        let response = request_builder.send().await.map_err(|send_error| anyhow!("HTTP request to {} failed: {send_error}", request.url))?;
+        log::debug!("http: {} {} ({} body bytes)", request.method, request.url, request.body.len());
+        let response = if request.body.is_empty() {
+            request_builder.send().await
+        }
+        else {
+            // Send the raw body bytes as a Uint8Array (works for JSON/form/binary).
+            let body_array = js_sys::Uint8Array::from(request.body.as_slice());
+            request_builder.body(body_array).map_err(|build_error| anyhow!("building HTTP request body for {}: {build_error}", request.url))?.send().await
+        };
+        let response = response.map_err(|send_error| anyhow!("HTTP request to {} failed: {send_error}", request.url))?;
 
         let status = response.status();
         log::debug!("http: {status} <- {} {}", request.method, request.url);

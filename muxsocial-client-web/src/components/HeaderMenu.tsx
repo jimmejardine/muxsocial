@@ -15,6 +15,8 @@ interface HeaderMenuProps {
 	on_open_help: () => void;
 	/** Open the config import/export dialog. */
 	on_open_config: () => void;
+	/** Open the "My accounts" dialog. */
+	on_open_accounts: () => void;
 }
 
 /**
@@ -23,7 +25,7 @@ interface HeaderMenuProps {
  * their own dropdowns, rendered in-place (not portalled) so opening one does not
  * dismiss this popover.
  */
-export function HeaderMenu({ version, on_open_help, on_open_config }: HeaderMenuProps) {
+export function HeaderMenu({ version, on_open_help, on_open_config, on_open_accounts }: HeaderMenuProps) {
 	const { t } = useTranslation();
 	const [opened, handlers] = useDisclosure(false);
 
@@ -43,6 +45,16 @@ export function HeaderMenu({ version, on_open_help, on_open_config }: HeaderMenu
 						}}
 					>
 						{t("wizard.open")}
+					</Button>
+					<Button
+						size="xs"
+						variant="default"
+						onClick={() => {
+							handlers.close();
+							on_open_accounts();
+						}}
+					>
+						{t("accounts.open")}
 					</Button>
 					<LanguageSwitcher />
 					<ThemeSwitcher />

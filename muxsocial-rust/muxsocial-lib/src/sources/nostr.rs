@@ -16,6 +16,7 @@ use anyhow::Context;
 use nostr_sdk::prelude::*;
 
 use crate::post::{AggregatedPost, PostMedia, SourceNetwork};
+use crate::posting::{ComposeRequest, PublishedPostReference, SourcePoster};
 use crate::timeline::SourcePager;
 
 /// The nostr SDK client type, re-exported so an owner can hold a shared,
@@ -119,6 +120,73 @@ impl SourcePager for NostrPager {
 
     async fn reset(&mut self) -> anyhow::Result<()> {
         Ok(())
+    }
+}
+
+/// Signs nostr events for a [`NostrPoster`]. The v1 implementation,
+/// [`KeysEventSigner`], wraps a pasted nsec and signs locally; this seam is the
+/// extension point for a future NIP-07 / browser-extension signer (which would
+/// sign without the private key ever entering mux.social). Static dispatch only,
+/// so the `async fn` form needs no `async-trait`/`Send` bound.
+#[allow(async_fn_in_trait)]
+pub trait EventSigner {
+    /// Build and sign a kind-1 text note carrying `content`.
+    async fn sign_text_note(&self, content: &str) -> anyhow::Result<Event>;
+    /// The signer's author public key as bech32 (`npub…`), for the account label.
+    fn public_key_bech32(&self) -> anyhow::Result<String>;
+}
+
+/// An [`EventSigner`] backed by a local secret key (the pasted nsec). The key is
+/// held only in memory for the session (the encrypted form lives in the account
+/// store).
+pub struct KeysEventSigner {
+    keys: Keys,
+}
+
+impl KeysEventSigner {
+    /// Parse an `nsec` (bech32) or hex secret key into a signer.
+    pub fn from_secret_key(secret_key_nsec_or_hex: &str) -> anyhow::Result<Self> {
+        let keys = Keys::parse(secret_key_nsec_or_hex).context("parsing nostr secret key (nsec/hex)")?;
+        Ok(Self { keys })
+    }
+}
+
+impl EventSigner for KeysEventSigner {
+    async fn sign_text_note(&self, content: &str) -> anyhow::Result<Event> {
+        EventBuilder::text_note(content).sign_with_keys(&self.keys).context("signing nostr text note")
+    }
+
+    fn public_key_bech32(&self) -> anyhow::Result<String> {
+        self.keys.public_key().to_bech32().context("encoding nostr npub")
+    }
+}
+
+/// Publishes text notes for one nostr account over a shared, pre-connected
+/// [`Client`]. Generic over the [`EventSigner`] so the pasted-nsec signer and a
+/// future external signer share one publish path.
+pub struct NostrPoster<S: EventSigner> {
+    client: Client,
+    signer: S,
+    /// Relays this poster publishes to; also embedded as hints in the post's
+    /// `nevent` permalink.
+    relays: Vec<String>,
+}
+
+impl<S: EventSigner> NostrPoster<S> {
+    /// `client` should be a clone of the shared, already-connected client (see
+    /// [`connect_client`]); `relays` are the relay URLs it is connected to.
+    pub fn new(client: Client, signer: S, relays: Vec<String>) -> Self {
+        Self { client, signer, relays }
+    }
+}
+
+impl<S: EventSigner> SourcePoster for NostrPoster<S> {
+    async fn publish_post(&mut self, request: &ComposeRequest) -> anyhow::Result<PublishedPostReference> {
+        let event = self.signer.sign_text_note(&request.text).await?;
+        let post_url = njump_event_url(&event, &self.relays);
+        let native_post_id = Some(event.id.to_hex());
+        self.client.send_event(&event).await.context("publishing nostr text note")?;
+        Ok(PublishedPostReference { native_post_id, post_url })
     }
 }
 
@@ -262,5 +330,28 @@ c",
         let (html, _) = render_nostr_content("(see https://example.com).");
         assert!(html.contains("<a href=\"https://example.com\">"), "{html}");
         assert!(html.contains(")."), "trailing punctuation kept as text: {html}");
+    }
+
+    /// The pasted-nsec signer builds a valid, self-consistent kind-1 note without
+    /// touching any relay: correct kind/content, a signature that verifies, and a
+    /// bech32 author that matches the key. This exercises the whole publish path
+    /// up to (but not including) `client.send_event`.
+    #[tokio::test]
+    async fn keys_signer_builds_and_signs_a_text_note() {
+        let keys = Keys::generate();
+        let nsec = keys.secret_key().to_bech32().expect("nsec");
+        let signer = KeysEventSigner::from_secret_key(&nsec).expect("build signer");
+
+        let event = signer.sign_text_note("hello nostr").await.expect("sign");
+
+        assert_eq!(event.kind, Kind::TextNote);
+        assert_eq!(event.content, "hello nostr");
+        assert!(event.verify().is_ok(), "signed event must verify");
+        assert_eq!(signer.public_key_bech32().expect("npub"), keys.public_key().to_bech32().expect("npub"));
+    }
+
+    #[test]
+    fn rejects_a_malformed_secret_key() {
+        assert!(KeysEventSigner::from_secret_key("not-a-real-nsec").is_err());
     }
 }
