@@ -77,13 +77,13 @@ impl SharedSourceWriters {
                 let oauth_flow_id = uuid::Uuid::new_v4().to_string();
                 self.pending_oauth.insert(
                     oauth_flow_id.clone(),
-                    PendingOauth::Bluesky(BlueskyFlow {
+                    PendingOauth::Bluesky(Box::new(BlueskyFlow {
                         client,
                         session_store,
                         client_id: client_id.to_string(),
                         redirect_uri: redirect_uri.to_string(),
                         handle_label: instance_or_handle.trim().to_string(),
-                    }),
+                    })),
                 );
                 Ok(BeginOauthResult { authorize_url, oauth_flow_id })
             }
@@ -105,6 +105,8 @@ impl SharedSourceWriters {
                 Ok(AuthenticatedAccount::new(SourceNetwork::Mastodon, display_label, StoredCredential::MastodonOAuth { instance_base_url, encrypted_access_token }))
             }
             PendingOauth::Bluesky(flow) => {
+                // Move the flow out of the box so its fields can be moved into the account.
+                let flow = *flow;
                 if let Some(error) = oauth::query_value(redirect_query, "error") {
                     anyhow::bail!("Bluesky authorization failed: {error}");
                 }
@@ -190,8 +192,8 @@ impl SharedSourceWriters {
     async fn publish_to_account(&mut self, account_store: &mut AccountStore, account: &AuthenticatedAccount, request: &ComposeRequest) -> anyhow::Result<PublishedPostReference> {
         // Bluesky doesn't go through the NetworkPoster enum (its atrium types are
         // generic-heavy); handle it inline so the session can be restored/rotated.
-        if let StoredCredential::BlueskyOAuth { did, client_id, redirect_uri, encrypted_session } = &account.credential {
-            return self.publish_bluesky(account_store, account, did, client_id, redirect_uri, encrypted_session, request).await;
+        if matches!(account.credential, StoredCredential::BlueskyOAuth { .. }) {
+            return self.publish_bluesky(account_store, account, request).await;
         }
         let mut poster = self.build_poster_for(account).await?;
         poster.publish_post(request).await
@@ -199,7 +201,16 @@ impl SharedSourceWriters {
 
     /// Decrypt the stored Bluesky session, restore it, post, and re-persist the
     /// (possibly token-rotated) session so the next post / a reload still works.
-    async fn publish_bluesky(&mut self, account_store: &mut AccountStore, account: &AuthenticatedAccount, did: &str, client_id: &str, redirect_uri: &str, encrypted_session: &EncryptedBlob, request: &ComposeRequest) -> anyhow::Result<PublishedPostReference> {
+    async fn publish_bluesky(&mut self, account_store: &mut AccountStore, account: &AuthenticatedAccount, request: &ComposeRequest) -> anyhow::Result<PublishedPostReference> {
+        let StoredCredential::BlueskyOAuth {
+            did,
+            client_id,
+            redirect_uri,
+            encrypted_session,
+        } = &account.credential
+        else {
+            anyhow::bail!("publish_bluesky called for a non-Bluesky account");
+        };
         let session_bytes = self.master_key()?.decrypt(encrypted_session)?;
         let session: bluesky::BlueskySession = serde_json::from_slice(&session_bytes).context("decoding stored Bluesky session")?;
         let session_store = bluesky::new_session_store();
@@ -232,7 +243,7 @@ impl SharedSourceWriters {
                 let nsec = String::from_utf8(nsec_bytes).context("decrypted nostr secret is not valid UTF-8")?;
                 let signer = KeysEventSigner::from_secret_key(&nsec)?;
                 let nostr_client = self.shared_nostr_client().await?;
-                Ok(NetworkPoster::Nostr(NostrPoster::new(nostr_client, signer, self.nostr_relays.clone())))
+                Ok(NetworkPoster::Nostr(Box::new(NostrPoster::new(nostr_client, signer, self.nostr_relays.clone()))))
             }
             StoredCredential::HashiverseKeyphrase { encrypted_keyphrase } => {
                 let keyphrase_bytes = self.master_key()?.decrypt(encrypted_keyphrase)?;
@@ -335,7 +346,13 @@ mod tests {
         writers.unlock("pw", &salt, None).expect("unlock");
 
         let make_hashiverse = |writers: &SharedSourceWriters, label: &str| {
-            AuthenticatedAccount::new(SourceNetwork::Hashiverse, label, StoredCredential::HashiverseKeyphrase { encrypted_keyphrase: writers.encrypt_secret(b"keyphrase").expect("enc") })
+            AuthenticatedAccount::new(
+                SourceNetwork::Hashiverse,
+                label,
+                StoredCredential::HashiverseKeyphrase {
+                    encrypted_keyphrase: writers.encrypt_secret(b"keyphrase").expect("enc"),
+                },
+            )
         };
         let accounts = vec![make_hashiverse(&writers, "hv-a"), make_hashiverse(&writers, "hv-b")];
 

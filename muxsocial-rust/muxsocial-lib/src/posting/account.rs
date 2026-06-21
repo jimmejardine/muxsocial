@@ -80,12 +80,7 @@ pub enum StoredCredential {
     /// serialized and encrypted as one blob. `client_id`/`redirect_uri` are the
     /// (origin-derived) OAuth client identity, kept so the session can be restored
     /// and refreshed after a reload. `client_id` empty = the localhost dev client.
-    BlueskyOAuth {
-        did: String,
-        client_id: String,
-        redirect_uri: String,
-        encrypted_session: EncryptedBlob,
-    },
+    BlueskyOAuth { did: String, client_id: String, redirect_uri: String, encrypted_session: EncryptedBlob },
 }
 
 impl StoredCredential {

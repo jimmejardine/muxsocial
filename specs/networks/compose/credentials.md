@@ -83,5 +83,9 @@ running browser tab a hardware enclave.
 `list_accounts`, `is_unlocked`, `unlock_secrets(master_password)`,
 `add_nostr_account(nsec, master_password)`,
 `add_hashiverse_account(keyphrase, label, master_password)`,
-`remove_account(account_id)`, and `cross_post(text)`. The OAuth `begin_oauth` /
-`complete_oauth` methods are added with the OAuth stages.
+`begin_oauth` / `complete_oauth` (Mastodon/Bluesky), `remove_account(account_id)`,
+and `cross_post(text)`. For the config transfer:
+`export_accounts_json()` / `import_accounts_json(json)` move the accounts +
+Argon2 salt as an `AccountsBundle` (secrets stay encrypted; import re-locks the
+session so the imported master password is re-entered). See
+[../../ui/config-transfer.md](../../ui/config-transfer.md).

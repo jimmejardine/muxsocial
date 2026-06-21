@@ -131,7 +131,8 @@ impl AccountStore {
 
     /// The persisted salt, if one has been created.
     pub async fn load_salt(&self) -> anyhow::Result<Option<[u8; ARGON2_SALT_LEN]>> {
-        let Some(salt_b64) = self.storage.get(ACCOUNTS_SALT_KEY).await? else {
+        let Some(salt_b64) = self.storage.get(ACCOUNTS_SALT_KEY).await?
+        else {
             return Ok(None);
         };
         let salt_bytes = base64::engine::general_purpose::STANDARD.decode(salt_b64).map_err(|decode_error| anyhow::anyhow!("decoding accounts salt: {decode_error}"))?;

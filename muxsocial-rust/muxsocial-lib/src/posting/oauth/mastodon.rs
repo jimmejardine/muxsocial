@@ -91,7 +91,9 @@ pub async fn complete(http_transport: &impl HttpTransport, pending: &MastodonPen
     .await
     .context("exchanging the Mastodon authorization code for a token")?;
 
-    let account: VerifyCredentials = get_json_authenticated(http_transport, &format!("{}/api/v1/accounts/verify_credentials", pending.instance_base_url), &token.access_token).await.context("reading the Mastodon account")?;
+    let account: VerifyCredentials = get_json_authenticated(http_transport, &format!("{}/api/v1/accounts/verify_credentials", pending.instance_base_url), &token.access_token)
+        .await
+        .context("reading the Mastodon account")?;
 
     let instance_host = pending.instance_base_url.trim_start_matches("https://").trim_start_matches("http://");
     let display_label = format!("@{}@{}", account.username, instance_host);

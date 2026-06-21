@@ -15,8 +15,9 @@ use crate::sources::nostr::{KeysEventSigner, NostrPoster};
 /// A concrete poster for one network, dispatched by [`SourcePoster`].
 pub enum NetworkPoster {
     /// nostr, signing with a pasted-nsec key (the [`KeysEventSigner`] seam also
-    /// admits a future NIP-07 signer as a separate variant).
-    Nostr(NostrPoster<KeysEventSigner>),
+    /// admits a future NIP-07 signer as a separate variant). Boxed — it carries a
+    /// nostr client + keys, much larger than the other variants.
+    Nostr(Box<NostrPoster<KeysEventSigner>>),
     /// Hashiverse, over an authenticated (keyphrase-unlocked) client.
     Hashiverse(HashiversePoster),
     /// Mastodon, over an OAuth bearer token.

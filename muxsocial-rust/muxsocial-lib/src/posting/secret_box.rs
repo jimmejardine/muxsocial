@@ -57,7 +57,9 @@ impl MasterKey {
         let params = Params::new(ARGON2_M_COST_KIB, ARGON2_T_COST, ARGON2_P_COST, Some(DERIVED_KEY_LEN)).map_err(|param_error| anyhow::anyhow!("invalid Argon2id params: {param_error}"))?;
         let argon2id = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
         let mut derived_key = [0u8; DERIVED_KEY_LEN];
-        argon2id.hash_password_into(master_password.as_bytes(), salt, &mut derived_key).map_err(|hash_error| anyhow::anyhow!("Argon2id key derivation failed: {hash_error}"))?;
+        argon2id
+            .hash_password_into(master_password.as_bytes(), salt, &mut derived_key)
+            .map_err(|hash_error| anyhow::anyhow!("Argon2id key derivation failed: {hash_error}"))?;
         Ok(MasterKey(derived_key))
     }
 
@@ -86,7 +88,9 @@ impl MasterKey {
         let nonce = XNonce::from_slice(&nonce_bytes);
         // A failure here is the expected "wrong password / tampered data" path —
         // the AEAD tag did not verify. Keep the message generic (don't leak which).
-        cipher.decrypt(nonce, ciphertext.as_ref()).map_err(|_decrypt_error| anyhow::anyhow!("could not decrypt credential (wrong master password or corrupt data)"))
+        cipher
+            .decrypt(nonce, ciphertext.as_ref())
+            .map_err(|_decrypt_error| anyhow::anyhow!("could not decrypt credential (wrong master password or corrupt data)"))
     }
 }
 

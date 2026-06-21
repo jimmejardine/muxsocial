@@ -23,9 +23,11 @@ pub struct BeginOauthResult {
 }
 
 /// In-flight OAuth state, held between `begin_oauth` and `complete_oauth`.
+/// `BlueskyFlow` is boxed: it carries the whole OAuth client, which is much larger
+/// than the Mastodon variant.
 pub enum PendingOauth {
     Mastodon(mastodon::MastodonPendingOauth),
-    Bluesky(bluesky::BlueskyFlow),
+    Bluesky(Box<bluesky::BlueskyFlow>),
 }
 
 /// Read a single query-string value by `key`, percent-decoded. For the Bluesky
@@ -93,7 +95,8 @@ fn percent_decode(input: &str) -> String {
                 if let Some(byte) = hex {
                     decoded.push(byte);
                     index += 3;
-                } else {
+                }
+                else {
                     decoded.push(bytes[index]);
                     index += 1;
                 }

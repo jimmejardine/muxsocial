@@ -150,7 +150,13 @@ mod tests {
                     }),
                 },
             ),
-            (SourceNetwork::Mastodon, "@bob@mastodon.social".to_string(), StubPoster { outcome: Err("instance rejected the post".to_string()) }),
+            (
+                SourceNetwork::Mastodon,
+                "@bob@mastodon.social".to_string(),
+                StubPoster {
+                    outcome: Err("instance rejected the post".to_string()),
+                },
+            ),
         ];
 
         let request = ComposeRequest::new("hello world");

@@ -239,11 +239,7 @@ impl MuxsocialClientWasm {
         let signer = KeysEventSigner::from_secret_key(&nsec).map_err(anyhow_to_js)?;
         let public_key_bech32 = signer.public_key_bech32().map_err(anyhow_to_js)?;
         let encrypted_nsec = self.writers.encrypt_secret(nsec.as_bytes()).map_err(anyhow_to_js)?;
-        let account = AuthenticatedAccount::new(
-            SourceNetwork::Nostr,
-            public_key_bech32.clone(),
-            StoredCredential::NostrNsec { encrypted_nsec, public_key_bech32 },
-        );
+        let account = AuthenticatedAccount::new(SourceNetwork::Nostr, public_key_bech32.clone(), StoredCredential::NostrNsec { encrypted_nsec, public_key_bech32 });
         let snapshot = self.account_store.add(account).await.map_err(anyhow_to_js)?;
         accounts_to_js(&snapshot)
     }

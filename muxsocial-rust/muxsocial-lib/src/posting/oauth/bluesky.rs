@@ -60,7 +60,11 @@ impl HttpClient for OwnedHttpClient {
             headers,
             body: request_body,
         };
-        let our_response = self.http_transport.execute(our_request).await.map_err(|transport_error| -> Box<dyn std::error::Error + Send + Sync + 'static> { format!("{transport_error:#}").into() })?;
+        let our_response = self
+            .http_transport
+            .execute(our_request)
+            .await
+            .map_err(|transport_error| -> Box<dyn std::error::Error + Send + Sync + 'static> { format!("{transport_error:#}").into() })?;
         let mut response_builder = Response::builder().status(our_response.status);
         for (header_name, header_value) in our_response.headers {
             response_builder = response_builder.header(header_name, header_value);
@@ -172,7 +176,11 @@ pub async fn authorize(client: &BlueskyOAuthClient, handle_or_entryway: &str) ->
 pub async fn complete(client: &BlueskyOAuthClient, session_store: &MemorySessionStore, code: String, state: Option<String>, iss: Option<String>) -> anyhow::Result<(String, Session)> {
     let (session, _app_state) = client.callback(CallbackParams { code, state, iss }).await.map_err(|callback_error| anyhow::anyhow!("Bluesky callback failed: {callback_error}"))?;
     let did = session.did().await.ok_or_else(|| anyhow::anyhow!("Bluesky session has no DID"))?;
-    let stored = session_store.get(&did).await.map_err(|store_error| anyhow::anyhow!("reading Bluesky session: {store_error}"))?.ok_or_else(|| anyhow::anyhow!("Bluesky session missing after callback"))?;
+    let stored = session_store
+        .get(&did)
+        .await
+        .map_err(|store_error| anyhow::anyhow!("reading Bluesky session: {store_error}"))?
+        .ok_or_else(|| anyhow::anyhow!("Bluesky session missing after callback"))?;
     Ok((did.as_ref().to_string(), stored))
 }
 
