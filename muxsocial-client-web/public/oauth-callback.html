@@ -9,15 +9,28 @@
 		<p>You can close this window.</p>
 		<script>
 			// OAuth redirect landing for the popup flow: hand the callback query
-			// (?code=…&state=…) back to the opener (the main app) and close. Same-origin
-			// as the app, so window.opener and postMessage are available.
-			(function () {
+			// (?code=…&state=…) back to the app and close.
+			//
+			// Primary channel is a same-origin BroadcastChannel, because some auth
+			// servers (Bluesky) send Cross-Origin-Opener-Policy: same-origin, which
+			// severs window.opener — so opener.postMessage would silently drop. The
+			// BroadcastChannel is origin-scoped and immune to COOP. opener.postMessage
+			// is kept as a fallback for providers that don't sever the opener.
+			(() => {
+				const message = { type: "muxsocial-oauth-callback", query: window.location.search };
+				try {
+					const channel = new BroadcastChannel("muxsocial-oauth");
+					channel.postMessage(message);
+					channel.close();
+				} catch {
+					// BroadcastChannel unavailable — fall back to the opener below.
+				}
 				try {
 					if (window.opener) {
-						window.opener.postMessage({ type: "muxsocial-oauth-callback", query: window.location.search }, window.location.origin);
+						window.opener.postMessage(message, window.location.origin);
 					}
-				} catch (error) {
-					// Ignore — the opener will time out and surface a clear error.
+				} catch {
+					// Ignore — the app resolves via the BroadcastChannel instead.
 				}
 				window.close();
 			})();
