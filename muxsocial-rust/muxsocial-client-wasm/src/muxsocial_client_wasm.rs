@@ -283,6 +283,21 @@ impl MuxsocialClientWasm {
         accounts_to_js(&snapshot)
     }
 
+    /// Export the accounts (+ Argon2 salt) as a JSON bundle for the config
+    /// transfer. Secrets stay encrypted; the master password is not included.
+    pub async fn export_accounts_json(&self) -> Result<String, JsValue> {
+        self.account_store.export_json().await.map_err(anyhow_to_js)
+    }
+
+    /// Replace the accounts (+ salt) from an exported bundle (all-or-nothing).
+    /// Re-locks the session so the user unlocks with the imported master password.
+    /// Returns the new account snapshot.
+    pub async fn import_accounts_json(&mut self, accounts_json: String) -> Result<JsValue, JsValue> {
+        let snapshot = self.account_store.import_json(&accounts_json).await.map_err(anyhow_to_js)?;
+        self.writers.lock();
+        accounts_to_js(&snapshot)
+    }
+
     /// Remove the account addressed by `account_id`. Returns the new snapshot.
     pub async fn remove_account(&mut self, account_id: String) -> Result<JsValue, JsValue> {
         let snapshot = self.account_store.remove(&account_id).await.map_err(anyhow_to_js)?;

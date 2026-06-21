@@ -10,6 +10,8 @@ use std::sync::Arc;
 
 use base64::Engine;
 
+use serde::{Deserialize, Serialize};
+
 use crate::config_storage::{ConfigStorage, get_json, set_json};
 use crate::posting::account::{AccountView, AuthenticatedAccount};
 use crate::posting::secret_box::{ARGON2_SALT_LEN, random_salt};
@@ -18,6 +20,17 @@ use crate::posting::secret_box::{ARGON2_SALT_LEN, random_salt};
 const ACCOUNTS_KEY: &str = "accounts";
 /// Storage key for the store-level Argon2id salt (base64).
 const ACCOUNTS_SALT_KEY: &str = "accounts_salt";
+
+/// The portable accounts bundle for config export/import: the accounts (with
+/// their secrets still encrypted) plus the store-level Argon2id salt (base64), so
+/// the same master password decrypts them on the target machine. The master
+/// password itself is never included.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AccountsBundle {
+    pub accounts: Vec<AuthenticatedAccount>,
+    #[serde(default)]
+    pub salt_b64: Option<String>,
+}
 
 /// Owns the authenticated-account list and persists every change.
 pub struct AccountStore {
@@ -66,6 +79,30 @@ impl AccountStore {
     /// snapshot. A no-op (but still re-persists) if no such account exists.
     pub async fn remove(&mut self, account_id: &str) -> anyhow::Result<Vec<AccountView>> {
         self.accounts.retain(|account| account.account_id != account_id);
+        self.persist().await?;
+        Ok(self.list())
+    }
+
+    /// Export the accounts + salt as a JSON [`AccountsBundle`] for the config
+    /// transfer. Secrets stay encrypted; the salt travels so the same master
+    /// password works on the target.
+    pub async fn export_json(&self) -> anyhow::Result<String> {
+        let salt_b64 = self.storage.get(ACCOUNTS_SALT_KEY).await?;
+        let bundle = AccountsBundle { accounts: self.accounts.clone(), salt_b64 };
+        Ok(serde_json::to_string(&bundle)?)
+    }
+
+    /// Replace the accounts + salt from an exported [`AccountsBundle`] JSON
+    /// (all-or-nothing, like the timeline import). The salt is persisted first so
+    /// the imported encrypted secrets decrypt with the source master password.
+    /// Returns the new snapshot.
+    pub async fn import_json(&mut self, json: &str) -> anyhow::Result<Vec<AccountView>> {
+        let bundle: AccountsBundle = serde_json::from_str(json).map_err(|parse_error| anyhow::anyhow!("invalid accounts JSON: {parse_error}"))?;
+        match &bundle.salt_b64 {
+            Some(salt_b64) => self.storage.set(ACCOUNTS_SALT_KEY, salt_b64).await?,
+            None => self.storage.remove(ACCOUNTS_SALT_KEY).await?,
+        }
+        self.accounts = bundle.accounts;
         self.persist().await?;
         Ok(self.list())
     }
@@ -163,6 +200,24 @@ mod tests {
         let second = store.ensure_salt().await.expect("ensure");
         assert_eq!(first, second, "salt must be stable once created");
         assert_eq!(store.load_salt().await.expect("load"), Some(first));
+    }
+
+    #[tokio::test]
+    async fn export_import_round_trips_accounts_and_salt() {
+        let mut store = AccountStore::new(Arc::new(MemConfigStorage::default()));
+        store.load().await.expect("load");
+        let salt = store.ensure_salt().await.expect("salt");
+        store.add(nostr_account("npub1aaa")).await.expect("add");
+        let json = store.export_json().await.expect("export");
+
+        // Import into a fresh store over independent storage.
+        let mut imported = AccountStore::new(Arc::new(MemConfigStorage::default()));
+        imported.load().await.expect("load");
+        let snapshot = imported.import_json(&json).await.expect("import");
+        assert_eq!(snapshot.len(), 1);
+        assert_eq!(snapshot[0].display_label, "npub1aaa");
+        // The salt travels so the same master password would derive the same key.
+        assert_eq!(imported.load_salt().await.expect("salt"), Some(salt));
     }
 
     #[tokio::test]

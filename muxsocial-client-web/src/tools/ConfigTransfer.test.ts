@@ -21,6 +21,17 @@ describe("compose_config_text", () => {
 		const parsed = parse_config_text(config_text, VALID_THEME_IDS, VALID_LANGUAGE_CODES);
 		expect(JSON.parse(parsed.timelines_json)).toEqual(JSON.parse(TIMELINES_JSON));
 		expect(parsed.settings).toEqual({ theme: "dark", language: "de" });
+		// No accounts passed → omitted from the document and parsed as "".
+		expect(config_text).not.toContain("accounts");
+		expect(parsed.accounts_json).toBe("");
+	});
+
+	it("embeds and round-trips the accounts bundle when provided", () => {
+		const accounts_json = JSON.stringify({ accounts: [{ account_id: "id1", network: "Nostr", display_label: "npub1xyz", credential: { type: "nostr_nsec" } }], salt_b64: "c2FsdA==" });
+		const config_text = compose_config_text(TIMELINES_JSON, { theme: "dark" }, accounts_json);
+		expect(JSON.parse(config_text).accounts).toEqual(JSON.parse(accounts_json));
+		const parsed = parse_config_text(config_text, VALID_THEME_IDS, VALID_LANGUAGE_CODES);
+		expect(JSON.parse(parsed.accounts_json)).toEqual(JSON.parse(accounts_json));
 	});
 });
 
@@ -59,6 +70,15 @@ describe("parse_config_text", () => {
 	it("rejects a missing or non-object settings root", () => {
 		expect(() => parse_config_text(JSON.stringify({ timelines: [] }), VALID_THEME_IDS, VALID_LANGUAGE_CODES)).toThrow(/"settings" must be a JSON object/);
 		expect(() => parse_config_text(JSON.stringify({ timelines: [], settings: [] }), VALID_THEME_IDS, VALID_LANGUAGE_CODES)).toThrow(/"settings" must be a JSON object/);
+	});
+
+	it("rejects a non-object accounts root", () => {
+		expect(() => parse_config_text(JSON.stringify({ timelines: [], settings: {}, accounts: [] }), VALID_THEME_IDS, VALID_LANGUAGE_CODES)).toThrow(/"accounts" must be a JSON object/);
+	});
+
+	it("leaves accounts untouched when the config omits them", () => {
+		const parsed = parse_config_text(JSON.stringify({ timelines: [], settings: {} }), VALID_THEME_IDS, VALID_LANGUAGE_CODES);
+		expect(parsed.accounts_json).toBe("");
 	});
 
 	it("rejects an unknown theme or language", () => {

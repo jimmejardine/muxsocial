@@ -8,6 +8,10 @@
  *   all-or-nothing replace) happens in `TimelineRegistry::import_timelines_json`.
  * - `"settings"` — the GUI-selectable preferences (theme, language), owned by the
  *   GUI and persisted in localStorage by their respective providers.
+ * - `"accounts"` — the connected cross-post accounts bundle (secrets stay
+ *   encrypted; carries the Argon2 salt so the same master password decrypts them
+ *   on the target). Opaque here; validated/replaced by `import_accounts_json`.
+ *   Optional: absent in older configs, in which case accounts are left untouched.
  *
  * These functions are pure (the valid theme/language ids are passed in) so they
  * can be unit-tested without React or WASM.
@@ -21,19 +25,27 @@ export interface ConfigSettings {
 	language?: string;
 }
 
-/** A parsed-and-validated config, split back into its two roots. */
+/** A parsed-and-validated config, split back into its roots. */
 export interface ParsedConfig {
 	/** The "timelines" root re-serialized, ready for the WASM `import_timelines_json`. */
 	timelines_json: string;
 	settings: ConfigSettings;
+	/** The "accounts" root re-serialized for `import_accounts_json`, or "" if the
+	 * config omits accounts (then accounts are left untouched on Apply). */
+	accounts_json: string;
 }
 
 /**
  * Compose the config text shown in the dialog: the Rust-exported timelines JSON
- * embedded under "timelines", plus the current GUI settings, pretty-printed.
+ * under "timelines", the current GUI settings under "settings", and (when given)
+ * the Rust-exported accounts bundle under "accounts". Pretty-printed.
  */
-export function compose_config_text(timelines_json: string, settings: ConfigSettings): string {
-	return JSON.stringify({ timelines: JSON.parse(timelines_json), settings }, null, 2);
+export function compose_config_text(timelines_json: string, settings: ConfigSettings, accounts_json?: string): string {
+	const root: Record<string, unknown> = { timelines: JSON.parse(timelines_json), settings };
+	if (accounts_json) {
+		root.accounts = JSON.parse(accounts_json);
+	}
+	return JSON.stringify(root, null, 2);
 }
 
 /**
@@ -77,5 +89,15 @@ export function parse_config_text(text: string, valid_theme_ids: string[], valid
 		settings.language = settings_object.language;
 	}
 
-	return { timelines_json: JSON.stringify(config.timelines), settings };
+	// Accounts are optional (older configs omit them). When present, the bundle is
+	// opaque here — the Rust `import_accounts_json` validates and replaces it.
+	let accounts_json = "";
+	if (config.accounts !== undefined) {
+		if (config.accounts === null || typeof config.accounts !== "object" || Array.isArray(config.accounts)) {
+			throw new Error('"accounts" must be a JSON object');
+		}
+		accounts_json = JSON.stringify(config.accounts);
+	}
+
+	return { timelines_json: JSON.stringify(config.timelines), settings, accounts_json };
 }

@@ -134,6 +134,12 @@ impl SharedSourceWriters {
         self.master_key.is_some()
     }
 
+    /// Drop the session master key (re-lock). Used after importing accounts, whose
+    /// secrets use the source machine's master password.
+    pub fn lock(&mut self) {
+        self.master_key = None;
+    }
+
     /// Replace the nostr relay list. Drops the cached client so the next post
     /// reconnects to the new relays.
     pub fn set_relays(&mut self, relays: Vec<String>) {

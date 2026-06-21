@@ -36,8 +36,8 @@ export function ConfigDialog({ opened, onClose, on_timelines_imported }: ConfigD
 	const load_current_config = useCallback(async () => {
 		if (!muxsocial) return;
 		try {
-			const timelines_json = await muxsocial.export_timelines_json();
-			set_config_text(compose_config_text(timelines_json, { theme: themeId, language: i18n.language }));
+			const [timelines_json, accounts_json] = await Promise.all([muxsocial.export_timelines_json(), muxsocial.export_accounts_json()]);
+			set_config_text(compose_config_text(timelines_json, { theme: themeId, language: i18n.language }, accounts_json));
 		} catch (err) {
 			Toast.error(t("toast.error_config_load", { message: error_message(err) }));
 		}
@@ -70,6 +70,10 @@ export function ConfigDialog({ opened, onClose, on_timelines_imported }: ConfigD
 				SUPPORTED_LANGUAGES.map((language) => language.value),
 			);
 			const imported_timelines = (await muxsocial.import_timelines_json(parsed_config.timelines_json)) as TimelineConfig[];
+			// Accounts are optional in the config; only replace them when present.
+			if (parsed_config.accounts_json) {
+				await muxsocial.import_accounts_json(parsed_config.accounts_json);
+			}
 			if (parsed_config.settings.theme !== undefined) {
 				setThemeId(parsed_config.settings.theme);
 			}

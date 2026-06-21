@@ -37,7 +37,7 @@
 	"language.label": "Language",
 	"config.open": "Config",
 	"config.title": "Config",
-	"config.description": "The box below contains your settings as JSON: your timelines and your GUI settings (theme, language). To move them to another machine, copy this text and paste it into this same dialog there, then press Apply. Apply validates the text and replaces this browser's settings with it; Revert restores the box to the current settings.",
+	"config.description": "The box below contains your settings as JSON: your timelines, your connected accounts (secrets stay encrypted — only usable with your master password), and your GUI settings (theme, language). To move them to another machine, copy this text and paste it into this same dialog there, then press Apply. Apply validates the text and replaces this browser's settings with it (you'll re-enter your master password to post); Revert restores the box to the current settings.",
 	"config.apply": "Apply",
 	"config.revert": "Revert",
 	"config.copy": "Copy",
