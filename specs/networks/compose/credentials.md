@@ -85,4 +85,3 @@ running browser tab a hardware enclave.
 `add_hashiverse_account(keyphrase, label, master_password)`,
 `remove_account(account_id)`, and `cross_post(text)`. The OAuth `begin_oauth` /
 `complete_oauth` methods are added with the OAuth stages.
-</content>

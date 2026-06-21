@@ -1,4 +1,4 @@
-import { Burger, Button, Popover, Stack } from "@mantine/core";
+import { Burger, Button, Menu, Popover, Stack } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher.tsx";
@@ -17,6 +17,8 @@ interface HeaderMenuProps {
 	on_open_config: () => void;
 	/** Open the "My accounts" dialog. */
 	on_open_accounts: () => void;
+	/** Open the nostr relays settings dialog. */
+	on_open_relays: () => void;
 }
 
 /**
@@ -25,7 +27,7 @@ interface HeaderMenuProps {
  * their own dropdowns, rendered in-place (not portalled) so opening one does not
  * dismiss this popover.
  */
-export function HeaderMenu({ version, on_open_help, on_open_config, on_open_accounts }: HeaderMenuProps) {
+export function HeaderMenu({ version, on_open_help, on_open_config, on_open_accounts, on_open_relays }: HeaderMenuProps) {
 	const { t } = useTranslation();
 	const [opened, handlers] = useDisclosure(false);
 
@@ -46,16 +48,32 @@ export function HeaderMenu({ version, on_open_help, on_open_config, on_open_acco
 					>
 						{t("wizard.open")}
 					</Button>
-					<Button
-						size="xs"
-						variant="default"
-						onClick={() => {
-							handlers.close();
-							on_open_accounts();
-						}}
-					>
-						{t("accounts.open")}
-					</Button>
+					<Menu position="bottom-end" withinPortal={false}>
+						<Menu.Target>
+							<Button size="xs" variant="default">
+								{t("posting.menu")}
+							</Button>
+						</Menu.Target>
+						<Menu.Dropdown>
+							<Menu.Label>{t("posting.menu")}</Menu.Label>
+							<Menu.Item
+								onClick={() => {
+									handlers.close();
+									on_open_accounts();
+								}}
+							>
+								{t("accounts.open")}
+							</Menu.Item>
+							<Menu.Item
+								onClick={() => {
+									handlers.close();
+									on_open_relays();
+								}}
+							>
+								{t("relays.open")}
+							</Menu.Item>
+						</Menu.Dropdown>
+					</Menu>
 					<LanguageSwitcher />
 					<ThemeSwitcher />
 					<NetworksMenu />

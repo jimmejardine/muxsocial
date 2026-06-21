@@ -134,6 +134,18 @@ impl SharedSourceWriters {
         self.master_key.is_some()
     }
 
+    /// Replace the nostr relay list. Drops the cached client so the next post
+    /// reconnects to the new relays.
+    pub fn set_relays(&mut self, relays: Vec<String>) {
+        self.nostr_relays = relays;
+        self.nostr_client = None;
+    }
+
+    /// The current nostr relay list.
+    pub fn relays(&self) -> &[String] {
+        &self.nostr_relays
+    }
+
     /// Derive and hold the session master key from `master_password` + `salt`. If
     /// `verification_blob` is given (an existing account's secret), the derived
     /// key must successfully decrypt it — this rejects a wrong master password

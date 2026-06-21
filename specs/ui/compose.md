@@ -50,4 +50,12 @@ A Mantine `Modal` with a `Textarea` and footer buttons **Post**, **Cancel**, and
 The Mastodon/Bluesky OAuth stages add `tools/OAuthPopup.ts` and an
 `/oauth/callback` route: the popup lands on the callback, `postMessage`s the
 redirect query to `window.opener`, and closes; the worker does the token work.
-</content>
+
+## Relays dialog
+
+`components/RelaysModal.tsx` (opened from the hamburger via `on_open_relays`) edits
+the nostr relay list as a single `;`-separated string in one autosize `Textarea`.
+It loads the current effective list with `get_nostr_relays()` on open and saves
+with `set_nostr_relays(text)` (which applies at runtime — see
+[../networks/nostr/index.md](../networks/nostr/index.md)). Strings under `relays.*`
+in `en.json`. One list governs both reading and posting.

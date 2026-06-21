@@ -6,6 +6,7 @@ import { AccountsModal } from "./components/AccountsModal.tsx";
 import { ComposeModal } from "./components/ComposeModal.tsx";
 import { ConfigDialog } from "./components/ConfigDialog.tsx";
 import { HelpWizard } from "./components/HelpWizard.tsx";
+import { RelaysModal } from "./components/RelaysModal.tsx";
 import { TimelineArea } from "./components/TimelineArea.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { Muxsocial, type MuxsocialClientWasmProxy } from "./Muxsocial.ts";
@@ -38,6 +39,7 @@ export function App() {
 	const [config_opened, config_handlers] = useDisclosure(false);
 	const [compose_opened, compose_handlers] = useDisclosure(false);
 	const [accounts_opened, accounts_handlers] = useDisclosure(false);
+	const [relays_opened, relays_handlers] = useDisclosure(false);
 	// Bumped on account add/remove so an open ComposeModal refreshes its list.
 	const [accounts_version, set_accounts_version] = useState(0);
 	// Auto-open the getting-started wizard once when the app first loads with no timelines.
@@ -174,6 +176,7 @@ export function App() {
 						on_open_help={help_handlers.open}
 						on_open_config={config_handlers.open}
 						on_open_accounts={accounts_handlers.open}
+						on_open_relays={relays_handlers.open}
 					/>
 				</AppShell.Header>
 
@@ -199,6 +202,7 @@ export function App() {
 			<ConfigDialog opened={config_opened} onClose={config_handlers.close} on_timelines_imported={set_timelines} />
 			<ComposeModal opened={compose_opened} onClose={compose_handlers.close} onOpenAccounts={accounts_handlers.open} accountsVersion={accounts_version} />
 			<AccountsModal opened={accounts_opened} onClose={accounts_handlers.close} onAccountsChanged={() => set_accounts_version((version) => version + 1)} />
+			<RelaysModal opened={relays_opened} onClose={relays_handlers.close} />
 		</MuxsocialContext.Provider>
 	);
 }

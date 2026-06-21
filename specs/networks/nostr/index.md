@@ -42,6 +42,27 @@ permalink hints match.
 
 Default relays: `wss://relay.damus.io`, `wss://nos.lol`.
 
+## Configurable relays
+
+The relay list is **user-configurable** and shared by reading and posting. It is
+edited in the GUI as a single `;`-separated string (the Relays dialog, opened from
+the hamburger; see [../../ui/compose.md](../../ui/compose.md)) and persisted in
+Rust `ConfigStorage` under the `"nostr_relays"` key (JSON `Vec<String>`), defaulting
+to the two relays above until changed.
+
+- Helpers `parse_relays_text` / `relays_to_text` (`sources/nostr.rs`) convert
+  between the `;`-string and the list.
+- Both builders expose `set_relays(Vec<String>)` (which drops the cached
+  `nostr_client` so it reconnects to the new relays) and `relays()`:
+  `SharedSourceClients` (read, `timeline/builder.rs`) and `SharedSourceWriters`
+  (write, `posting/writers.rs`) — they hold independent clients but the same list.
+- The wasm bridge (`MuxsocialClientWasm`) loads the saved list on startup and
+  applies it to both builders; `get_nostr_relays()` / `set_nostr_relays(text)`
+  read/update it. `set_nostr_relays` persists, applies to both builders, and
+  clears live read trackers so pagers rebuild over the reconnected client — the
+  change takes effect at runtime (no reload). Empty input falls back to the
+  defaults (nostr needs at least one relay).
+
 ## Test identifier
 
 The integration harness pages a baked-in author,

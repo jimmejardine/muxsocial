@@ -1,17 +1,20 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use muxsocial_lib::config_storage::ConfigStorage;
+use muxsocial_lib::config_storage::{ConfigStorage, get_json, set_json};
 use muxsocial_lib::greeting::compose_greeting_message;
 use muxsocial_lib::post::{AggregatedPost, SourceNetwork};
 use muxsocial_lib::posting::account::{AccountView, AuthenticatedAccount, StoredCredential};
 use muxsocial_lib::posting::{AccountStore, ComposeRequest, PostResult, SharedSourceWriters};
-use muxsocial_lib::sources::nostr::{EventSigner, KeysEventSigner};
+use muxsocial_lib::sources::nostr::{self, EventSigner, KeysEventSigner};
 use muxsocial_lib::timeline::{MultiTimeline, NetworkPager, SharedSourceClients, Source};
 use muxsocial_lib::timeline_registry::{TimelineRegistry, TimelineView};
 use wasm_bindgen::prelude::*;
 
 use crate::indexed_db_config_storage::IndexedDbConfigStorage;
+
+/// ConfigStorage key for the user's nostr relay list (JSON `Vec<String>`).
+const NOSTR_RELAYS_KEY: &str = "nostr_relays";
 
 /// The WASM-facing client owned by the MuxsocialWorker. All UI access goes through
 /// the MuxsocialClientWasmProxy on the main thread, never through this type
@@ -42,6 +45,9 @@ pub struct MuxsocialClientWasm {
     /// Session-scoped write state: the master key (after unlock) and the shared
     /// network publish clients. Not persisted — a reload starts locked.
     writers: SharedSourceWriters,
+    /// The shared IndexedDB config store, retained for settings that live outside
+    /// the registry/account stores (e.g. the nostr relay list).
+    storage: Arc<dyn ConfigStorage>,
 }
 
 #[wasm_bindgen]
@@ -51,14 +57,27 @@ impl MuxsocialClientWasm {
         let storage: Arc<dyn ConfigStorage> = IndexedDbConfigStorage::new().await.map_err(anyhow_to_js)?;
         let mut timeline_registry = TimelineRegistry::new(storage.clone());
         timeline_registry.load().await.map_err(anyhow_to_js)?;
-        let mut account_store = AccountStore::new(storage);
+        let mut account_store = AccountStore::new(storage.clone());
         account_store.load().await.map_err(anyhow_to_js)?;
+
+        let mut shared_clients = SharedSourceClients::new();
+        let mut writers = SharedSourceWriters::new();
+        // Apply any saved custom relay list to both the read and write clients
+        // (otherwise both keep the built-in DEFAULT_RELAYS).
+        if let Some(relays) = get_json::<Vec<String>>(storage.as_ref(), NOSTR_RELAYS_KEY).await.map_err(anyhow_to_js)? {
+            if !relays.is_empty() {
+                shared_clients.set_relays(relays.clone());
+                writers.set_relays(relays);
+            }
+        }
+
         Ok(MuxsocialClientWasm {
             timeline_registry,
-            shared_clients: SharedSourceClients::new(),
+            shared_clients,
             trackers: HashMap::new(),
             account_store,
-            writers: SharedSourceWriters::new(),
+            writers,
+            storage,
         })
     }
 
@@ -161,6 +180,33 @@ impl MuxsocialClientWasm {
             Some(tracker) => posts_to_js(tracker.posts()),
             None => posts_to_js(&[]),
         }
+    }
+
+    // --- nostr relays (shared by reading + posting) ---------------------------
+
+    /// The configured nostr relays as a single `;`-separated string. This is the
+    /// effective list (the built-in defaults until the user changes it) — shown in
+    /// the Relays settings dialog.
+    pub async fn get_nostr_relays(&self) -> Result<String, JsValue> {
+        Ok(nostr::relays_to_text(self.shared_clients.relays()))
+    }
+
+    /// Replace the nostr relay list from a `;`-separated string. Persists it,
+    /// applies it to both the read and write clients (they reconnect on next use),
+    /// and drops live read pagers so they rebuild over the new relays. Empty input
+    /// falls back to the defaults (nostr needs at least one relay). Returns the
+    /// normalized `;`-joined list.
+    pub async fn set_nostr_relays(&mut self, relays_text: String) -> Result<String, JsValue> {
+        let mut relays = nostr::parse_relays_text(&relays_text);
+        if relays.is_empty() {
+            relays = nostr::DEFAULT_RELAYS.iter().map(|relay_url| relay_url.to_string()).collect();
+        }
+        set_json(self.storage.as_ref(), NOSTR_RELAYS_KEY, &relays).await.map_err(anyhow_to_js)?;
+        self.shared_clients.set_relays(relays.clone());
+        self.writers.set_relays(relays.clone());
+        // Live read pagers hold the old client; drop them so they rebuild.
+        self.trackers.clear();
+        Ok(nostr::relays_to_text(&relays))
     }
 
     // --- Cross-posting (authenticated accounts + compose) ---------------------

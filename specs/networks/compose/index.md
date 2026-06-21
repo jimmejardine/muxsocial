@@ -112,4 +112,3 @@ round-trip / wrong-password / tamper, the account store persistence, credential
 serde round-trips, and the nostr signer building a verifiable kind-1 note.
 Hashiverse posting against a live bucket and the OAuth round-trips are verified
 in-browser / in the integration harness.
-</content>

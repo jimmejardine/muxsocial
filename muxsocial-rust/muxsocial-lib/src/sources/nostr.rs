@@ -26,6 +26,17 @@ pub use nostr_sdk::Client;
 /// Default public relays used when a caller does not supply their own.
 pub const DEFAULT_RELAYS: &[&str] = &["wss://relay.damus.io", "wss://nos.lol"];
 
+/// Parse a user-entered `;`-separated relay string into a clean relay list:
+/// split on `;`, trim each entry, and drop empties. Order is preserved.
+pub fn parse_relays_text(text: &str) -> Vec<String> {
+    text.split(';').map(str::trim).filter(|relay_url| !relay_url.is_empty()).map(str::to_string).collect()
+}
+
+/// Render a relay list back to the `"; "`-joined string shown in the GUI.
+pub fn relays_to_text(relays: &[String]) -> String {
+    relays.join("; ")
+}
+
 /// Build and connect a nostr client to `relays`. The returned [`Client`] is
 /// `Arc`-backed (cheap to clone, shared relay pool) — build it once and hand
 /// clones to every nostr source rather than reconnecting per fetch.
@@ -353,5 +364,19 @@ c",
     #[test]
     fn rejects_a_malformed_secret_key() {
         assert!(KeysEventSigner::from_secret_key("not-a-real-nsec").is_err());
+    }
+
+    #[test]
+    fn parses_semicolon_separated_relays_trimming_and_dropping_empties() {
+        let relays = parse_relays_text(" wss://relay.damus.io ;wss://nos.lol; ; ");
+        assert_eq!(relays, vec!["wss://relay.damus.io".to_string(), "wss://nos.lol".to_string()]);
+        assert!(parse_relays_text("   ;  ; ").is_empty());
+    }
+
+    #[test]
+    fn relay_text_round_trips() {
+        let relays = vec!["wss://relay.damus.io".to_string(), "wss://nos.lol".to_string()];
+        assert_eq!(relays_to_text(&relays), "wss://relay.damus.io; wss://nos.lol");
+        assert_eq!(parse_relays_text(&relays_to_text(&relays)), relays);
     }
 }

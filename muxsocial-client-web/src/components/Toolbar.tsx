@@ -17,6 +17,8 @@ interface ToolbarProps {
 	on_open_config: () => void;
 	/** Open the "My accounts" dialog (from the hamburger menu). */
 	on_open_accounts: () => void;
+	/** Open the nostr relays settings dialog (from the hamburger menu). */
+	on_open_relays: () => void;
 }
 
 /** A simple quill/pen glyph for the Post button. */
@@ -30,7 +32,7 @@ function PenIcon() {
 }
 
 /** The top toolbar: app title, theme/language switchers, and the Post / Add-timeline buttons. */
-export function Toolbar({ on_add_timeline, on_open_compose, highlight, version, on_open_help, on_open_config, on_open_accounts }: ToolbarProps) {
+export function Toolbar({ on_add_timeline, on_open_compose, highlight, version, on_open_help, on_open_config, on_open_accounts, on_open_relays }: ToolbarProps) {
 	const { t } = useTranslation();
 
 	return (
@@ -51,7 +53,7 @@ export function Toolbar({ on_add_timeline, on_open_compose, highlight, version, 
 				<Button size="xs" onClick={on_add_timeline} className={highlight ? "mux-throb" : undefined}>
 					{t("toolbar.add_timeline")}
 				</Button>
-				<HeaderMenu version={version} on_open_help={on_open_help} on_open_config={on_open_config} on_open_accounts={on_open_accounts} />
+				<HeaderMenu version={version} on_open_help={on_open_help} on_open_config={on_open_config} on_open_accounts={on_open_accounts} on_open_relays={on_open_relays} />
 			</Group>
 		</Group>
 	);

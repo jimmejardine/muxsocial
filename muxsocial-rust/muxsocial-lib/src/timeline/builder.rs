@@ -60,6 +60,18 @@ impl SharedSourceClients {
         self
     }
 
+    /// Replace the nostr relay list. Drops the cached client so the next read
+    /// reconnects to the new relays (callers should also drop live pagers).
+    pub fn set_relays(&mut self, relays: Vec<String>) {
+        self.nostr_relays = relays;
+        self.nostr_client = None;
+    }
+
+    /// The current nostr relay list.
+    pub fn relays(&self) -> &[String] {
+        &self.nostr_relays
+    }
+
     /// Connect the shared nostr client once; hand out cheap clones (shared pool).
     async fn shared_nostr_client(&mut self) -> anyhow::Result<NostrClient> {
         if self.nostr_client.is_none() {
@@ -154,5 +166,16 @@ mod tests {
             Ok(_) => panic!("Hashiverse should be unsupported without a client"),
             Err(error) => assert!(error.to_string().contains("Hashiverse"), "error should name Hashiverse: {error}"),
         }
+    }
+
+    /// `new()` seeds the default relays; `set_relays` replaces the effective list.
+    #[test]
+    fn set_relays_replaces_the_effective_list() {
+        let mut clients = SharedSourceClients::new();
+        assert_eq!(clients.relays(), crate::sources::nostr::DEFAULT_RELAYS);
+
+        let custom = vec!["wss://relay.primal.net".to_string(), "wss://nos.lol".to_string()];
+        clients.set_relays(custom.clone());
+        assert_eq!(clients.relays(), custom.as_slice());
     }
 }
